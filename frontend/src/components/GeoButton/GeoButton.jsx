@@ -6,17 +6,20 @@ import { Modal } from '../Modal/Modal';
 import { ButtonVertion } from "../../components/ButtonVersion";
 import { ReactComponent as IconClose } from './close.svg';
 import { useFilters } from '../../context/FiltersContext';
+import { usePlaces } from '../../context/PlacesContext';
 import { CitySelect } from '../CitySelect/CitySelect';
 import style from './GeoButton.module.scss';
 import { useT } from '../../i18n';
 import { publishLocation } from '../../utils/distance';
+import { zoomToShowNearest } from '../../utils/mapZoom';
 
 const API_KEY=process.env.REACT_APP_API_KEY_MAP;
 
 export const GeoButton = () => {
   const [geoMessage, setGeoMessage] = useState(null);
   const [showCitySelect, setShowCitySelect] = useState(false);
-  const {updateCity,updateCenter} = useFilters();
+  const {updateCity,updateCenter,focusMap} = useFilters();
+  const { places } = usePlaces();
   const t = useT();
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -94,6 +97,17 @@ export const GeoButton = () => {
 
       setGeoMessage(null);
       updateCity(city || 'Київ');
+
+      // Recentring alone left the zoom wherever it was, so someone two
+      // kilometres from the nearest bowl got their own empty neighbourhood and
+      // the button looked broken. Pull back just far enough to include the
+      // closest venue — same updateCity-then-focusMap order the city markers
+      // already use, so the city change does not move the map afterwards.
+      const zoom = zoomToShowNearest(coords, places, {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+      if (zoom !== null) focusMap(coords.lat, coords.lng, zoom);
     };
 
     const onFinalError = async (error) => {

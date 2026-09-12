@@ -22,6 +22,7 @@ import { Auth } from "./page/Auth";
 import { AppProvider } from "./context/AppProvider";
 import { I18nProvider } from "./i18n";
 import { FilterUrlSync } from "./components/FilterUrlSync";
+import { PageviewTracker } from "./components/PageviewTracker";
 
 
 
@@ -32,6 +33,7 @@ export default function App() {
       <BrowserRouter>
       <Layout>              
           <FilterUrlSync />              
+          <PageviewTracker />
           <Routes>          
             <Route path="/" element={<MapPage />} />
             <Route path="/list" element={<ListPage />} />           

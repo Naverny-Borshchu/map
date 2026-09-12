@@ -3,8 +3,8 @@
  *
  * These names are compositional — a head word ("борщ"), some adjectives and a
  * list of ingredients after "з / із / зі". So rather than a lookup table of
- * whole names (which would go stale the moment somebody adds a borsch), this
- * parses the name and rebuilds it in English. A borsch added tomorrow is
+ * whole names (which would go stale the moment somebody adds a borshch), this
+ * parses the name and rebuilds it in English. A borshch added tomorrow is
  * translated as long as it uses culinary vocabulary we know; anything unknown
  * falls back to transliteration, so the result stays readable.
  *
@@ -47,9 +47,9 @@ const PHRASES = [
  * (телятина / телятиною / телятини …).
  */
 const STEMS = [
-  ['борщик', ['borsch', HEAD]],
-  ['борщ', ['borsch', HEAD]],
-  ['орщ', ['borsch', HEAD]], // a typo that exists in the data
+  ['борщик', ['borshch', HEAD]],
+  ['борщ', ['borshch', HEAD]],
+  ['орщ', ['borshch', HEAD]], // a typo that exists in the data
 
   ['зі', ['with', CONN]],
   ['із', ['with', CONN]],
@@ -159,10 +159,10 @@ const STEMS = [
   ['пекар', ['the baker', NOUN]],
   ['корчм', ['korchma', NOUN]],
   ['гриль', ['grill', NOUN]],
-  // --- broader culinary vocabulary, so a newly added borsch still translates.
+  // --- broader culinary vocabulary, so a newly added borshch still translates.
   // Longer stems win, which is how 'зелений' (green) is kept apart from
   // 'зелень' (herbs) — the two collided and turned "Зелений борщ" into
-  // "Herbs borsch".
+  // "Herbs borshch".
   ['зелений', ['green', ADJ]],
   ['зелена', ['green', ADJ]],
   ['зелене', ['green', ADJ]],
@@ -229,7 +229,7 @@ const lookup = (word) => {
   const w = word.toLowerCase();
   for (const [stem, entry] of STEMS) {
     // Function words must match EXACTLY. Prefix-matching them swallowed real
-    // words: 'на' matched "Намелачний" and turned the dish into "In red borsch".
+    // words: 'на' matched "Намелачний" and turned the dish into "In red borshch".
     if (entry[1] === CONN) {
       if (w === stem) return entry;
       continue;
@@ -311,7 +311,7 @@ export const translateDish = (name) => {
 
   // A quoted or parenthesised name carries a proper name — translate in place
   // and never hoist words out of it, or «Родинне застілля» turns into
-  // "Family borsch feast".
+  // "Family borshch feast".
   const hasQuotes = QUOTED.test(name) || name.includes('(');
 
   if (!headSeg || hasQuotes) {
@@ -358,7 +358,7 @@ export const translateDish = (name) => {
   const out = segs
     .map((s) => {
       if (hoisted.has(s)) return '';
-      if (s === headSeg) return `${prefix.join(' ')} borsch`;
+      if (s === headSeg) return `${prefix.join(' ')} borshch`;
       return s.t === 'word' ? renderWord(s) : s.out;
     })
     .join('');
