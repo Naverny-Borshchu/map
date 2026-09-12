@@ -12,8 +12,7 @@ import style from './GeoButton.module.scss';
 import { useT } from '../../i18n';
 import { publishLocation } from '../../utils/distance';
 import { zoomToShowNearest } from '../../utils/mapZoom';
-
-const API_KEY=process.env.REACT_APP_API_KEY_MAP;
+import { reverseGeocodeCity } from '../../services/geocode';
 
 export const GeoButton = () => {
   const [geoMessage, setGeoMessage] = useState(null);
@@ -40,38 +39,6 @@ export const GeoButton = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getCityFromCoords = async (lat, lng) => {
-  try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=uk&key=${API_KEY}`
-    );
-
-    const data = await response.json();
-
-    if (!data.results || !data.results.length) {
-      return null;
-    }
-
-    for (const result of data.results) {
-      for (const component of result.address_components) {
-        if (
-          component.types.includes('locality') ||
-          component.types.includes('postal_town') ||
-          component.types.includes('administrative_area_level_2') ||
-          component.types.includes('administrative_area_level_1')
-        ) {
-          return component.long_name;
-        }
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('GEOCODER ERROR:', error);
-    return null;
-  }
-};
-
   const runGeolocation = (useNative = false) => {
     if (!navigator.geolocation) {
       setGeoMessage({
@@ -90,7 +57,7 @@ export const GeoButton = () => {
       };
       updateCenter(coords)
 
-      const city = await getCityFromCoords(coords.lat, coords.lng);
+      const city = await reverseGeocodeCity(coords.lat, coords.lng);
       publishLocation(coords);
       localStorage.setItem("город", city)
       localStorage.removeItem("refusal");
