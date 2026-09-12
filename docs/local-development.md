@@ -121,6 +121,9 @@ CI=true REACT_APP_API_URL=/api REACT_APP_VARIANT=map1 \
 | `REACT_APP_VARIANT` | дизайн-варіант, у проді `map1` |
 | `REACT_APP_NAV` | арм нижньої навігації (`wide` / `compact`) |
 | `REACT_APP_RATE_SCALE` | шкала оцінювання (`10` / `5`) |
+| `REACT_APP_POSTHOG_KEY` | токен проєкту PostHog; порожній = аналітика вимкнена |
+| `REACT_APP_POSTHOG_HOST` | свій хост PostHog, якщо не хмара за замовчуванням |
+| `REACT_APP_SITE` | `map` / `map1` — яким сайтом підписані події |
 
 **`backend/.env`**:
 
