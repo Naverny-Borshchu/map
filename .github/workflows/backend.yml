@@ -8,9 +8,9 @@ on:
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main, develop]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
+    # Без paths-фільтра навмисно: обов’язкові чеки гілки main мають
+    # відзвітувати на КОЖНОМУ PR. Під фільтром чек просто не зʼявляється,
+    # і PR, який не чіпав цю половину репозиторію, висить вічно.
   workflow_dispatch:
 
 concurrency:
