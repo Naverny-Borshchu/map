@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { hasSeenIntro, REQUEST_LOCATION_EVENT } from "../Onboarding";
 import { ReactComponent as IconGeoActive } from './geoActive.svg';
 import { Modal } from '../Modal/Modal';
@@ -14,11 +14,44 @@ import { publishLocation } from '../../utils/distance';
 import { zoomToShowNearest } from '../../utils/mapZoom';
 import { reverseGeocodeCity } from '../../services/geocode';
 
+/**
+ * The box the zoom has to fit a venue into: the rendered map, not the window.
+ *
+ * On desktop the map is roughly half the window wide, because the list sits
+ * beside it, so `window.innerWidth/innerHeight` overstates the room available.
+ * It happens not to change the answer at the distances measured so far — both
+ * give zoom 12 for a venue 9 km out — but the map is the box actually being
+ * filled, and the two diverge as the aspect ratio does.
+ *
+ * Falls back to the window when the map has not mounted yet: this flow can run
+ * on first load, before Google's canvas exists.
+ */
+const mapViewport = () => {
+  const rect = document.querySelector('.gm-style')?.getBoundingClientRect();
+  return rect && rect.width > 0 && rect.height > 0
+    ? { width: rect.width, height: rect.height }
+    : { width: window.innerWidth, height: window.innerHeight };
+};
+
 export const GeoButton = () => {
   const [geoMessage, setGeoMessage] = useState(null);
   const [showCitySelect, setShowCitySelect] = useState(false);
   const {updateCity,updateCenter,focusMap} = useFilters();
   const { places } = usePlaces();
+  // A position that arrived before the venues did, still waiting to be framed.
+  const pendingFrame = useRef(null);
+
+  // The venues have landed: frame the position we could not frame earlier.
+  // Runs at most once per position — the ref is cleared as it fires — so it
+  // cannot fight the visitor for control of the map afterwards.
+  useEffect(() => {
+    const coords = pendingFrame.current;
+    if (!coords || !places || places.length === 0) return;
+    const zoom = zoomToShowNearest(coords, places, mapViewport());
+    if (zoom === null) return;
+    pendingFrame.current = null;
+    focusMap(coords.lat, coords.lng, zoom);
+  }, [places, focusMap]);
   const t = useT();
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -70,11 +103,14 @@ export const GeoButton = () => {
       // the button looked broken. Pull back just far enough to include the
       // closest venue — same updateCity-then-focusMap order the city markers
       // already use, so the city change does not move the map afterwards.
-      const zoom = zoomToShowNearest(coords, places, {
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      const zoom = zoomToShowNearest(coords, places, mapViewport());
       if (zoom !== null) focusMap(coords.lat, coords.lng, zoom);
+      // On a first visit this whole flow runs from the mount effect, while the
+      // venues are still loading — `places` is empty, there is no nearest one
+      // to frame, and the map would just sit on the visitor with no pins in
+      // sight, which is the complaint this was meant to fix. Remember the
+      // position and frame it the moment the venues arrive.
+      else pendingFrame.current = coords;
     };
 
     const onFinalError = async (error) => {
