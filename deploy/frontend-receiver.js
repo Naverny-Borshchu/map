@@ -46,8 +46,6 @@ const TARGETS = {
   'map:refs/heads/main':         { site: '/var/www/nb-map',     label: 'map prod  (map.navernyborshchu.com)' },
   'map:refs/heads/develop':      { site: '/var/www/nb-map1',    label: 'map dev   (map1.navernyborshchu.com)' },
   // Попередні приватні репозиторії, поки триває переїзд на монорепо.
-  'frontend:refs/heads/main':    { site: '/var/www/nb-map',     label: 'map prod  (map.navernyborshchu.com)' },
-  'frontend:refs/heads/develop': { site: '/var/www/nb-map1',    label: 'map dev   (map1.navernyborshchu.com)' },
   'landing:refs/heads/main':     { site: '/var/www/nb-landing', label: 'landing   (navernyborshchu.com)' },
 };
 
