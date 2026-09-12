@@ -105,7 +105,9 @@ jobs:
 
       - name: Ship artifact to the deploy receiver
         env:
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          # Два приймачі на сервері мають РІЗНІ секрети, тож у монорепо вони
+          # не можуть зватися однаково.
+          WEBHOOK_SECRET: ${{ secrets.FRONTEND_WEBHOOK_SECRET }}
         run: |
           BODY_HASH=$(sha256sum build.tgz | cut -d' ' -f1)
           # Репозиторій підписується теж: у кожного репо є `main`, і приймач не

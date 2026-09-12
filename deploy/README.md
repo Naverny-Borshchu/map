@@ -12,6 +12,7 @@
 | `naverny-borschu-api.service` | systemd --user юніт API |
 
 Обидва приймачі вимагають `WEBHOOK_SECRET` у середовищі й падають на старті,
-якщо його немає. Той самий секрет лежить у secrets репозиторію на GitHub.
+якщо його немає. Секрети у них **різні** — у secrets репозиторію вони лежать
+як `FRONTEND_WEBHOOK_SECRET` і `BACKEND_WEBHOOK_SECRET`.
 
 Розгорнутий опис конвеєра — [../docs/deploy.md](../docs/deploy.md).

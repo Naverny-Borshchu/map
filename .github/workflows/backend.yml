@@ -58,7 +58,7 @@ jobs:
       # текст, на який впливає автор коміту, вклеювався в команду шелу.
       - name: Deploy via webhook
         env:
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          WEBHOOK_SECRET: ${{ secrets.BACKEND_WEBHOOK_SECRET }}
           GITHUB_EVENT: ${{ toJson(github) }}
         run: |
           set -euo pipefail
