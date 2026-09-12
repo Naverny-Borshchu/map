@@ -5,16 +5,16 @@
   "private": true,
   "dependencies": {
     "@react-google-maps/api": "^2.20.6",
-    "@react-oauth/google": "^0.12.1",
+    "@react-oauth/google": "^0.13.5",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
+    "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^13.5.0",
     "posthog-js": "^1.430.2",
-    "react": "^19.0.0",
+    "react": "^19.2.8",
     "react-cool-onclickoutside": "^1.7.0",
-    "react-dom": "^19.0.0",
-    "react-icons": "^5.5.0",
+    "react-dom": "^19.2.8",
+    "react-icons": "^5.7.0",
     "react-router-dom": "^7.18.3",
     "react-scripts": "5.0.1",
     "use-places-autocomplete": "^4.0.1"
@@ -44,8 +44,8 @@
     ]
   },
   "devDependencies": {
-    "css-loader": "^7.1.2",
-    "sass": "^1.91.0",
+    "css-loader": "^7.1.5",
+    "sass": "^1.104.0",
     "sass-loader": "^16.0.5"
   },
   "description": "Наверни Борщу — народна мапа борщу України (фронтенд)",
