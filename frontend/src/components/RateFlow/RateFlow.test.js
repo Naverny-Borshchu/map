@@ -132,3 +132,57 @@ describe('RateFlow account wall', () => {
     expect(screen.getByText(/КРОК 1 З 4/i)).toBeInTheDocument();
   });
 });
+
+/**
+ * The photo used to sit second from the end, after all seven taste questions.
+ * Every one of those — how much meat, how thick, how salty, what aftertaste —
+ * can only be answered by somebody who has eaten the bowl, so the app asked
+ * for a picture at the exact moment there was nothing left to photograph.
+ * Reported from the table: "не зміг додати фото, бо вже зʼїв борщ".
+ */
+describe('the photo is asked for while there is still a borsch to photograph', () => {
+  const withCriteria = () =>
+    render(
+      <MemoryRouter>
+        <I18nProvider>
+          <UserProvider>
+            <RateFlow
+              criteria={[{ key: 'meat', i18n: 'crit.meat' }, { key: 'salt', i18n: 'crit.salt' }]}
+              grades={{}}
+              onGrade={() => {}}
+              comment=""
+              onComment={() => {}}
+              photos={[]}
+              onPhotos={() => {}}
+              onSubmit={() => {}}
+              onExit={() => {}}
+              onSignIn={() => {}}
+              saving={false}
+              isSent={false}
+              error=""
+              borschName="Борщ"
+            />
+          </UserProvider>
+        </I18nProvider>
+      </MemoryRouter>
+    );
+
+  it('opens on the photo, not on a taste question', () => {
+    withCriteria();
+    expect(screen.getByText(/Покажи свій борщ/i)).toBeInTheDocument();
+    // and the taste questions have not started yet
+    expect(screen.queryByText(/Скільки в ньому було мʼяса/i)).not.toBeInTheDocument();
+  });
+
+  it('says when to take it, so the first step does not read as a demand', () => {
+    withCriteria();
+    expect(screen.getByText(/поки не взяв ложку/i)).toBeInTheDocument();
+  });
+
+  it('is still skippable — nobody is blocked by not having a photo', async () => {
+    withCriteria();
+    userEvent.click(screen.getByRole('button', { name: /Пропустити/i }));
+    // the taste questions begin only after the photo step is passed
+    expect(await screen.findByText(/Скільки в ньому було мʼяса/i)).toBeInTheDocument();
+  });
+});

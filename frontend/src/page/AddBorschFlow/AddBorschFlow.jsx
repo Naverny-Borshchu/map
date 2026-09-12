@@ -25,10 +25,16 @@ import style from './AddBorschFlow.module.scss';
  * The old screen was one page with photo, name, price, weight and meat type,
  * and it asked for all of it BEFORE the person got to say anything about the
  * borsch they had just eaten — the interesting part came last, or never. This
- * flow inverts it: seven taste questions first, while the taste is still in
- * your mouth, then the four dull facts one screen at a time with chips to tap,
- * then (only then) the account, because by that point there is something worth
+ * flow inverts it: the taste questions come while the taste is still in your
+ * mouth, then the dull facts one screen at a time with chips to tap, then
+ * (only then) the account, because by that point there is something worth
  * saving.
+ *
+ * The photo is the one exception that stays at the very front. It used to sit
+ * second from the end, and that put it after all seven taste questions — which
+ * only somebody who has eaten the bowl can answer. So the app asked for a
+ * picture at the exact moment the bowl was empty. It is still optional; it is
+ * simply asked while there is something left to photograph.
  *
  * A brand-new borsch has never been tasted by anyone, so finishing this makes
  * you its Першовар — ×3 XP, same as discovering a virgin pin on the map.
@@ -78,6 +84,12 @@ export const AddBorschFlow = () => {
 
   const steps = useMemo(
     () => [
+      // The photo goes first, because by the end there is nothing left to
+      // photograph. Every taste question in tasteSteps() — how much meat, how
+      // thick, how salty, what aftertaste — can only be answered by someone
+      // who has eaten the bowl, so asking for a picture afterwards asks for it
+      // at the one moment it cannot exist. It stays optional and skippable.
+      { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
       ...tasteSteps(),
       { type: 'choice', key: 'meatType', i18n: 'flow.qMeatType', options: MEAT_OPTIONS },
       {
@@ -90,7 +102,6 @@ export const AddBorschFlow = () => {
       },
       { type: 'number', key: 'price', i18n: 'flow.qPrice', hint: 'flow.qPriceHint', unit: priceChips.unit, chips: priceChips.chips, min: 0 },
       { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: [250, 300, 350, 400, 500], min: 0 },
-      { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
       { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
       ...(needsSignIn
         ? [{ type: 'signin', key: 'signin', i18n: 'flow.signinTitle', hint: 'flow.signinHint' }]
