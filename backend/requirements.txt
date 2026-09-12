@@ -6,6 +6,6 @@ django-cors-headers>=4.0  # CORS підтримка
 google-auth>=2.29         # Верифікація Google ID token
 psycopg2-binary>=2.9      # PostgreSQL адаптер (опціонально, для production)
 pillow>=10.0              # Робота з зображеннями (фото борщів)
-pytest-django>=4.5        # Тестування Django проєкту
+pytest-django>=4.14.0        # Тестування Django проєкту
 requests>=2.31.0
 whitenoise>=6.12.0
