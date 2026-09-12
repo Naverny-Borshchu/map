@@ -1,0 +1,60 @@
+.title {
+    margin-top: 40px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    margin: 0 auto 28px;
+    max-width: 300px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-text-main);
+}
+
+.googleBtnWrapper {
+    margin-top: 24px;
+}
+
+.checkboxWrapper {
+    display: flex;
+    align-items: flex-start; /* box sits by the first line of the wrapping consent text */
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--color-text-btn);
+    text-align: left;
+    cursor: pointer;
+}
+
+.hiddenCheckbox {
+    display: none;
+}
+
+.customCheckbox {
+    position: relative; /* anchor the tick to the box itself, not the wrapper */
+    flex: 0 0 20px; /* never shrink below 20px next to the long consent text */
+    width: 20px;
+    height: 20px;
+    margin-top: 1px; /* optical align with the first text line */
+    border: 1px solid var(--color-border-input);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkboxSign {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-bottom: 3px solid var(--color-btn-link);
+    border-left: 3px solid var(--color-btn-link);
+    width: 12px;
+    height: 6px;
+    transform: translate(-50%, -70%) rotate(-45deg);
+}
+
+.link {
+    color: var(--color-brown-900);
+    text-decoration: underline;
+}

@@ -1,0 +1,199 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+
+.page {
+  min-height: 100%;
+  background-color: var(--color-bg-grey);
+  padding: 12px 12px 24px;
+
+  @include respond(desktop) {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+}
+
+// --- header ---------------------------------------------------------------
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchWrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  font-size: 15px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.search {
+  width: 100%;
+  height: 44px;
+  padding: 8px 36px 8px 38px;
+  border: 1px solid var(--color-header-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--surface);
+  color: var(--color-text-btn);
+  @include body;
+  outline: none;
+}
+
+.search::placeholder {
+  color: var(--color-input-search);
+}
+
+.clear {
+  position: absolute;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--color-grey-400);
+  color: var(--color-text-main);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cityBtn {
+  flex: 0 0 auto;
+  height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-header-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--surface);
+  color: var(--color-text-btn);
+  cursor: pointer;
+
+  svg { width: 16px; height: 16px; flex: 0 0 auto; }
+  span {
+    @include footnote;
+    white-space: nowrap;
+    max-width: 26vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  /* the view toggle plus two sort chips do not fit 320–390px in one row */
+  flex-wrap: wrap;
+}
+
+.toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-grey-400);
+}
+
+.toggleBtn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 18px;
+  border-radius: var(--radius-pill);
+  @include button;
+  color: var(--color-text-btn);
+  text-decoration: none;
+}
+
+.toggleActive {
+  background-color: var(--color-text-active);
+  color: var(--color-text-btn-active);
+}
+
+.sortControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sortLabel {
+  @include footnote;
+  color: var(--color-text-main);
+}
+
+.sortSelect {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 8px 34px 8px 14px;
+  border: 1px solid var(--color-text-active);
+  border-radius: var(--radius-pill);
+  background-color: var(--surface);
+  color: var(--color-text-active);
+  cursor: pointer;
+  @include footnote;
+}
+
+.count {
+  @include footnote;
+  color: var(--color-text-main);
+  padding: 0 2px;
+}
+
+// --- list -----------------------------------------------------------------
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  color: var(--color-text-main);
+  @include footnote;
+  text-align: center;
+}
+
+.emptyReset {
+  padding: 8px 16px;
+  border: 1px solid var(--color-text-active);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-active);
+  cursor: pointer;
+  @include button;
+}
+
+@media (max-width: 390px) {
+  .sortControl {
+    width: 100%;
+  }
+
+  .sortSelect {
+    flex: 1 1 auto;
+  }
+}

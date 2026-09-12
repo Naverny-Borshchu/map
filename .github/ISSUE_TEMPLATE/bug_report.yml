@@ -1,0 +1,49 @@
+name: 🐞 Баг
+description: Щось працює не так, як має
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Дякуємо. Опис, за яким баг можна відтворити, коштує більше за десять
+        «у мене не працює».
+  - type: textarea
+    id: what
+    attributes:
+      label: Що сталося
+      description: І що мало статися замість цього.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Як відтворити
+      placeholder: |
+        1. Відкрити map.navernyborshchu.com
+        2. …
+        3. Бачу …
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Де саме
+      options:
+        - map.navernyborshchu.com (прод)
+        - map1.navernyborshchu.com (дев)
+        - локальна збірка
+        - API (api.navernyborshchu.com)
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Пристрій і браузер
+      placeholder: iPhone 14, Safari 18 / Windows, Chrome 140
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Скріншот, запис екрана або лог консолі
+      description: Для проблем із версткою скріншот вирішує майже все.

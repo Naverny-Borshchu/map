@@ -1,0 +1,109 @@
+@use "../../styles/mixin_font.scss" as *;
+
+// Sits over the map as a floating call to action. Beet, because on this map
+// beet means "unscouted" — the chip and the pins it sends you to match.
+.chip {
+  /* fixed, not absolute: the nav is fixed, and on iOS the two disagree. While
+     Safari shows its bottom bar, a fixed inset:0 ancestor still reaches behind
+     that bar, so an absolutely-positioned child anchors ~80px lower than a
+     fixed sibling — which is how this chip ended up half-hidden under the nav
+     on an iPhone while looking fine in every desktop browser. */
+  position: fixed;
+  z-index: 999;
+  left: 50%;
+  transform: translateX(-50%);
+  /* --nb-nav-h is measured and already contains the safe-area padding; adding
+     the inset again just floated everything 34px too high. The fallback is the
+     only place that still needs it, for the frames before the measurement. */
+  bottom: var(--nb-float-1, 94px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 420px);
+  padding: 9px 16px 9px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #a71e5b;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  text-align: left;
+}
+
+.chip:hover {
+  background: #93194f;
+}
+
+.icon {
+  font-size: 20px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.text strong {
+  @include footnote;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub {
+  @include caption;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Desktop puts it above the map's own bottom edge, clear of the nav column.
+@media (min-width: 1280px) {
+  .chip {
+    bottom: 24px;
+  }
+}
+
+// --- folded into the brand badge (phones) --------------------------------
+// Same content, no positioning of its own: the badge owns the corner now.
+.inline {
+  composes: chip;
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  // Stretch to the plaque, but let the label's natural width push the plaque
+  // wider (up to its max-width) instead of being squeezed by the logo's width —
+  // width: 100% made this row invisible to the badge's max-content sizing, so
+  // "Нерозвіданих: 174" truncated mid-number on narrow phones.
+  width: auto;
+  align-self: stretch;
+  max-width: none;
+  border-radius: 12px;
+  padding: 7px 10px;
+  gap: 8px;
+  box-shadow: none;
+  // the badge is pointer-events: none so the map stays draggable around it
+  pointer-events: auto;
+}
+
+.inline .icon {
+  font-size: 15px;
+}
+
+.inline .text strong {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.inline .sub {
+  font-size: 11px;
+  line-height: 1.25;
+  // the badge is narrow; let the distance line wrap instead of vanishing
+  white-space: normal;
+}

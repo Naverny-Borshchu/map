@@ -1,0 +1,107 @@
+/* Dropdown of the topbar venue/dish search. Positioned against the nearest
+   positioned ancestor — Filters' .inputWrap is position: relative. */
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-header-border);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 6px 0;
+  max-height: 320px;
+  overflow-y: auto;
+  text-align: left;
+  /* It used to appear — one frame nothing, next frame a full panel over the
+     map. Rising the last few pixels while it fades tells the eye where it came
+     from, which is the difference between a popup and a panel that belongs to
+     the field above it. */
+  animation: dropdownIn var(--dur-base) var(--ease-out);
+  transform-origin: top center;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+.heading {
+  padding: 6px 14px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-input-search);
+}
+
+.empty {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--color-input-search);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  transition: background-color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.itemActive {
+  background-color: var(--color-border-input, rgba(0, 0, 0, 0.06));
+}
+
+.kind {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-input-search);
+  border: 1px solid var(--color-header-border);
+  border-radius: 8px;
+  padding: 2px 6px;
+  min-width: 46px;
+  text-align: center;
+}
+
+.labelWrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sublabel {
+  font-size: 11px;
+  color: var(--color-input-search);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-active);
+}

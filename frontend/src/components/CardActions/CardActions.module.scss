@@ -1,0 +1,16 @@
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Unliked the button is just the themed surface (white on light, near-black on
+   dark) with a neutral heart; liking turns the whole button red. */
+.like svg [stroke] {
+  stroke: currentColor;
+}
+
+.liked {
+  background-color: var(--color-akcent-btn) !important;
+  color: #fff;
+}

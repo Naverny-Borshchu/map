@@ -1,0 +1,28 @@
+@use "../styles/mixin_adaptiv.scss" as *;
+.wrapper {
+    background-color: var(--color-bg-grey);
+    min-height: 100vh;
+    padding: 16px 16px 24px;
+    text-align: center;
+     @include respond(desktop) {
+       margin-top: 100px;
+    }
+}
+
+.authContainer {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 40px 28px 28px;
+    text-align: center;
+    @include respond(desktop) {
+       margin-top: 110px;
+    }
+
+    // the wordmark SVG is a fixed 320px wide — cap it so it never overflows /
+    // gets clipped on narrow phones (id is global, so scope it to this page)
+    :global(#logo) {
+        max-width: 100%;
+        height: auto;
+    }
+}

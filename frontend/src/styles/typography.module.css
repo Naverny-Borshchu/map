@@ -1,0 +1,117 @@
+
+.mobileTitle {
+    /* mobile/h2 */
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 26px;
+    text-align: center;
+    color: var(--color-text-btn);
+}
+
+.mobileTitleSmall {
+    /* mobile/h4 */
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 25px;
+    color: var(--color-text-btn);
+}
+
+.mobileBody {
+    /* mobile/body */
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 22px;
+    color: var(--color-text-btn);
+}
+
+.mobileFootnote {
+       /* mobile/footnote */
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+    color: var(--color-text-btn);
+}
+.mobileCaption{
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-text-main);
+}
+
+.fontBtn {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 22px;
+    letter-spacing: -0.408px;
+    color: var(--color-text-btn-active);
+}
+.mobileH2{
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 26px;
+    color: var(--color-text-btn);
+}
+.mobileH3{
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 24px;
+    color: var(--color-text-btn);
+}
+
+.mobileLabel {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 25px;
+    letter-spacing: 0.01em;
+    color: var(--color-text-btn);
+}
+
+.modalTitle {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 28px;
+    text-align: center;
+    color: var(--color-modal-black);
+}
+
+.modalParagraph {
+    /* mobile/caption */
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 130%;
+    text-align: center;
+    color: var(--color-modal-black);
+}
+
+.mobileBtn {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 130%;
+    /* identical to box height, or 21px */
+    color: var(--color-btn-link);
+}
+

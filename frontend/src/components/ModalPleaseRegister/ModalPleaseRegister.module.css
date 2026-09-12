@@ -1,0 +1,77 @@
+
+.modalContent {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    /* was position:absolute; top:0; right:-50vw — a compensation for the
+       old, broken .Modal offset. With the overlay centring properly that
+       crutch pushed the dialog off to the top-right. */
+    background-color: var(--color-bg-main);
+    width: min(100%, 420px);
+    max-height: 85dvh;
+    overflow-y: auto;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    padding: 40px 16px 24px;
+}
+
+.modalLogo {
+    display: block;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 16px;
+}
+
+.modalTitle {
+    margin-bottom: 16px;
+}
+
+.modalParagraph {
+    margin-bottom: 24px;
+}
+
+.modalCloseBtn {
+    background-color: inherit;
+    display: block;
+    border: 1px solid var(--color-akcent-btn);
+    border-radius: 14px;
+    color: var(--color-text-btn);
+    cursor: pointer;
+    margin-top: 16px;
+    padding: 14px 20px;
+    /*transition: border-color 0.2s ease-in-out;*/
+    width: 100%;
+}
+
+.modalCloseBtn:hover {
+    border-color: var(--color-akcent-hover);
+}
+
+.modalCloseBtn:hover{
+    cursor: pointer;
+}
+
+.spin-once {
+    animation: spin 1s linear 1;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+/* inline variant: sits in the page flow so the bottom nav stays reachable */
+.pageWrap {
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+}
+
+.asPage {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-once { animation: none; }
+}

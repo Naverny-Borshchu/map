@@ -1,0 +1,248 @@
+@use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/mixin_font.scss" as *;
+.container{
+    height: 100vh;
+    max-width: 100vw;   
+    display: flex; 
+    flex-direction: column;
+    justify-content:space-between;
+    margin:0 auto ;  
+    @include respond(desktop) {
+    display: grid;
+    grid-template-columns: 20vw 1fr;  
+    background-color: var(--color-bg-main);      
+    }   
+}
+.desktop{
+    display: flex;
+}
+
+// Desktop map view: collapsible sidebar next to the map.
+// The split pins itself to the viewport height and the sidebar scrolls its
+// own content — otherwise the page (.main) is the scroller and dragging the
+// list drags the map down with it.
+.split{
+    display: grid;
+    grid-template-columns: 33% 64%;
+    transition: grid-template-columns var(--dur-slow) var(--ease-standard);
+    height: 100%;
+}
+.splitCollapsed{
+    grid-template-columns: 0% 100%;
+}
+.sidebarPanel{
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    // The top bar floats over everything at z-index 99, so the panel has to
+    // reserve its height — otherwise the list's first card and its sort row
+    // start at y=0 and sit hidden underneath it.
+    padding-top: var(--nb-topbar-h);
+}
+.mapPanel{
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+}
+.sidebarToggle{
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 998;
+    width: 26px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 0 10px 10px 0;
+    background-color: var(--color-text-btn-active);
+    color: var(--color-text-layout);
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0;
+}
+.sidebarToggle:hover{
+    color: var(--color-text-active);
+}
+ 
+.header{   
+    z-index: 999;    
+    padding: 3px 23px 34px 23px;   
+    background-color: var(--color-text-btn-active); 
+    color: var(--color-text-layout);    
+    border-top: 2px solid var(--color-header-border); 
+    display: flex;  
+    flex-direction: column;
+    justify-content: space-between;
+    @include respond(desktop) {
+    order: 1;
+    // border-radius:0 24px 0 0;
+    border: 1px solid var(--color-bg-main);
+    margin-top: 100px;
+    padding: 20px 40px;    
+    }   
+}
+.headerDesctop{
+    display: none;
+    @include respond(desktop) {
+       display: block;
+    }  
+   
+}
+.main{
+    @include respond(desktop) {
+        order: 2;
+        // display: flex;
+      flex: 1;             // зайняти всю доступну висоту
+      overflow-y: auto;   // скролл
+      min-height: 0;       // grid item must be allowed to shrink, or it grows
+                           // to fit its content and the whole page scrolls
+      max-width: 100%;
+      background-color: var(--color-bg-main);
+    }
+}
+
+
+
+.navContainer{    
+    display: flex;
+    justify-content: space-between;    
+    list-style: none; 
+    max-width: 100vw; 
+    @include respond(desktop) {
+    flex-direction: column;
+    // gap:20px;    
+    }
+}
+
+.link {
+    /* the label followed the icon a frame late because only the icon moved */
+    transition: color var(--transition-fast);
+    padding: 10px;
+    border-radius: 20px;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    color: var(--color-text-layout);
+    @include body; 
+    @include respond(desktop) {
+        flex-direction: row;
+    }  
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.iconHover { 
+    display: none;
+    opacity: 0; 
+}
+
+
+.link:hover .iconDefault { 
+    display: none; 
+    opacity: 0; 
+}
+.link:hover .iconHover  { 
+    display: inline-block;
+    opacity: 1;    
+}
+.link:hover .text { 
+    color: var(--color-text-active);     
+}
+
+
+.addBorsch{
+    background-color: var(--color-add-btn);
+    border-radius: 50%;
+    display: flex;
+    align-items:  center;
+    justify-content: center;
+    padding: 10px;
+    margin-top: -12px;
+    @include respond(desktop) {
+    background-color: var(--color-bg-main);
+    justify-content: left;
+    padding: 0;
+    margin-top: 0;
+    } 
+}
+.addBorsch:hover{
+    background-color: var(--color-add-btn-active);
+    @include respond(desktop) {
+    background-color: var(--color-bg-main);   
+    } 
+}
+.active{
+    @include respond(desktop) {
+       background-color: var(--color-activ-page);
+    }         
+}
+
+.active .iconDefault {
+  display: none;
+  opacity: 0;
+}
+
+.active .iconHover {
+  display: inline-block;
+  opacity: 1;
+}
+
+.active .text {
+  color: var(--color-text-active);
+  
+}
+.boxContact{
+    display: none;    
+    @include respond(desktop) {
+       display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 16px;
+    border-top: 3px solid var(--color-bg-main);
+    }
+}
+.boxText{
+    display: flex;
+    flex-direction: column;
+    gap:5px;
+}
+.title{
+    @include button;
+    color: var(--color-btn-text);
+}
+.boxSocio{
+    display: flex; 
+    justify-content: left; 
+    gap: 18px;  
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+
+
+.socialLink:hover  {
+    transform: scale(1.1);
+}

@@ -1,0 +1,78 @@
+@use "../../styles/mixin_font.scss" as *;
+
+// Rendered only by the full-screen map variants; positioning lives here so the
+// component is self-contained, styling hooks stay in the variant stylesheet.
+.badge {
+  position: fixed;
+  left: 12px;
+  // --nb-nav-h is the bottom nav measured at runtime by Layout; the fallback
+  // only applies before the first measurement lands.
+  // the measured nav height already includes the safe-area padding
+  bottom: var(--nb-float-1, 94px);
+  z-index: 120;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+
+  // Wide enough for the quest label, narrow enough that the view toggle in the
+  // opposite corner never has to climb over it (the logo sets the floor at
+  // ~164px, so this only ever trims the quest text).
+  width: max-content;
+  max-width: min(52vw, 200px);
+
+  padding: 8px;
+  border-radius: 16px;
+
+  background-color: var(--surface-soft);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.logo {
+  display: block;
+  // the wordmark is 320x64; below ~145px its lettering stops being legible
+  width: 148px;
+  height: auto;
+}
+
+.count {
+  @include footnote;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--color-text-main);
+  white-space: nowrap;
+}
+
+/* Below 380px the view toggle climbs above the plaque instead of sitting beside
+   it (see the map1 variant stylesheet), so the width no longer has to leave a
+   lane for it — and the quest label stops truncating mid-word. */
+@media (max-width: 379px) {
+  .badge {
+    max-width: min(86vw, 260px);
+  }
+}
+
+/* Keep the badge light at night: the logo is a full-colour borscht bowl plus
+   dark lettering, and inverting it turned the bowl cyan. A light chip on a
+   dark map reads better and keeps the brand colours honest. */
+:global(html[data-theme='dark']) .badge {
+  background-color: rgba(245, 245, 245, 0.92);
+}
+
+:global(html[data-theme='dark']) .count {
+  color: #5A5A5A;
+}

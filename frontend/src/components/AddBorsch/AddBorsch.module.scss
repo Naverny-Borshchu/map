@@ -1,0 +1,124 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+
+/* "Not this one?" — the venues Google also knows within the same few metres.
+   Without this the sheet stated a guess as a fact. */
+.others {
+  margin: 14px 0 4px;
+}
+
+.othersTitle {
+  @include caption;
+  color: var(--color-text-grey, #6B6B6B);
+  margin-bottom: 8px;
+}
+
+.othersList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 168px;
+  overflow-y: auto;
+}
+
+.otherBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-header-border, #DDD);
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.otherName {
+  @include footnote;
+  font-weight: 700;
+  color: var(--color-text-btn);
+}
+
+.otherAddr {
+  @include caption;
+  color: var(--color-text-grey, #6B6B6B);
+}
+.container{
+    position: relative;
+}
+
+.card{
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    /* see note in ModalPleaseRegister: the right:-50vw offset was a
+       workaround for the old uncentred overlay */
+    padding: 16px;
+    background-color: var(--color-bg-main);
+    width: min(100%, 420px);
+    max-height: 85dvh;
+    overflow-y: auto;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.boxClose{
+    display: flex;
+    justify-content: right;
+}
+
+.boxContext{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align:center;
+    gap: 24px;
+   
+}
+.boxAddress{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    width: 100%;
+    gap: 10px;
+    padding: 16px;
+    
+}
+
+.name{
+    @include caption;
+    color:var(--color-text-btn);
+}
+.street{
+    @include caption;
+    color:var(--color-text-main);
+}
+.box_time{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.time{
+    @include caption;
+    color:var(--color-text-active);
+}
+.close{
+    @include caption;
+    color:var(--color-text-btn);
+}
+.photos {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+
+}
+
+.photo {
+  width: 150px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}

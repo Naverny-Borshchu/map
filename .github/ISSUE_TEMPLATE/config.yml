@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🍲 Додати або оцінити борщ
+    url: https://map.navernyborshchu.com
+    about: Заклад чи борщ додаються прямо в застосунку, а не через issue.
+  - name: 🔐 Вразливість безпеки
+    url: https://github.com/Naverny-Borshchu/map/security/advisories/new
+    about: Приватний канал. Будь ласка, не відкривайте публічний issue.
+  - name: 💬 Питання й ідеї
+    url: https://github.com/Naverny-Borshchu/map/discussions
+    about: Обговорення, питання, «а що якби».

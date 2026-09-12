@@ -1,0 +1,35 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+
+.desktopWrapper {
+    @include respond(desktop) {
+        margin-top: 0;
+        width: calc(100vw - 550px);
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        min-height: auto;
+        height: auto;
+    }
+}
+
+.back{
+    position: absolute;
+    top:20px;
+    left: 17px;
+    @include respond(desktop) {
+        display: none;
+    }
+}
+
+.infoContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    border: 1px solid var(--color-input-active);
+    border-radius: 14px;
+    margin: 24px 0;
+    padding: 16px;
+}
+

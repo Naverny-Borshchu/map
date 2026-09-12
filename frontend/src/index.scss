@@ -1,0 +1,276 @@
+@use "./styles/mixin_font.scss" as *;
+@use "./styles/mixin_adaptiv.scss" as *;
+// Design-experiment variants. Every rule inside is scoped to
+// html[data-variant="<name>"], which only ever gets set by builds that pass
+// REACT_APP_VARIANT — so this is inert in the production map. build.
+@use "./styles/variants/map1.scss";
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --color-text-btn: #1A1A1A; 
+  --color-text-btn-active: #FFFFFF;
+  --color-bg-main: #F8F8F8; 
+  --color-bg-grey: #F2F2F2; /* Grey/300 */
+  --color-header-border: #DDDDDD; /*Grey/500 */
+  --color-grey-400: #E9E9E9; /*Grey/400 */
+  /* Text greys darkened to clear WCAG AA (4.5:1) on the app's light surfaces.
+     The previous values failed badly — the bottom-nav labels sat at 2.3:1 and
+     the review counts at 2.2:1. Borders keep the old, lighter values through
+     their own tokens so nothing got visually heavier. */
+  --color-text-grade: #6E6E6E;   /* was #A6A6A6 → 2.17:1 */
+  --color-input-search: #6E6E6E; /* was #BEB9B2 → 1.74:1 (placeholders) */
+  --color-text-layout: #6B6B6B;  /* was #A0A0A0 → 2.34:1 (bottom nav) */
+  --color-text-main: #6B6B6B;    /* was #878787 → 3.21:1 */
+
+  /* border-only tokens, holding the original light values */
+  --color-border-mid: #878787;
+  --color-border-input: #BEB9B2;
+  --color-btn-text:#4D4D4D;// GreyD
+  --color-activ-page:#E9FDE2;/*Green/100 */
+  --color-add-btn: #BAE9AC; /*Green/400 */
+  --color-add-btn-active: #ABDD9C; /*Green/500 */
+  --color-btn-disabled: #76A069;
+  --color-input-active: #89B87B; /*Green/700 */
+  --color-btn-hover: #76A069; /*Green/800 */
+  --color-text-active: #5D7E52; /* Green/900, 6% darker: white-on-green was 4.09:1, AA needs 4.5 */
+  --color-btn-link: #4F7942;
+
+
+  --color-bg-ad: #F9CFA8;
+  --color-filter-btn: #DD9755;
+  --color-akcent-btn: #B8092C; /*Red/700 */
+  --color-akcent-hover: #A00322; /*Red/800*/
+  --color-red-900: #87001B; /*Red/900 */
+  --color-brown-900: #875323;
+  --color-modal-black: #000000;
+
+  --font-family-main: 'Roboto', sans-serif;
+
+  /* Corner radius scale. The app had grown 20 different values (2, 4, 6, 8,
+     12, 14, 16, 17, 18, 20, 24, 26px …), which is why images, modals and
+     buttons all looked rounded to a different degree. Use these. */
+  --radius-xs: 8px;   /* chips, small controls */
+  --radius-sm: 12px;  /* inputs, list rows */
+  --radius-md: 16px;  /* buttons, photos */
+  --radius-lg: 24px;  /* cards, modals, sheets */
+  --radius-pill: 999px; /* pills and circular buttons */
+
+  /* Floating surfaces (map chrome, dialogs). Separate from the palette above
+     so the dark theme can flip them without touching every component. */
+  --surface: #ffffff;
+  --surface-soft: rgba(255, 255, 255, 0.94);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+
+  /* Height the desktop top bar (logo + search + account) floats over. Pages
+     reserve it as PADDING inside their full-height box; six of them used to
+     hard-code `margin-top: 110px` on top of `height: 100vh`, which made every
+     one of them 110px taller than the viewport — the whole page scrolled, and
+     vertically centred content drifted to the middle of nowhere. */
+  --nb-topbar-h: 0px;
+
+  /* Motion. The app had grown 14 different transition durations (0.1, 0.12,
+     0.14, 0.15, 0.16, 0.18, 0.2, 0.25, 0.3, 0.35, 0.45, 0.5s …) and reached for
+     the bare `ease` keyword 77 times — the browser default, which is why most
+     interactions feel generic. This is the same three-step scale the Generect
+     design system uses, on the same curve.
+
+       fast  — a state answering a finger: hover, press, colour, opacity
+       base  — something entering or leaving in place: dropdown, chip, tooltip
+       slow  — a whole surface arriving: modal, sheet, a step in a flow
+
+     Two curves, and only two. `standard` is symmetric and belongs on states
+     that go both ways. `out` starts fast and settles — it makes an arrival
+     look decided rather than floaty, which is why the rating flow already
+     reached for it by hand. */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Ready-made shorthands, so a rule can say `transition: background
+     var(--transition-fast)` instead of restating the curve every time. */
+  --transition-fast: var(--dur-fast) var(--ease-standard);
+  --transition-base: var(--dur-base) var(--ease-standard);
+  --transition-slow: var(--dur-slow) var(--ease-standard);
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --nb-topbar-h: 110px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion, once, for everything.
+   Six files remembered to honour this preference by naming every animated
+   class by hand; the other nineteen with animations did not — which is the
+   predictable outcome of a rule you have to remember per file. Durations are
+   collapsed rather than set to `none` so animations that hold their end state
+   (`forwards`) still land on it, and JS that waits out a transition still
+   fires.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+/* ---------------------------------------------------------------------------
+   Dark theme — switched on by src/theme.js between 20:00 and 06:00 in the
+   visitor's own timezone. Only the neutrals flip; the brand greens and reds
+   stay recognisable, lifted slightly so they hold contrast on dark surfaces.
+   --------------------------------------------------------------------------- */
+html[data-theme='dark'] {
+  --color-text-btn: #ECECEC;        /* primary text */
+  --color-text-btn-active: #1F1F1F; /* card / control surface (was white) */
+  --color-bg-main: #171717;
+  --color-bg-grey: #101010;
+  --color-header-border: #363636;
+  --color-grey-400: #2A2A2A;
+  --color-text-grade: #9A9A9A;
+  --color-input-search: #9A9A9A;
+  --color-text-layout: #A8A8A8;
+  --color-text-main: #A8A8A8;
+  --color-border-mid: #4A4A4A;
+  --color-border-input: #4A4A4A;
+  --color-btn-text: #D6D6D6;
+
+  --color-activ-page: #23331F;
+  --color-add-btn: #3E5A34;
+  --color-add-btn-active: #47663B;
+  --color-btn-disabled: #6E8A63;
+  --color-input-active: #7FAE71;
+  --color-btn-hover: #8CBB7D;
+  --color-text-active: #8CBB7D;     /* brand green, lifted for dark */
+  --color-btn-link: #9CC98D;
+
+  --color-bg-ad: #4A3524;
+  --color-filter-btn: #C98A4E;
+  --color-akcent-btn: #E0567A;
+  --color-akcent-hover: #EC6C8C;
+  --color-modal-black: #000000;
+
+  --surface: #1F1F1F;
+  --surface-soft: rgba(31, 31, 31, 0.94);
+  --surface-strong: rgba(31, 31, 31, 0.96);
+
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Dark theme: brand INK.
+   The logo and most icons ship with baked-in dark ink, which disappears on
+   dark surfaces. Two inks are in play and they are NOT the same element:
+     #1A1A1A — the plate's outline rings (and several icon glyphs, e.g. share)
+     #262923 — the "Naverny Borshchu" wordmark
+   Lifting both here fixes the logo, the share icon and every close/pin glyph
+   in one place, wherever they are inlined.
+   --------------------------------------------------------------------------- */
+html[data-theme='dark'] {
+  svg [fill='#1A1A1A'],
+  svg [fill='#1a1a1a'],
+  svg [fill='#262923'] {
+    fill: #ECECEC;
+  }
+
+  svg [stroke='#1A1A1A'],
+  svg [stroke='#1a1a1a'] {
+    stroke: #ECECEC;
+  }
+
+  /* mid-grey glyph ink (map pin) — lift just enough to stay legible */
+  svg [stroke='#4D4D4D'] {
+    stroke: #A8A8A8;
+  }
+}
+
+/* The map brand badge is deliberately a LIGHT chip on the dark map, so its
+   logo must keep the dark ink the rest of the app is lifting. */
+html[data-theme='dark'] .nb-brandbadge svg [fill='#1A1A1A'],
+html[data-theme='dark'] .nb-brandbadge svg [fill='#1a1a1a'] {
+  fill: #1A1A1A;
+}
+html[data-theme='dark'] .nb-brandbadge svg [fill='#262923'] {
+  fill: #262923;
+}
+
+main,html {
+  overflow-x: hidden;  
+  height: 100%;
+  width: 100%;
+  @include respond(desktop) {
+    overflow-y: hidden;    
+  }
+}
+
+body {
+  @include body;
+  background-color: var(--color-bg-grey);
+  text-decoration: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;  
+  height: 100%;
+  width: 100%;
+}
+
+ul {
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+ul,
+li,
+p,
+a {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  outline: 0;
+  text-decoration: none;
+}
+
+/* Keyboard focus was invisible on links (the Мапа/Список toggle, the consent
+   links). :focus-visible keeps it off for mouse/touch users. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-text-active);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* iOS Safari zooms the entire page when you focus a field whose text is smaller
+   than 16px — which is what happened to the venue search (13.33px, the UA
+   default: nobody had set a size). Sixteen is the smallest size that does not
+   trigger it, so it is the floor for every field on touch-sized screens. */
+@media (max-width: 1023.98px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+button {
+  padding: 0;
+}

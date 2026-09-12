@@ -1,0 +1,86 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+.containerPage{
+  padding: 16px;  
+  background-color: var(--color-bg-main);
+  /* min-height, not height: with a fixed 100vh the map and the button below it
+     overflowed a box that could not grow, so the page had nothing to scroll to.
+     The bottom padding keeps the last control clear of the floating nav. */
+  min-height: 100vh;
+  padding-bottom: calc(var(--nb-nav-h, 78px) + 24px + env(safe-area-inset-bottom, 0px));
+  @include respond(desktop) {
+    // full-height panel with the top bar reserved inside it, so the step does
+    // not push the page 110px past the viewport
+    height: 100%;
+    overflow-y: auto;
+    background-color:var(--color-text-btn-active);
+    padding: var(--nb-topbar-h) 18px 18px;
+    margin: 0 auto;
+  }   
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 15px; 
+  margin-bottom: 34px; 
+  @include respond(desktop) {  
+    width: 50%;
+    margin: 0 auto;   
+  }  
+}
+
+.card {
+  position: relative;
+  border: 1px solid var(--color-border-mid);
+  border-radius: 24px;
+  padding: 13px 24px;
+  margin-bottom: 20px;
+  background:var(--color-bg-main);
+}
+
+.label {
+  position: absolute;
+  @include footnote;
+  top: -8px;
+  left: 15px; 
+  color:var( --color-text-btn);
+  background:var(--color-bg-main);
+}
+
+.input {
+  @include button;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-btn);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.value {
+  @include button;
+  color:var( --color-text-btn);
+  text-transform: capitalize;
+}
+
+/* The step's only way forward: it stays on screen instead of living at the end
+   of a scroll the person has to discover. */
+.btn{
+  position: sticky;
+  bottom: calc(var(--nb-nav-h, 78px) + 12px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  margin-top: 24px;
+  padding: 8px 0;
+  background: var(--color-bg-main);
+
+  @include respond(desktop) {
+    position: static;
+    margin-top: 32px;
+    padding: 0;
+  }
+}

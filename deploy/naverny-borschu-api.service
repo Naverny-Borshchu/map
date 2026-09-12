@@ -1,0 +1,21 @@
+# systemd --user юніт бойового API. Копія на сервері:
+#   ~/.config/systemd/user/naverny-borschu-api.service
+# Змінні оточення (DB_*, DJANGO_*, GOOGLE_OAUTH_CLIENT_IDS) у EnvironmentFile —
+# у репозиторії їх немає і бути не може, шаблон — backend/.env.example.
+[Unit]
+Description=Naverny Borshchu API
+After=network.target
+
+[Service]
+Type=notify
+WorkingDirectory=/home/<user>/projects/map/backend
+EnvironmentFile=/home/<user>/.config/naverny-borschu/env
+ExecStart=/home/<user>/projects/map/backend/venv/bin/gunicorn naverny_borschu_api.wsgi:application -c ../deploy/gunicorn.conf.py
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=naverny-borschu-api
+
+[Install]
+WantedBy=default.target

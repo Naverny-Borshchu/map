@@ -1,0 +1,1 @@
+export { MapBrandBadge } from './MapBrandBadge';

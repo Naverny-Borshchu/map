@@ -1,0 +1,39 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies — unanchored: /node_modules missed v2/node_modules,
+# and 2393 dependency files were committed through that gap.
+node_modules/
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# знімки збірок перед деплоєм — тримаємо на диску, не в git.
+# production — and every scratch copy the deploy dance makes: the site is built
+# to build.new, the live one is moved aside to build.prev-<stamp>, and variants
+# land in build.wide / build.old. Only "/build" used to be ignored, so a
+# `git add -A` mid-deploy swept a whole minified bundle into the branch.
+/build
+/build.new
+/build.old
+/build.wide
+/build.prev-*
+/build.bak.*
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.env
+.idea/
+
+# build output of any nested app
+dist/

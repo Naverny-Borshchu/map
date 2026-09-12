@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="66" height="44" viewBox="0 0 66 44">
+  <!-- City aggregate marker: fork & spoon in a white pill, count label rendered by Google Maps at labelOrigin -->
+  <rect x="1.5" y="3.5" width="63" height="37" rx="18.5" fill="#ffffff" stroke="#A71E5B" stroke-width="2.5"/>
+  <g transform="translate(9,10)" fill="#A71E5B">
+    <!-- fork -->
+    <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7z"/>
+    <!-- spoon -->
+    <path d="M18 1.5c-1.8 0-3.25 1.9-3.25 4.25 0 2.05 1.1 3.76 2.55 4.15V22h1.4V9.9c1.45-.39 2.55-2.1 2.55-4.15C21.25 3.4 19.8 1.5 18 1.5z"/>
+  </g>
+</svg>

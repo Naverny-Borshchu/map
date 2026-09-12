@@ -1,0 +1,63 @@
+// Type scale.
+//
+// These mixins used to set a line-height SMALLER than the font-size
+// (22px text on a 12px line, 16px on 14px, …), which squashes and overlaps
+// wrapped text. They now match src/styles/typography.module.css exactly, so a
+// component reaching for either system gets the same result — the two systems
+// disagreeing was the real source of the "too many different fonts" feel.
+
+@mixin mobileH2 {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 26px;
+}
+
+@mixin mobileH3 {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 24px;
+}
+
+@mixin mobileH4 {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 25px;
+}
+
+@mixin body {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 22px;
+}
+
+@mixin button {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+@mixin footnote {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+}
+
+@mixin caption {
+    font-family: var(--font-family-main);
+    font-style: normal;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 16px;
+}

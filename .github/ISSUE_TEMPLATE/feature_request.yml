@@ -1,0 +1,22 @@
+name: 💡 Ідея
+description: Пропозиція зміни або нової можливості
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Яку проблему це вирішує
+      description: Почніть з болю користувача, а не з рішення.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Що пропонуєте
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Що ще розглядали
+      description: Зокрема варіант «нічого не робити» — чим він поганий?

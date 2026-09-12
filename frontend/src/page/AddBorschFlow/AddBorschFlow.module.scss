@@ -1,0 +1,26 @@
+@use "../../styles/mixin_font.scss" as *;
+
+/* Only shown when the flow is opened without a picked place (deep link or a
+   reload); the quest itself paints its own full-screen stage. */
+.fallback {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  @include body;
+}
+
+.fallbackBtn {
+  min-height: 48px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-beet, #A3245A);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}

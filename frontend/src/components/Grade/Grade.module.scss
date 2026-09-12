@@ -1,0 +1,130 @@
+@use "../../styles/mixin_font.scss" as *;
+.container{
+  display: flex;
+  flex-direction: column;  
+}
+.wrap {
+  display: flex;
+  margin-top: 20px;
+  align-items: center;
+  gap: 12px;
+}
+
+/* the criterion icon must keep its size — it was being squeezed off-screen */
+.wrap > svg {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0; /* let the row shrink instead of overflowing the screen */
+  @include footnote;
+  color: var(--color-text-btn);
+}
+
+.sliderWrapper {
+  position: relative;
+  width: 100%;  
+}
+
+
+
+ .input {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;
+  background: none;
+  position: relative;
+  z-index: 1;
+}
+
+
+.input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.input::-moz-range-thumb {
+  width: 24px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.track {
+  display: flex;
+  gap: 4px;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 8px;
+  transform: translateY(-50%);
+  pointer-events: none;   
+  z-index: 0;
+}
+
+/* was a fixed 25px each: ten of them plus the icon overflowed the viewport,
+   which is why the right-hand labels were cut off */
+.tick {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 7px;
+  background-color:var(--color-text-grade);
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.filled {
+  background-color:var(--color-text-active);
+}
+.text {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  @include caption;
+  color: var(--color-text-btn);
+  width: 100%;
+}
+
+.text p {
+  min-width: 0;
+}
+
+.text p:last-child {
+  text-align: right;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* an untouched criterion must not look rated */
+.valueOff {
+  color: var(--color-text-main);
+  @include caption;
+}
+
+.valueOn {
+  color: var(--color-text-active);
+  font-weight: 600;
+  @include caption;
+}
+
+/* highlighted after a Save attempt, so "what is missing" is visible */
+.needsInput {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 2px var(--color-akcent-btn);
+  padding: 4px;
+  margin: -4px;
+}

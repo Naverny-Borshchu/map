@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F2F2F2" />
+    <!-- The brand beet sits on its own light-green disc, so it reads on both
+         light and dark browser chrome — one icon covers both schemes. -->
+    <link rel="icon" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <script>
+      /* Set the theme before the first paint so a night visit never flashes
+         the light palette. Mirrors the rule in src/theme.js. */
+      (function () {
+        try {
+          var pref = localStorage.getItem('themePref');
+          var t;
+          if (pref === 'light' || pref === 'dark') {
+            t = pref;
+          } else {
+            var h = new Date().getHours();
+            t = (h >= 20 || h < 6) ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', t);
+          document.documentElement.style.colorScheme = t;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'dark' ? '#101010' : '#F2F2F2');
+        } catch (e) {}
+      })();
+    </script>
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    /> 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">  
+    <title>Наверни Борщу</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script
+            src="https://accounts.google.com/gsi/client"
+            async
+            defer
+    ></script>
+  </body>
+</html>

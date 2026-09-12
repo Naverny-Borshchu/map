@@ -1,0 +1,40 @@
+@use "../../styles/mixin_font.scss" as *;
+
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.label {
+  @include body;
+  color: var(--color-text-btn);
+}
+
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-grey-400);
+}
+
+.opt {
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-btn);
+  @include footnote;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.active {
+  background-color: var(--color-text-active);
+  color: var(--color-text-btn-active);
+}

@@ -1,0 +1,344 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+.desctop{
+  display: none;
+  @include respond(desktop) {
+    display:block;
+  }   
+}
+.filterWrap{
+  position: absolute;
+  z-index: 99;
+  display: flex;
+  justify-content: center;
+  align-items:end;
+  gap: 10px;
+  width: 100%;
+  // mobile: auto height + top padding reserve room for the absolutely
+  // positioned city button (top:10px, ~40px tall) so it never covers the input
+  height: auto;
+  min-height: 13%;
+  padding: 60px 16px 16px;
+  background-color: var(--color-text-btn-active);
+  left: 0;
+  top:0;
+  @include respond(desktop) {
+    height: 10%;
+    min-height: 0;
+    justify-content:space-between;
+    align-items:center;
+    padding: 16px 40px;
+  }
+}
+.box{
+  display: flex;
+  text-align: center;
+  align-items: center;
+  gap:50px
+}
+.flex{
+    display: flex;
+    text-align: center;
+    align-items: center; 
+    gap: 10px;
+  @include respond(desktop) {
+     
+    border: 1px solid var(--color-border-input);
+    border-radius: 24px;
+    padding:5px 20px;
+  }
+  
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.searchButton {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: block;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none; 
+}
+
+.iconDefault { opacity: 1; }
+.iconActive  { opacity: 0; }
+
+.inputWrap:focus-within .iconDefault {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.95);
+}
+.inputWrap:focus-within .iconActive {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+
+.input {
+    border: 1px solid var(--color-header-border);
+    background-color: var(--color-text-btn-active); 
+    border-radius: 14px;
+    padding: 8px 12px 8px 48px; 
+    
+    height: 40px;
+    outline: none;
+    transition: border-color 0.2s ease;
+   @include respond(desktop) {
+    border: none;
+    width: 320px;
+  }
+}
+
+.clearButton {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-input-search);
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+  background-color: var(--color-header-border);
+  color: var(--color-text);
+}
+
+
+.inputWrap:focus-within .input {
+  border-color: var(--color-text-active);
+}
+.inputWrap:hover .input {
+  border-color: var(--color-text-active);
+}
+
+.input::placeholder {
+  color: var(--color-input-search);
+  @include footnote;  
+}
+
+.boxFilter{
+   @include respond(desktop) {
+    width: 26%;  
+    padding: 40px 30px 40px 30px;  
+    display: flex; 
+    justify-content: space-between;
+    position: absolute;
+    top: 100px; 
+    left: 20%;
+    background-color: var(--color-bg-main);
+  }
+}
+.btnFilter, .btnGeo,.btnFilterCity{
+  width: 40px;
+  height: 40px;
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-header-border);  
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;   
+  justify-content: center; 
+  align-items: center;
+}
+.btnFilter{
+  position: relative;
+  background-color: var(--color-text-btn-active); 
+  @include respond(desktop) {
+    @include button;  
+    background-color: var(--color-bg-main);
+    color: var(--color-btn-text);    
+    width: 135px;
+    display: flex;
+    gap:10px;
+    justify-content: center;
+    align-items: center;
+  }   
+}
+.btnFilter:hover{
+  border: 1px solid var(--color-btn-text); 
+  transition: opacity .15s ease, transform .15s ease;
+}
+.btnRating{
+  display: none;
+  @include respond(desktop) {
+    @include button; 
+    background-color: var(--color-bg-main);
+    border: none;     
+    width: 140px;
+    display: flex;
+    gap:10px;
+    justify-content: center;
+    align-items: center;
+  }   
+}
+.btnFilterCity{
+  position: absolute;
+  top:10px;
+  width: 50vw;
+  justify-content: left;
+  border: none;
+  background-color: var(--color-text-btn-active);  
+  color: var(--color-btn-text);
+  @include button;
+  @include respond(desktop) {  
+    position: relative; 
+    top: 0;
+    width: 100%;
+    padding: 10px;
+    border-radius: 0;
+    border-left: 2px solid var(--color-header-border);   
+    display: flex;
+    gap:5px;
+    justify-content: center;
+    align-items: center;
+  }    
+}
+.btnFilterText{
+  display: none;  
+  @include respond(desktop) {
+    @include body; 
+    color: var(--color-btn-text);
+    display: block;
+  }
+}
+.btnFilterCityText{  
+  @include button; 
+  color: var(--color-btn-text);
+  @include respond(desktop) {
+    display: block;
+  }
+}
+.btnFilterCityText:hover{  
+  color:var(--color-text-btn);
+  transition: opacity .15s ease, transform .15s ease;
+}
+.btnRatingText{
+  @include body; 
+  color: var(--color-btn-text);
+}
+.btnRatingText:hover{
+  color: var(--color-text-btn);
+}
+
+
+.geoMessage {
+  position: absolute;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.success {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-input-active);
+  color:var(--color-btn-disabled);
+}
+
+.error {
+  background-color: var(--color-text-btn-active);
+  border: 1px solid var(--color-bg-ad);
+  color: var(--color-filter-btn);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+}
+.btnReg{
+  @include button;
+    padding:10px 33px;   
+    border-radius: 14px;
+    list-style: none;    
+    text-align:center;
+    text-decoration: none;
+    background-color: var(--color-text-active); 
+    color:var( --color-text-btn-active);
+}
+.btnReg:hover{
+    cursor: pointer;   
+    opacity: 0.8; 
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 24px;
+  transition: background 0.2s;
+  &:hover { background: rgba(0,0,0,0.06); }
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-text-active);
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-btn);
+}
+
+/* count of active filters, so the map tells you a filter is on */
+.filterBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-akcent-btn);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 600;
+}

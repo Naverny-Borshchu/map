@@ -1,0 +1,38 @@
+# --- операційні системи та редактори ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- секрети ---
+# Ніколи не комітьте .env: шаблони лежать у backend/.env.example та
+# frontend/.env.example.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- python / django ---
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.sqlite3
+backend/staticfiles/
+backend/media/
+.pytest_cache/
+
+# --- node / react ---
+node_modules/
+/frontend/build
+/frontend/build.*
+coverage/
+npm-debug.log*
+yarn-error.log*
+
+# --- службове ---
+*.log
+*.bak
+*.tgz

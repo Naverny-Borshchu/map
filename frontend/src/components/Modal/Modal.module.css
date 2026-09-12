@@ -1,0 +1,66 @@
+.Backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.45);
+    transition: opacity var(--transition-slow), visibility var(--transition-slow);
+    animation: backdropIn var(--dur-base) var(--ease-standard);
+    overflow-y: scroll;
+}
+
+.Overlay {
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh; /* mobile: exclude the browser toolbar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+/* Was `position:absolute; top:30%; left:50%` with no transform, so every modal
+   hung down and to the right and could not fit a phone screen. Now the overlay
+   centres it and it is capped to the viewport. */
+.Modal {
+    animation: modalIn var(--dur-slow) var(--ease-out);
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Was `position:absolute` inside the flex overlay, so it ignored the centring
+   and sat wherever the overlay's origin happened to be. Now it centres like
+   every other modal. */
+.ModalFilters {
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.ModalNotification {   /*integrate into logic*/
+    position: fixed; /* instead of absolute */
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    z-index: 1000;
+}
+
+
+
+/* The panel used to be there on the frame it mounted. Now the backdrop fades
+   and the panel rises the last few pixels into it — the same arrival the
+   rating flow already uses, so surfaces across the app behave alike. */
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}

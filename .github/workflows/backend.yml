@@ -1,0 +1,84 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-django
+      - name: Run tests
+        env:
+          DJANGO_SETTINGS_MODULE: naverny_borschu_api.settings_test
+        run: pytest --tb=short
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      # Payload і секрет приходять змінними оточення і ніколи не
+      # інтерполюються в скрипт.
+      #
+      # Колись вони вставлялися як `'${{ toJson(github) }}'` усередині
+      # одинарних лапок — тож будь-який заголовок PR чи повідомлення коміту з
+      # лапкою або дужкою давав синтаксичну помилку bash, і деплой просто не
+      # відбувався. Саме так це впало 2026-09-04. Це ще й вектор інʼєкції:
+      # текст, на який впливає автор коміту, вклеювався в команду шелу.
+      - name: Deploy via webhook
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          GITHUB_EVENT: ${{ toJson(github) }}
+        run: |
+          set -euo pipefail
+          SIG="sha256=$(printf '%s' "$GITHUB_EVENT" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
+          curl --fail-with-body --silent --show-error \
+            -X POST https://api.navernyborshchu.com/deploy-webhook \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $SIG" \
+            --data-binary "$GITHUB_EVENT"
+
+      - name: Smoke-check the live API
+        run: |
+          set -euo pipefail
+          for path in "/api/borsches/?limit=1" "/api/places/?limit=1"; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://api.navernyborshchu.com$path")
+            test "$code" = "200" || { echo "$path returned $code"; exit 1; }
+            echo "ok $path"
+          done
+          # обрізаний або наполовину перезапущений деплой теж віддає 200 на
+          # порожньому списку, тож перевіряємо, що за ним є дані
+          BODY="$(mktemp)"
+          curl -sS -o "$BODY" "https://api.navernyborshchu.com/api/borsches/?limit=1"
+          python3 -c "import json,sys; d=json.load(open('$BODY')); assert d['count']>0, 'borsch count is 0'; print('ok: %d borsches' % d['count'])"

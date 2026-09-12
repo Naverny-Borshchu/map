@@ -1,0 +1,132 @@
+name: frontend
+
+# Деплої відбуваються тут і більше ніде. Прод-докрут — /var/www/nb-map/current,
+# симлінк у теку релізів, у яку пише лише приймач деплою; це навмисно НЕ
+# git-чекаут. Збірка в чекауті на сервері колись не відрізнялася від деплою —
+# саме так 2026-08-20 у прод потрапила неперевірена переписана апка.
+#
+#   main    -> map.navernyborshchu.com   (продакшн)
+#   develop -> map1.navernyborshchu.com  (дев-сайт)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Tests
+        run: npx react-scripts test --watchAll=false
+        env:
+          CI: true
+
+      # Арми A/B колись жили в рукописному .env на кожному сервері, тож два
+      # сайти могли тихо розʼїхатися і ніде не було записано, який арм живий.
+      - name: Resolve per-site flags
+        id: flags
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            echo "nav=wide"      >> "$GITHUB_OUTPUT"
+            echo "site=map"      >> "$GITHUB_OUTPUT"
+          else
+            echo "nav=compact"   >> "$GITHUB_OUTPUT"
+            echo "site=map1"     >> "$GITHUB_OUTPUT"
+          fi
+          echo "scale=10" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        env:
+          CI: true                      # ворнінги = помилки
+          REACT_APP_API_URL: /api
+          REACT_APP_VARIANT: map1
+          REACT_APP_NAV: ${{ steps.flags.outputs.nav }}
+          REACT_APP_RATE_SCALE: ${{ steps.flags.outputs.scale }}
+          REACT_APP_API_KEY_MAP: ${{ vars.REACT_APP_API_KEY_MAP }}
+          REACT_APP_API_KEY_AUTH: ${{ vars.REACT_APP_API_KEY_AUTH }}
+        run: npm run build
+
+      - name: Sanity-check the artifact before it can ship
+        run: |
+          test -f build/index.html || { echo "no index.html"; exit 1; }
+          asset=$(grep -oE '/static/js/main\.[a-z0-9]+\.js' build/index.html | head -1)
+          test -n "$asset" || { echo "index.html references no main bundle"; exit 1; }
+          test -f "build${asset}" || { echo "referenced bundle ${asset} is missing"; exit 1; }
+          echo "artifact ok: ${asset}"
+
+      - name: Package
+        run: tar -C build -czf build.tgz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+          path: frontend/build.tgz
+          retention-days: 7
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+
+      - name: Ship artifact to the deploy receiver
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          BODY_HASH=$(sha256sum build.tgz | cut -d' ' -f1)
+          # Репозиторій підписується теж: у кожного репо є `main`, і приймач не
+          # має права переплутати main одного сайту з main іншого.
+          CANON=$(printf '%s\n%s\n%s\n%s\n%s' "$GITHUB_REF" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$BODY_HASH" "$GITHUB_REPOSITORY")
+          SIG="sha256=$(printf '%s' "$CANON" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
+          curl --fail-with-body -sS -X POST https://map.navernyborshchu.com/deploy-webhook \
+            -H "X-Hub-Signature-256: $SIG" \
+            -H "X-NB-Repo: $GITHUB_REPOSITORY" \
+            -H "X-NB-Ref: $GITHUB_REF" \
+            -H "X-NB-Sha: $GITHUB_SHA" \
+            -H "X-NB-Run: $GITHUB_RUN_ID" \
+            --data-binary @build.tgz
+
+      - name: Smoke-check the live site
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then HOST=map.navernyborshchu.com; else HOST=map1.navernyborshchu.com; fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST/")
+          test "$code" = "200" || { echo "$HOST returned $code"; exit 1; }
+          asset=$(curl -s "https://$HOST/" | grep -oE '/static/js/main\.[a-z0-9]+\.js' | head -1)
+          test -n "$asset" || { echo "live index.html has no main bundle"; exit 1; }
+          acode=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST$asset")
+          test "$acode" = "200" || { echo "live bundle $asset returned $acode"; exit 1; }
+          echo "$HOST serving $asset"

@@ -1,0 +1,181 @@
+@use "../../styles//mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+.card{
+    position: relative;
+	width: min(344px, 100%);
+    background-color: var(--color-text-btn-active);
+    border-radius: var(--radius-lg);
+    padding: 6px;  
+    @include respond(tablet) {
+		width: min(380px, 100%);
+        padding: 24px;
+    } 
+}
+
+
+.borschName{
+    @include body;
+    margin-top: 14px;
+    color: var(--color-text-btn);
+}
+.borschPrice{
+    @include caption;
+    color: var(--color-text-main);
+}
+.namePlace{
+    @include footnote;
+    color: var(--color-btn-text);
+}
+.box{
+    position: absolute;
+    right: 35px;
+    top: 35px;    
+    display:flex;    
+    justify-content: center;
+    align-items: center;
+    gap:20px;
+    z-index: 998;
+}
+.flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;  
+  gap:10px;
+}
+.btnAbout{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  @include footnote;
+  color: var(--color-btn-link);
+  border: 1px solid  var(--color-btn-link);
+  padding:14px 20px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-text-btn-active);
+}
+.btnAbout:hover{
+  cursor: pointer;
+  color: var(--color-text-btn);
+  border: 1px solid  var(--color-text-btn);
+}
+.grade{
+    @include caption;
+    color: var(--color-text-main);
+    text-align: left;
+    margin: 10px 0;
+}
+.rating_grade{
+ @include footnote;
+    color: var(--color-text-main);
+}
+/* pin + venue name belong together — .flex is space-between, which pushed the
+   icon and the name to opposite edges once they were alone in the row */
+.placeRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin: 10px 0;
+  color: var(--color-text-main);
+  min-width: 0;
+}
+
+.placeRow > svg {
+  flex: 0 0 auto;
+}
+
+/* secondary action, then the primary one */
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.actionRow > * {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btnRate {
+  background-color: var(--color-text-active);
+  border: 1px solid var(--color-text-active);
+  color: var(--color-text-btn-active);
+  font-weight: 500;
+}
+
+.btnRate:hover {
+  opacity: 0.9;
+}
+
+.noRating {
+  margin: 6px 0;
+  color: var(--color-text-main);
+  @include caption;
+}
+
+// "Розвідка борщу" chips: quest call-out on untasted borsches, a softer
+// "confirm this score" nudge on catalogue-only ones, discoverer credit once
+// the community has been there
+.exploreVirgin,
+.exploreUnverified,
+.exploreDone {
+  margin: 6px 0 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+  @include caption;
+}
+
+// The quest state is the loudest chip on the card: solid beet, white type.
+.exploreVirgin {
+  color: #fff;
+  background: #a71e5b;
+  font-weight: 700;
+}
+
+.exploreUnverified {
+  color: #a71e5b;
+  background: rgba(167, 30, 91, 0.08);
+  border: 1px dashed rgba(167, 30, 91, 0.45);
+  font-weight: 600;
+}
+
+.exploreDone {
+  color: var(--color-text-main);
+  background: rgba(99, 135, 88, 0.1);
+}
+
+
+/* The card had no motion at all: it blinked into place over the map and its
+   buttons answered a tap with nothing. Arrival and press feedback are the two
+   moments a surface feels either built or pasted. */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+.card {
+  animation: cardIn var(--dur-slow) var(--ease-out) both;
+}
+
+.btnAbout,
+.btnRate {
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              transform var(--dur-fast) var(--ease-out);
+}
+
+.btnAbout:active,
+.btnRate:active {
+  /* a press the finger can feel, not a colour it has to notice */
+  transform: scale(0.97);
+}

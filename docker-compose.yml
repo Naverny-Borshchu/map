@@ -1,0 +1,50 @@
+# Локальна розробка: PostgreSQL + API. Фронтенд запускається нативно
+# (`cd frontend && npm start`) — так швидший hot reload і не треба пробрасувати
+# ключ Google Maps у контейнер.
+#
+#   docker compose up --build
+#   http://localhost:8000/api/places/
+#
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: navernyborshchu
+      POSTGRES_USER: borshchu
+      POSTGRES_PASSWORD: borshchu
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U borshchu -d navernyborshchu"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SECRET_KEY: dev-only-not-a-secret
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,api
+      DB_NAME: navernyborshchu
+      DB_USER: borshchu
+      DB_PASSWORD: borshchu
+      DB_HOST: db
+      DB_PORT: "5432"
+      # Свій OAuth client id потрібен лише для входу через Google.
+      GOOGLE_OAUTH_CLIENT_IDS: ""
+    volumes:
+      - ./backend:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

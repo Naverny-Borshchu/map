@@ -1,0 +1,131 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+
+
+
+
+ .btnGeo{
+  width: 40px;
+  height: 40px;
+  background-color: var(--color-text-btn-active); 
+  border: 1px solid var(--color-header-border); 
+  border-radius: 14px;
+  padding: 8px;  
+  @include respond(desktop) {
+    width: 100px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    border: none;
+    border-left: 2px solid var(--color-header-border);
+    border-radius: 0;
+    gap: 5px; 
+  }   
+}
+
+.btnGeo:hover{
+  border: 1px solid var(--color-text-btn); 
+   @include respond(desktop) {
+    border: none;
+    border-left: 2px solid var(--color-header-border);
+   }
+}
+
+.iconGeo {
+  width: 24px;
+  height: 24px;
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+
+.btnGeoText{  
+  display: none;  
+  @include respond(desktop) {
+    display: block;
+    @include button; 
+    color: var(--color-btn-text);  
+  }
+  
+}
+.btnGeoText:hover{
+  color:var(--color-text-btn);
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.modalContent{
+  /* same off-centre crutch as .geoMessage had */
+  width: min(92vw, 380px);
+  background-color: var(--color-bg-grey);
+  padding: 20px 0;
+  border-radius: var(--radius-lg);
+}
+
+
+.title{
+  @include mobileH4;
+  color: var(--color-text-btn);
+  text-align: center;
+  padding: 0 10px;
+}
+.subtitle{
+  @include caption;
+  color: var(--color-text-btn);
+  text-align: center;
+  padding: 0 10px;
+}
+
+.modalButtons{
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+.modalBtn{
+  border: none;
+  background-color: var(--color-bg-grey);
+  width: 100%;
+  color: var(--color-brown-900);
+  @include button;
+  padding: 12px;
+  border-top: 1px solid var(--color-border-input);
+}
+.geoMessage {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  text-align: center;
+  background-color: var(--color-bg-grey);
+  color: var(--color-text-btn);
+  padding: 20px;
+  /* was width:140%; margin-left:-70% — another compensation for the old
+     uncentred overlay, which now drags the dialog off the left edge */
+  width: min(92vw, 380px);
+  max-height: 85dvh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+}
+.btnClose{
+  position: absolute;
+  top: 10px; 
+  right: 10px; 
+}
+
+.error_title{
+  @include mobileH4;
+}
+.error_sub_title{
+  @include caption;
+}
+.manualBtn{
+  display: block;
+  margin: 16px auto 0;
+  padding: 10px 20px;
+  border: 1px solid var(--color-text-btn);
+  border-radius: 14px;
+  background-color: var(--color-text-btn-active);
+  color: var(--color-btn-text);
+  @include button;
+  cursor: pointer;
+  transition: opacity .15s ease;
+}
+.manualBtn:hover{
+  opacity: 0.85;
+}

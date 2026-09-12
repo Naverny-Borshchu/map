@@ -1,0 +1,368 @@
+// ============================================================================
+//  VARIANT map1 — "Google Maps" full-screen map (mobile)
+// ============================================================================
+//
+//  Production stacks four opaque layers down the top of the screen — location
+//  strip, action strip, Мапа/Список toggle, borsch counter — and only then the
+//  map, which ends up with roughly half the viewport.
+//
+//  map1 inverts that: the map IS the page, and every control floats over it as
+//  a rounded pill, the way native Google Maps does it.
+//
+//  It also fixes the bug where Chrome's own bottom UI covers our nav bar. The
+//  cause is `height: 100vh` — on mobile Chrome 100vh is the viewport WITHOUT
+//  the toolbar, so the tail of a 100vh-tall page sits underneath it. We switch
+//  to 100dvh (dynamic viewport) and pin the nav with position: fixed, which is
+//  laid out against the *visual* viewport and therefore always stays visible.
+//
+//  Everything is scoped to html[data-variant="map1"] and to mobile widths, so
+//  the production build and the desktop layout are untouched.
+// ============================================================================
+
+html[data-variant='map1'] {
+  // Height of the floating bottom nav. Seeded with a sensible default and then
+  // overwritten at runtime by Layout's ResizeObserver, so every floating
+  // element below is positioned against the real measured nav rather than a
+  // guess that drifts with font size or safe-area insets.
+  // Seeded WITH the inset (see --nb-safe-b below): the real nav's own padding
+  // carries it, and Layout overwrites this with the measured height a moment
+  // later. A bare 78px left every floating control 8px under the nav on a
+  // notched phone until that measurement landed.
+  --nb-nav-h: calc(78px + var(--nb-safe-b, 0px));
+  // The height Safari is actually showing right now, published by Layout.
+  // 100dvh is the fallback for the first paint and for browsers without JS.
+  --nb-vh: 100dvh;
+  --nb-safe-b: env(safe-area-inset-bottom, 0px);
+  --nb-safe-t: env(safe-area-inset-top, 0px);
+
+  // First row of floating controls clears the nav; each next one stacks above.
+  // --nb-nav-h already contains the safe-area inset, whether seeded or measured,
+  // so nothing below adds --nb-safe-b a second time.
+  --nb-float-1: calc(var(--nb-nav-h) + 16px);
+  --nb-float-2: calc(var(--nb-nav-h) + 72px);
+
+  @media (max-width: 1279.98px) {
+    height: 100%;
+
+    body {
+      height: 100%;
+      overscroll-behavior: none;
+      // whatever shows in a transient gap should read as part of the chrome;
+      // the solid surface, because --surface-soft is translucent and would let
+      // the black canvas through exactly where we are trying to hide it
+      background-color: var(--surface);
+    }
+
+    // ------------------------------------------------------------------
+    //  1. The map becomes the whole page
+    // ------------------------------------------------------------------
+    .nb-shell {
+      height: var(--nb-vh);
+      min-height: var(--nb-vh);
+      // drop the flex column that reserved a row in the flow for the nav
+      display: block;
+    }
+
+    .nb-main {
+      height: var(--nb-vh);
+      max-width: 100%;
+      // non-map routes (register, profile…) must scroll if taller than the
+      // viewport; the map route's content is position:fixed so this is inert there
+      overflow-y: auto;
+    }
+
+    .nb-mappage {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100vw;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nb-mapcanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    // Google's own copyright/ToS chrome would collide with the brand badge.
+    .nb-mapcanvas .gm-style-cc {
+      display: none;
+    }
+
+    // ------------------------------------------------------------------
+    //  2. Top chrome floats instead of stacking
+    // ------------------------------------------------------------------
+    .nb-topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 110;
+
+      width: 100%;
+      height: auto;
+      min-height: 0;
+
+      // the opaque white strip is what stole the vertical space
+      background-color: transparent;
+      padding: calc(var(--nb-safe-t) + 10px) 12px 0;
+
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 8px;
+
+      // the map stays draggable in the gaps between the pills
+      pointer-events: none;
+    }
+
+    .nb-topbar-box {
+      display: block;
+      gap: 0;
+      text-align: left;
+    }
+
+    // --- row 1: the search pill --------------------------------------
+    .nb-searchrow {
+      position: relative;
+      pointer-events: auto;
+
+      display: flex;
+      align-items: center;
+      gap: 0;
+
+      background-color: var(--surface);
+      border: none;
+      border-radius: 26px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      padding: 0;
+    }
+
+    .nb-searchwrap {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .nb-search {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 26px;
+      background-color: transparent;
+      padding: 8px 40px 8px 48px;
+
+      &:focus,
+      &:hover {
+        border: none;
+      }
+    }
+
+    // --- row 2: chips ------------------------------------------------
+    // The city button is absolutely positioned in production (it owns a strip
+    // at the very top). Here it drops onto the chip line under the pill, on the
+    // left; the filter button holds the right end of the same line.
+    .nb-citybtn {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+
+      width: auto;
+      max-width: 62vw;
+      height: 36px;
+      padding: 0 14px;
+
+      border: none;
+      border-radius: 18px;
+      background-color: var(--surface);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      pointer-events: auto;
+
+      > svg {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+      }
+
+      span {
+        font-size: 14px;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .nb-filterbtns {
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+
+      > button {
+        pointer-events: auto;
+        flex: 0 0 auto;
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 18px;
+        background-color: var(--surface);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      }
+    }
+
+    // "My location" sits on the chip line, immediately left of the filter
+    // button: two round controls of the same size at the top right read as one
+    // group, and the bottom-right corner is free for the view toggle. Scoped to
+    // the search row so the add-borsch screen's own geo button is untouched.
+    .nb-searchrow .nb-geo {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 44px; // 36px filter button + 8px gap
+      bottom: auto;
+      z-index: 111;
+
+      button {
+        width: 36px;
+        height: 36px;
+        border-radius: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+
+        svg { width: 18px; height: 18px; }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    //  3. Floating controls over the map
+    // ------------------------------------------------------------------
+    // Fallback anchoring for any other instance (the add-borsch screen keeps
+    // the round Google-Maps-style FAB). Its geo-error modal renders through a
+    // portal on <body>, so re-anchoring this wrapper is safe.
+    .nb-geo {
+      position: fixed;
+      right: 12px;
+      bottom: var(--nb-float-1);
+      z-index: 115;
+      pointer-events: auto;
+
+      button {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: var(--surface);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    // Мапа / Список — compact floating segmented control, bottom right. It used
+    // to be stacked above the location FAB, or squeezed into the gap next to the
+    // badge on wider phones; with the FAB moved to the top chip line the corner
+    // is its own and one rule covers every width.
+    .nb-viewtoggle {
+      position: fixed;
+      top: auto;
+      right: 12px;
+      bottom: var(--nb-float-1);
+      z-index: 115;
+
+      background-color: var(--surface);
+      border-radius: 20px;
+      padding: 3px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+      a {
+        width: auto;
+        padding: 7px 14px;
+        border-radius: 17px;
+        font-size: 13px;
+        line-height: 1;
+      }
+    }
+
+    // Below ~380px the badge and the toggle cannot share one row, so the toggle
+    // climbs above it — the same right-rail stacking Google Maps uses. The lift
+    // is the badge's measured height (MapBrandBadge publishes --nb-badge-h), so
+    // it stays exact whether or not the plaque carries a quest row.
+    @media (max-width: 379px) {
+      .nb-viewtoggle {
+        bottom: calc(var(--nb-float-1) + var(--nb-badge-h, 62px) + 8px);
+      }
+    }
+
+    // The counter moved into the brand badge (bottom-left), so its former
+    // top-of-screen strip is gone entirely.
+    .nb-borschcount {
+      display: none;
+    }
+
+    // ------------------------------------------------------------------
+    //  4. Bottom nav — floating, and never under Chrome's UI again
+    // ------------------------------------------------------------------
+    .nb-bottomnav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 130;
+
+      margin: 0;
+      padding: 6px 12px calc(6px + var(--nb-safe-b));
+
+      background-color: var(--surface-soft);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(0, 0, 0, 0.07);
+      box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.1);
+
+      // tighter than production so the map keeps more of the screen
+      .nb-navicon {
+        width: 26px;
+        height: 26px;
+      }
+
+      .nb-navtext {
+        /* primary navigation should not be the smallest text on screen */
+        font-size: 12px;
+        line-height: 1.2;
+      }
+
+      .nb-navlink {
+        padding: 6px 8px;
+        gap: 3px;
+      }
+
+      // central "add borsch" button, slightly enlarged as the primary action
+      // (44px stock → 56px; 1.5x/66px read as too heavy)
+      .nb-addbtn {
+        padding: 12px;
+        margin-top: -16px;
+
+        svg {
+          width: 32px;
+          height: 32px;
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    //  5. Non-map routes still scroll, and clear the floating nav
+    // ------------------------------------------------------------------
+    .nb-main > *:not(.nb-mappage) {
+      padding-bottom: calc(var(--nb-nav-h) + 16px + var(--nb-safe-b));
+    }
+  }
+}

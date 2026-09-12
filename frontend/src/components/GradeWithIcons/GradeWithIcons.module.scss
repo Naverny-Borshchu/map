@@ -1,0 +1,96 @@
+@use "../../styles/mixin_font.scss" as *;
+
+.wrap {  
+  margin-top: 14px;  
+  align-items: center;
+  gap: 6px;
+}
+
+
+.sliderWrapper {
+  position: relative;
+  width: 100%;  
+}
+
+
+
+ .input {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;
+  background: none;
+  position: relative;
+  z-index: 1;
+}
+
+
+.input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.input::-moz-range-thumb {
+  width: 24px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.track {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 8px;
+  transform: translateY(-50%);
+  pointer-events: none;   
+  z-index: 0;
+}
+
+.tick {
+  width: 25px;
+  height: 7px;
+  background-color:var(--color-text-grade);
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.filled {
+  background-color:var(--color-text-active);
+}
+
+.labelCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.title {
+  @include body;
+  color: var(--color-text-btn);
+  margin-bottom: 6px;
+}
+
+.iconLabels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+}
+
+.valueOff { color: var(--color-text-main); font-size: 13px; }
+.valueOn  { color: var(--color-text-active); font-weight: 600; font-size: 13px; }
+
+.needsInput {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 2px var(--color-akcent-btn);
+  padding: 4px;
+}
