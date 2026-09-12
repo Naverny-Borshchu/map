@@ -68,15 +68,20 @@ export const AddBorsch = ({ onClose, placeData, place, candidates = [], onPickCa
         : meaningful[0] || "";
 
       setStreet(guessedStreet);
-      setCity(guessedCity || currentCity || "");
+      // Google's own label first. Reading the city off the tail of the address
+      // only ever worked because "Україна" was special-cased out of it: for any
+      // other country that tail *is* the country, which is how the first Berlin
+      // venue was stored with city "Німеччина". The string parse stays as the
+      // fallback for addresses Google did not label, then the city being browsed.
+      setCity(place?.city || guessedCity || currentCity || "");
       // Best-effort only — drives the price-chip currency guess downstream,
       // never a required field, so an empty guess is fine.
-      setCountry(guessCountryFromAddress(placeData));
+      setCountry(place?.country || guessCountryFromAddress(placeData));
       setLoading(false);
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [placeData, currentCity]);
+  }, [placeData, currentCity, place?.city, place?.country]);
 
   const handleClose = () => {
     setStreet("");

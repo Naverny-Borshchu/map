@@ -72,6 +72,13 @@ jobs:
           REACT_APP_RATE_SCALE: ${{ steps.flags.outputs.scale }}
           REACT_APP_API_KEY_MAP: ${{ vars.REACT_APP_API_KEY_MAP }}
           REACT_APP_API_KEY_AUTH: ${{ vars.REACT_APP_API_KEY_AUTH }}
+          # Токен проєкту PostHog — публічний write-only ключ, який усе одно
+          # їде в бандлі; секретом тут бути нічому. Порожнє значення = аналітика
+          # просто не вмикається, збірка від цього не падає.
+          REACT_APP_POSTHOG_KEY: ${{ vars.REACT_APP_POSTHOG_KEY }}
+          # map і map1 шлють в один проєкт; site відрізняє прод від тестового
+          # стенда, і фільтр внутрішніх юзерів у PostHog ріже map1.
+          REACT_APP_SITE: ${{ steps.flags.outputs.site }}
         run: npm run build
 
       - name: Sanity-check the artifact before it can ship

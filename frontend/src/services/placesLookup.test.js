@@ -52,3 +52,76 @@ test('venues are asked for in the language the person is reading', () => {
   localStorage.setItem('lang', 'uk');
   expect(placeLanguage()).toBe('uk');
 });
+
+/**
+ * The add flow read the city off the tail of `formattedAddress`. That tail is
+ * the country for every address outside Ukraine — "Україна" being the single
+ * country name the parser knew to drop — so the first Berlin venue was stored
+ * with city "Німеччина" and country "Україна". Google labels the parts; ask it.
+ */
+describe('city and country come from Google labels, not from string position', () => {
+  const berlin = {
+    id: 'p1',
+    displayName: { text: 'Slava Berlin!' },
+    formattedAddress: 'Wrangelstraße 43, 10997 Berlin, Німеччина',
+    addressComponents: [
+      { longText: 'Wrangelstraße', types: ['route'] },
+      { longText: '43', types: ['street_number'] },
+      { longText: 'Berlin', types: ['locality', 'political'] },
+      { longText: '10997', types: ['postal_code'] },
+      { longText: 'Німеччина', shortText: 'DE', types: ['country', 'political'] },
+    ],
+  };
+
+  it('reads the German venue that used to be filed under its country', () => {
+    const place = toPlace(berlin);
+    expect(place.city).toBe('Berlin');
+    expect(place.country).toBe('Німеччина');
+  });
+
+  it('still reads a Ukrainian venue correctly', () => {
+    const place = toPlace({
+      id: 'p2',
+      displayName: { text: 'Ватра' },
+      formattedAddress: 'вулиця Хрещатик, 1, Київ, Україна, 02000',
+      addressComponents: [
+        { longText: 'Київ', types: ['locality', 'political'] },
+        { longText: 'Україна', shortText: 'UA', types: ['country', 'political'] },
+        { longText: '02000', types: ['postal_code'] },
+      ],
+    });
+    expect(place.city).toBe('Київ');
+    expect(place.country).toBe('Україна');
+  });
+
+  it('falls back to postal_town where Google uses no locality', () => {
+    const place = toPlace({
+      id: 'p3',
+      displayName: { text: 'Borsch & Co' },
+      addressComponents: [
+        { longText: 'London', types: ['postal_town'] },
+        { longText: 'United Kingdom', types: ['country'] },
+      ],
+    });
+    expect(place.city).toBe('London');
+  });
+
+  it('an unlabelled address yields empty strings, never a guess', () => {
+    const place = toPlace({ id: 'p4', displayName: { text: 'X' }, formattedAddress: 'кудись там' });
+    expect(place.city).toBe('');
+    expect(place.country).toBe('');
+  });
+
+  it('does not mistake the postal code for the city', () => {
+    const place = toPlace({
+      id: 'p5',
+      displayName: { text: 'Y' },
+      addressComponents: [
+        { longText: '10997', types: ['postal_code'] },
+        { longText: 'Deutschland', types: ['country'] },
+      ],
+    });
+    expect(place.city).toBe('');
+    expect(place.country).toBe('Deutschland');
+  });
+});

@@ -12,7 +12,7 @@
 const KEY = process.env.REACT_APP_API_KEY_MAP;
 
 const FIELDS =
-  'id,displayName,formattedAddress,location,primaryType,types,photos,regularOpeningHours';
+  'id,displayName,formattedAddress,addressComponents,location,primaryType,types,photos,regularOpeningHours';
 
 /** Google answers in whatever language it likes unless asked; ask for the UI's. */
 export const placeLanguage = () => {
@@ -23,12 +23,41 @@ export const placeLanguage = () => {
   }
 };
 
+/**
+ * The city and the country as Google actually labelled them.
+ *
+ * The add flow used to read both off the tail of `formattedAddress`: the city
+ * was "the last comma-segment" and so was the country, which works only while
+ * every venue is Ukrainian, because "Україна" was the one country name the
+ * parser knew to skip. The first Berlin venue was therefore filed with
+ * city "Німеччина" and country "Україна" — a country in the city column, and
+ * the wrong country at that. `addressComponents` says which is which instead
+ * of inferring it from position.
+ *
+ * `postal_town` is the fallback Google uses where there is no `locality`,
+ * notably in the UK. Everything stays best-effort: an unlabelled address
+ * simply yields '' and the caller keeps its existing fallbacks.
+ */
+const componentText = (components, type) => {
+  const hit = (components || []).find((c) => (c.types || []).includes(type));
+  return hit ? (hit.longText || hit.shortText || '') : '';
+};
+
+export const cityOf = (components) =>
+  componentText(components, 'locality') || componentText(components, 'postal_town');
+
+export const countryOf = (components) => componentText(components, 'country');
+
 /** Places API v1 → the shape the sheet and the add flow already speak. */
 export const toPlace = (raw) =>
   raw && {
     id: raw.id,
     name: raw.displayName?.text || '',
     address: raw.formattedAddress || '',
+    // '' when Google did not label it; the add flow falls back to its own
+    // parsing and then to the city being browsed, exactly as before.
+    city: cityOf(raw.addressComponents),
+    country: countryOf(raw.addressComponents),
     location: { lat: raw.location?.latitude, lng: raw.location?.longitude },
     type: raw.primaryType || null,
     types: raw.types || [],
