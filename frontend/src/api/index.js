@@ -2,6 +2,7 @@ import { tokenStorage } from "../services/tokenStorage";
 import { AUTH_SESSION_EXPIRED_EVENT, clearAuthSession } from '../services/authSession';
 import { hasRating } from "../utils/rating";
 import { normalizeId } from "../utils/ids";
+import { track } from "../analytics";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.navernyborshchu.com/api';
 
@@ -396,6 +397,9 @@ export const placesAPI = {
       ...(placeData.type_id && { type: placeData.type_id }),
     };
     const created = await request('/places/', { method: 'POST', body: payload, authRequired: true });
+    // Події пишемо після відповіді бекенду, а не по кліку: інакше в даних
+    // з'являються «додавання», яких насправді не сталось.
+    track('place_added', { place_id: created?.id, city: payload.city });
     return mapPlace(created);
   },
 
@@ -446,6 +450,13 @@ export const borschAPI = {
       weight_grams: Number(String(borschData.weight ?? borschData.grams ?? '').replace(/[^\d.]/g, '')),
     };
     const created = await request('/borsches/', { method: 'POST', body: payload, authRequired: true });
+    track('borsch_added', {
+      borsch_id: created?.id,
+      place_id: payload.place,
+      price_uah: payload.price_uah,
+      weight_grams: payload.weight_grams,
+      type_meat: payload.type_meat,
+    });
     return mapBorsch(created);
   },
 
@@ -481,12 +492,14 @@ export const borschAPI = {
   uploadPhoto: async (borschId, file) => {
     const formData = new FormData();
     formData.append('photo', file);
-    return request(`/borsches/${borschId}/upload_photo/`, {
+    const uploaded = await request(`/borsches/${borschId}/upload_photo/`, {
       method: 'POST',
       body: formData,
       isFormData: true,
       authRequired: true,
     });
+    track('borsch_photo_uploaded', { borsch_id: borschId });
+    return uploaded;
   }
 };
 
@@ -567,6 +580,11 @@ export const commentsAPI = {
       body: payload,
       authRequired: true,
     });
+    track('review_submitted', {
+      borsch_id: borschId,
+      overall_rating: payload.overall_rating,
+      has_message: Boolean(payload.message),
+    });
     return mapReview(created);
   },
 
@@ -607,9 +625,11 @@ export const favoritesAPI = {
     const existing = favorites.find((f) => String(f.borsch) === String(borschId));
     if (existing) {
       await request(`/favorites/${existing.id}/`, { method: 'DELETE', authRequired: true });
+      track('favorite_toggled', { borsch_id: borschId, active: false });
       return false;
     }
     await request('/favorites/', { method: 'POST', body: { borsch: borschId }, authRequired: true });
+    track('favorite_toggled', { borsch_id: borschId, active: true });
     return true;
   },
 };

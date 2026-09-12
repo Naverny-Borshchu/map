@@ -5,8 +5,10 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { applyVariant } from './variant';
 import { applyTimeTheme } from './theme';
 import { getLanguage } from './i18n';
+import { initAnalytics } from './analytics';
 import './index.scss';
 
+initAnalytics();
 applyVariant();
 applyTimeTheme();
 document.documentElement.setAttribute('lang', getLanguage());

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { tokenStorage } from '../services/tokenStorage';
 import { AUTH_SESSION_EXPIRED_EVENT, clearAuthSession } from '../services/authSession';
+import { identifyUser, resetAnalytics, track } from '../analytics';
 
 const UserContext = createContext();
 
@@ -36,8 +37,12 @@ export const UserProvider = ({ children }) => {
       const hasToken = !!(tokenStorage.getAccess() || tokenStorage.getRefresh());
 
       if (storedUser && storedAuth === 'true' && hasToken) {
-        setUser(JSON.parse(storedUser));
+        const restored = JSON.parse(storedUser);
+        setUser(restored);
         setIsAuthenticated(true);
+        // Повернення зі збереженою сесією — це та сама людина, а не новий
+        // анонім: без цього кожен другий візит рахувався б як чужий.
+        identifyUser(restored);
       } else if (storedAuth === 'true' && !hasToken) {
         // Stale session: drop the flag so the UI offers sign-in instead of
         // failing at save time.
@@ -66,6 +71,8 @@ export const UserProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userWithTimestamp));
     localStorage.setItem('auth', 'true');
 
+    identifyUser(userWithTimestamp);
+
     // TODO: При появлении API заменить на:
     // await api.auth.login(userData);
   };
@@ -74,7 +81,12 @@ export const UserProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    
+
+    track('logout');
+    // Наступні події — вже інша (анонімна) людина, інакше вони б приклеїлись
+    // до акаунта, з якого щойно вийшли.
+    resetAnalytics();
+
     clearAuthSession();
   };
 
