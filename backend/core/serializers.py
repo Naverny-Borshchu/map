@@ -347,8 +347,25 @@ class ReviewSerializer(serializers.ModelSerializer):
     Всі rating_* поля обов'язкові (діапазон 0-10).
     """
     # Додаткові поля для відображення автора
-    author_username = serializers.CharField(source='user.username', read_only=True)
+    author_username = serializers.SerializerMethodField(read_only=True)
     borsch_name = serializers.CharField(source='borsch.name', read_only=True)
+
+    def get_author_username(self, obj):
+        """
+        Нік автора — і ніколи не його пошта.
+
+        У частини користувачів `username` дорівнює email (реєстрація через пошту
+        або Google). Серіалізатор віддається публічно, без авторизації, а
+        сторінка борщу друкує це значення як є — тобто адреса була видима
+        кожному відвідувачу. Заміряно на проді 12.09.2026.
+
+        Джерело імені лишається тим самим, міняється одне: якщо username це
+        пошта, назовні йде лише частина до «@».
+        """
+        user = getattr(obj, 'user', None)
+        username = (getattr(user, 'username', '') or '').strip()
+        at = username.find('@')
+        return username[:at] if at > 0 else username
     
     class Meta:
         model = Review

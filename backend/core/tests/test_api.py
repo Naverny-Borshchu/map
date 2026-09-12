@@ -501,6 +501,26 @@ class TestAuthenticatedEngagement(APITestCase):
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["author_username"], "account-a")
 
+    def test_review_author_never_exposes_email(self):
+        """
+        Публічний список відгуків не має віддавати пошту автора.
+
+        У частини користувачів `username` дорівнює email (реєстрація через
+        пошту або Google), і сторінка борщу друкувала це значення як є.
+        """
+        mail_user = User.objects.create_user(username="taster@example.com", password="x")
+        review_fields = self._review_payload()
+        review_fields["borsch"] = self.borsch
+        Review.objects.create(user=mail_user, **review_fields)
+
+        response = self.client.get(reverse("review-list"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        authors = [row["author_username"] for row in response.data["results"]]
+        self.assertIn("taster", authors)
+        self.assertNotIn("taster@example.com", authors)
+        self.assertNotIn("@", response.content.decode())
+
     def test_user_cannot_update_another_users_review(self):
         review_fields = self._review_payload()
         review_fields["borsch"] = self.borsch
