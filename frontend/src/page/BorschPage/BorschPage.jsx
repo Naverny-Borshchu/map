@@ -241,12 +241,12 @@ export const BorschPage=({ borschId: propId })=>{
                     <p className={typography.mobileCaption}>{borschComents.length} Reviews</p>
                 </div>
                 <div className={style.gradesFlex}>
-                    <ProgressLine title={'Мʼясовитість'} value={borschOne.rating_meat} icon={IconMeat}/>
-                    <ProgressLine title={'Буряковість'} value={borschOne.rating_beet} icon={IconBeetroot}/>
-                    <ProgressLine title={'Густина'} value={borschOne.rating_density} icon={IconDensity}/>
-                    <ProgressLine title={'Солоність'} value={borschOne.rating_salt} icon={IconSalt}/>
-                    <ProgressLine title={'Післясмак'} value={borschOne.rating_aftertaste} icon={IconAftertaste}/>
-                    <ProgressLine title={'Подача'} value={borschOne.rating_serving} icon={IconServing}/>
+                    <ProgressLine title={t('rate.meat')} value={borschOne.rating_meat} icon={IconMeat}/>
+                    <ProgressLine title={t('rate.beetroot')} value={borschOne.rating_beet} icon={IconBeetroot}/>
+                    <ProgressLine title={t('rate.density')} value={borschOne.rating_density} icon={IconDensity}/>
+                    <ProgressLine title={t('rate.salt')} value={borschOne.rating_salt} icon={IconSalt}/>
+                    <ProgressLine title={t('rate.aftertaste')} value={borschOne.rating_aftertaste} icon={IconAftertaste}/>
+                    <ProgressLine title={t('rate.serving')} value={borschOne.rating_serving} icon={IconServing}/>
                 </div> 
                 <div className={style.boxBtn}>
                     <RouteButton place={place} label={t('card.routeLong')} className={style.routeBtn}/>

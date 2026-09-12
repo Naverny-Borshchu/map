@@ -318,11 +318,26 @@ const mapMeatTypeToApi = (value) => {
   return map[value] || 'other';
 };
 
+/**
+ * Імʼя автора відгуку для показу.
+ *
+ * У частини користувачів `username` на бекенді дорівнює пошті (реєстрація через
+ * email або Google), і сторінка борщу друкувала її повністю — публічно, кожному
+ * відвідувачу. Корінь чиниться в серіалізаторі, тут лишається другий запобіжник:
+ * клієнт не має покладатись на те, що жоден інстанс API не віддасть пошту.
+ */
+export const displayAuthorName = (value) => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const at = raw.indexOf('@');
+  return at > 0 ? raw.slice(0, at) : raw;
+};
+
 const mapReview = (apiReview) => ({
   id: normalizeId(apiReview.id),
   id_borsch: normalizeId(apiReview.borsch ?? apiReview.borschi),
   user_id: apiReview.user ? normalizeId(apiReview.user) : (apiReview.temp_user_id || ''),
-  author_username: apiReview.author_username || '',
+  author_username: displayAuthorName(apiReview.author_username),
   messege: apiReview.message || apiReview.comment || '',
   rating_salt: String(apiReview.rating_salt ?? ''),
   rating_meat: String(apiReview.rating_meat ?? ''),
