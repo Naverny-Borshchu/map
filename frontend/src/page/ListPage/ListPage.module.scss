@@ -9,7 +9,17 @@
   @include respond(desktop) {
     max-width: 720px;
     margin: 0 auto;
-    padding: 20px;
+
+    /* Reserve room for the chrome that floats above this column, because this
+       column's scroller starts at scrollTop 0 — anything underneath was not
+       merely hidden, it was unreachable.
+         /list : Filters .filterWrap is absolute at 0 and 108px tall, and this
+                 page sits straight inside Layout .main, which reserves nothing.
+         /     : Layout .sidebarPanel already reserves the top bar, but then
+                 Filters .boxFilter is absolute at top 100 and 120px tall and
+                 covers the first ~110px of the column.
+       Both cases clear at the top bar height plus a gap. */
+    padding: calc(var(--nb-topbar-h) + 20px) 20px 20px;
   }
 }
 
@@ -101,32 +111,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  /* the view toggle plus two sort chips do not fit 320–390px in one row */
+  /* the sort label and its select do not fit 320–390px in one row */
   flex-wrap: wrap;
 }
 
-.toggle {
-  display: inline-flex;
-  padding: 3px;
-  border-radius: var(--radius-pill);
-  background-color: var(--color-grey-400);
-}
-
-.toggleBtn {
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 18px;
-  border-radius: var(--radius-pill);
-  @include button;
-  color: var(--color-text-btn);
-  text-decoration: none;
-}
-
-.toggleActive {
-  background-color: var(--color-text-active);
-  color: var(--color-text-btn-active);
-}
 
 .sortControl {
   display: inline-flex;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SORTS } from '../../utils/filterUrl';
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { ReactComponent as IconLocation } from "../../components/Filters/location-red.svg";
 import { BorschListItem } from "../../components/BorschListItem/BorschListItem";
 import { Modal } from "../../components/Modal/Modal";
@@ -121,11 +121,12 @@ export const ListPage = () => {
           </button>
         </div>
 
+        {/* The Мапа | Список segmented control used to sit here. It was the
+            last copy of a switch that had already moved into the nav as a
+            single tab (see Layout and the note in MapPage), so on desktop it
+            sat one row below the sidebar's own List tab and did the same
+            thing. One obvious place to switch views. */}
         <div className={style.toolbar}>
-          <div className={style.toggle}>
-            <Link to={{ pathname: '/', search: searchParams.toString() }} className={style.toggleBtn}>{t('nav.map')}</Link>
-            <Link to="/list" className={`${style.toggleBtn} ${style.toggleActive}`}>{t('map.list')}</Link>
-          </div>
           <label className={style.sortControl}>
             <span className={style.sortLabel}>{t('sort.label')}</span>
             <select
