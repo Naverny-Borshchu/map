@@ -44,6 +44,12 @@ export const RateFlow = ({
 
   const steps = useMemo(
     () => [
+      // The photo goes first, because by the end there is nothing left to
+      // photograph. Every taste question below — how much meat, how thick,
+      // how salty, what aftertaste — can only be answered by someone who has
+      // eaten the bowl, so asking for a picture afterwards asks for it at the
+      // one moment it cannot exist. It stays optional and skippable.
+      { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
       ...criteria.map((c) => ({
         type: 'scale',
         key: c.key,
@@ -53,7 +59,6 @@ export const RateFlow = ({
         i18n: SCALE_ANSWERS[c.key] ? `flow.q.${c.key}` : c.i18n,
         options: SCALE_ANSWERS[c.key] || [],
       })).filter((s) => s.options.length > 0),
-      { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
       { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
       // The account wall. A review belongs to a user, so the API refuses an
       // anonymous POST /reviews/ — and without this step a guest answered all
