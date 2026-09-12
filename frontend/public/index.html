@@ -28,10 +28,37 @@
         } catch (e) {}
       })();
     </script>
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    /> 
+    <meta name="description" content="Find and rate Ukraine's best borshch on one map. Every bowl is scored on seven criteria by people who actually ate it. Free, no ads." />
+
+    <!-- Прев'ю посилання. Без цих тегів шер мапи в X, Telegram, LinkedIn чи Slack
+         давав ПОРОЖНЮ картку, а описом сторінки лишався дефолт create-react-app —
+         той самий рядок, що стояв тут роками. Це помітили перед лончем на
+         Product Hunt, де мапа мала бути основним посиланням.
+
+         Тексти англійською свідомо: картку читає той, кому посилання переслали,
+         і найчастіше це не українськомовна людина. Українське прев'ю є в
+         лендінгу (navernyborshchu.com), у якого свої og-теги.
+
+         og-map.jpg лежить статичним файлом і свідомо БЕЗ чисел на ньому:
+         оновлювати картинку ніхто не ходитиме, а «277 борщів» протухне
+         за тиждень. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Naverny Borshchu" />
+    <meta property="og:title" content="Naverny Borshchu — the map of Ukraine's best borshch" />
+    <meta property="og:description" content="Find and rate Ukraine's best borshch on one map. Every bowl is scored on seven criteria by people who actually ate it. Free, no ads." />
+    <meta property="og:url" content="https://map.navernyborshchu.com/" />
+    <meta property="og:image" content="https://map.navernyborshchu.com/og-map.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A bowl of Ukrainian borshch with a swirl of sour cream and a wooden spoon, captioned “Find and rate Ukraine’s best borshch on one map”" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="uk_UA" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Naverny Borshchu — the map of Ukraine's best borshch" />
+    <meta name="twitter:description" content="Find and rate Ukraine's best borshch on one map. Every bowl is scored on seven criteria by people who actually ate it. Free, no ads." />
+    <meta name="twitter:image" content="https://map.navernyborshchu.com/og-map.jpg" />
+    <meta name="twitter:image:alt" content="A bowl of Ukrainian borshch with a swirl of sour cream and a wooden spoon, captioned “Find and rate Ukraine’s best borshch on one map”" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">  

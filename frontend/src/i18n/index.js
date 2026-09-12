@@ -6,15 +6,30 @@ import { dishLabel as rawDishLabel } from './dishNames';
 const LANG_KEY = 'lang';
 const DEFAULT_LANG = 'uk';
 
+/* Мови, для яких українська — доречніший показ, ніж англійська: та сама
+   аудиторія й той самий контекст закладів. */
+const PREFERS_UK = /^(uk|ru|be)$/;
+
 export const getLanguage = () => {
   try {
     const saved = localStorage.getItem(LANG_KEY);
     if (saved && translations[saved]) return saved;
   } catch (e) { /* storage unavailable */ }
-  // fall back to the browser's language, but only for languages we ship
   try {
     const nav = (navigator.language || '').slice(0, 2).toLowerCase();
     if (translations[nav]) return nav;
+    if (PREFERS_UK.test(nav)) return DEFAULT_LANG;
+    /* Мова, якої ми не маємо (de, pl, fr, es…) — це НЕ привід показувати
+       українську: людина її майже напевно не читає, а англійську радше так.
+       Раніше тут був фолбек у DEFAULT_LANG, і відвідувач із німецьким або
+       польським браузером бачив український інтерфейс. Заміряно на проді:
+       en-* — англійська, de-DE / pl-PL / fr-FR — українська.
+
+       Лендінг це правило вже застосовує (i18n/lang-switch.js у репозиторії
+       landing: uk|ru|be → українська, решта → англійська), тож до цієї правки
+       німецький відвідувач отримував англійський лендінг і українську мапу —
+       розрив рівно посередині шляху. */
+    if (nav) return 'en';
   } catch (e) { /* no navigator */ }
   return DEFAULT_LANG;
 };
