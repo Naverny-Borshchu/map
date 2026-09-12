@@ -132,6 +132,11 @@ export const translations = {
 
     // --- list
     'list.searchPlaceholder': 'Пошук борщу або закладу',
+    // The borsch page printed a hardcoded English "Reviews" to Ukrainian
+    // readers — on the screen people land on from the map.
+    'card.reviewCount': '{count} відгуків',
+    'card.reviewCount_one': '{count} відгук',
+    'card.reviewCount_few': '{count} відгуки',
     'list.count': '{count} борщів',
     'list.count_one': '{count} борщ',
     'list.count_few': '{count} борщі',
@@ -511,6 +516,8 @@ export const translations = {
     'add.venueName': 'Venue name',
 
     'list.searchPlaceholder': 'Search a borshch or venue',
+    'card.reviewCount': '{count} reviews',
+    'card.reviewCount_one': '{count} review',
     'list.count': '{count} bowls of borshch',
     'list.count_one': '{count} borshch',
     'list.empty': 'Nothing here yet',
