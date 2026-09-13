@@ -86,6 +86,79 @@ export function identifyUser(user) {
   });
 }
 
+/**
+ * Куди дивитись, щоб побачити ваду на власні очі.
+ *
+ * Запис сесії вже вмикається в initAnalytics, тож замість скриншота (який
+ * показує один кадр і не каже, що людина робила до нього) звіт несе посилання
+ * на реплей. `timestampLookBack` відмотує програвач трохи НАЗАД від кліку:
+ * момент, що спричинив скаргу, має бути ще на екрані, а не вже позаду.
+ */
+export function replayPointer() {
+  const empty = { replayUrl: null, sessionId: null, distinctId: null };
+  if (!ready) return empty;
+  try {
+    return {
+      replayUrl: posthog.get_session_replay_url?.({ withTimestamp: true, timestampLookBack: 30 }) ?? null,
+      sessionId: posthog.get_session_id?.() ?? null,
+      distinctId: posthog.get_distinct_id?.() ?? null,
+    };
+  } catch (e) {
+    return empty;
+  }
+}
+
+/**
+ * Те, що людина не напише сама, але без чого звіт не відтворити: де вона була,
+ * на чому і що бачила. Збирається мовчки — питати про це у формі означало б
+ * просити користувача виконати роботу браузера.
+ */
+export function bugContext() {
+  const nav = typeof navigator === 'undefined' ? {} : navigator;
+  const loc = typeof window === 'undefined' ? {} : window.location;
+  let lang = null;
+  try { lang = localStorage.getItem('lang'); } catch (e) { /* приватний режим */ }
+  return {
+    path: loc.pathname || null,
+    search: loc.search || null,
+    lang,
+    site: SITE,
+    viewport: typeof window === 'undefined' ? null : `${window.innerWidth}x${window.innerHeight}`,
+    userAgent: nav.userAgent || null,
+    online: nav.onLine ?? null,
+    at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Чи справді подія кудись поїде.
+ *
+ * `track` мовчки нічого не робить без ключа, а PostHog сам відкидає події,
+ * коли людина увімкнула Do Not Track (ми його поважаємо, див. initAnalytics)
+ * або коли блокувальник не дав SDK піднятись. Для більшості подій це
+ * правильна поведінка — не падати. Для скарги ні: подякувати за повідомлення,
+ * якого ніхто не отримав, гірше, ніж чесно сказати «не дійшло».
+ */
+function capturing() {
+  if (!ready) return false;
+  try {
+    return !posthog.has_opted_out_capturing?.();
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Звіт про ваду. Повертає посилання на реплей, щоб екран подяки міг показати
+ * людині, що саме поїхало — і `delivered`, щоб той екран не брехав.
+ */
+export function reportBug(message) {
+  const replay = replayPointer();
+  const payload = { message, ...bugContext(), ...replay };
+  track('bug_report', payload);
+  return { ...payload, delivered: capturing() };
+}
+
 /** Вихід з акаунта: далі це вже інша (анонімна) людина. */
 export function resetAnalytics() {
   if (!ready) return;
