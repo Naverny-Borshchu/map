@@ -238,7 +238,7 @@ export const BorschPage=({ borschId: propId })=>{
                     ) : (
                       <p className={style.grade}>{t('card.noRatings')}</p>
                     )}
-                    <p className={typography.mobileCaption}>{borschComents.length} Reviews</p>
+                    <p className={typography.mobileCaption}>{t('card.reviewCount', { count: borschComents.length })}</p>
                 </div>
                 <div className={style.gradesFlex}>
                     <ProgressLine title={t('rate.meat')} value={borschOne.rating_meat} icon={IconMeat}/>
