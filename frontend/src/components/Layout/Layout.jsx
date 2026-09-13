@@ -18,6 +18,7 @@ import { hasFullscreenMap } from "../../variant";
 import { Onboarding } from "../Onboarding";
 import { useUser } from "../../context/UserContext";
 import { ViewSwapIcon } from "./ViewSwapIcon";
+import { BugReport } from "../BugReport";
 
 import style from "./Layout.module.scss";
 import { useT } from "../../i18n";
@@ -214,6 +215,15 @@ export const Layout = ({ children }) => {
               </NavLink>
             </li>
             )}
+
+            {/* Жучок стоїть останнім і навмисно в тій самій смузі, що й
+                навігація: це єдина частина екрана, яка не зникає ні на мапі,
+                ні всередині оцінювання, а скарга потрібна саме там, де щось
+                зламалось. Ховати її в профіль означало б просити людину
+                спершу знайти шлях у застосунку, який щойно не спрацював. */}
+            <li>
+              <BugReport />
+            </li>
           </ul>
         </nav>
         <div className={style.boxContact}>
