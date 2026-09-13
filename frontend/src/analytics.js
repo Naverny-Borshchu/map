@@ -159,6 +159,32 @@ export function reportBug(message) {
   return { ...payload, delivered: capturing() };
 }
 
+/**
+ * Скарга на сам заклад: зачинився або переїхав.
+ *
+ * Окрема подія, а не `bug_report`, бо це не поломка застосунку, а застаріла
+ * реальність: у день запуску двоє людей одразу написали про це в чат — одна
+ * бачила на мапі місця, що не працюють уже кілька років, інший знайшов
+ * заклад, який переїхав з-під купола у двори. Обидва мали куди написати лише
+ * тому, що знали автора особисто.
+ *
+ * `reason` тримаємо окремим полем ('closed' | 'moved'), щоб такі сигнали
+ * можна було рахувати й сортувати, не вичитуючи вільний текст.
+ */
+export function reportVenue({ reason, note = '', placeId = null, placeName = null, borschId = null }) {
+  const payload = {
+    reason,
+    note,
+    place_id: placeId,
+    place_name: placeName,
+    borsch_id: borschId,
+    ...bugContext(),
+    ...replayPointer(),
+  };
+  track('venue_report', payload);
+  return { ...payload, delivered: capturing() };
+}
+
 /** Вихід з акаунта: далі це вже інша (анонімна) людина. */
 export function resetAnalytics() {
   if (!ready) return;
