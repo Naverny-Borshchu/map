@@ -50,3 +50,32 @@ test('сміття в localStorage ігнорується, а не ламає в
   localStorage.setItem('lang', 'klingon');
   expect(withLocale('de-DE', getLanguage)).toBe('en');
 });
+
+/**
+ * The borsch page printed a hardcoded English "Reviews" next to the count —
+ * on the screen people land on from the map, to Ukrainian readers. Ukrainian
+ * needs three forms, so a bare key would have read "3 відгуків".
+ */
+describe('review count reads correctly in Ukrainian', () => {
+  const t = (lang, count) => {
+    const { translations } = require('./translations');
+    const dict = translations[lang];
+    const key = 'card.reviewCount';
+    const n = Math.abs(count) % 100, n1 = n % 10;
+    let lookup = key;
+    if (count === 1 && dict[`${key}_one`]) lookup = `${key}_one`;
+    else if (lang === 'uk' && n1 >= 2 && n1 <= 4 && (n < 12 || n > 14) && dict[`${key}_few`]) lookup = `${key}_few`;
+    return String(dict[lookup] ?? dict[key]).replace('{count}', String(count));
+  };
+
+  it.each([[1, '1 відгук'], [3, '3 відгуки'], [5, '5 відгуків'], [11, '11 відгуків'], [22, '22 відгуки']])(
+    'uk: %i → %s', (n, want) => expect(t('uk', n)).toBe(want),
+  );
+
+  it.each([[1, '1 review'], [3, '3 reviews']])('en: %i → %s', (n, want) => expect(t('en', n)).toBe(want));
+
+  it('no longer leaves the label untranslated', () => {
+    const { translations } = require('./translations');
+    expect(translations.uk['card.reviewCount']).not.toMatch(/review/i);
+  });
+});
