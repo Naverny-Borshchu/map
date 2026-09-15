@@ -76,6 +76,22 @@ export const translations = {
     'bug.failLink': 'Написати в Instagram',
     'bug.close': 'Закрити',
 
+    // --- заклад зачинився або переїхав (рядок під адресою)
+    'venue.link': 'Заклад зачинився або переїхав?',
+    'venue.title': 'Що з цим закладом?',
+    'venue.hint': 'Оберіть, що сталось.',
+    'venue.closed': 'Зачинився',
+    'venue.moved': 'Переїхав',
+    'venue.notePlaceholder': 'Деталі, якщо знаєте: нова адреса, коли зачинився…',
+    'venue.cancel': 'Скасувати',
+    'venue.send': 'Надіслати',
+    'venue.thanksTitle': 'Дякуємо!',
+    'venue.thanksHint': 'Сигнал у нас. Ми звіряємо такі скарги, перш ніж щось міняти на мапі — одна людина може й помилитись.',
+    'venue.failTitle': 'Не вдалося надіслати',
+    'venue.failHint': 'Схоже, браузер блокує нашу аналітику, а сигнал їде саме нею. Напишіть нам в інстаграм — прочитаємо там.',
+    'venue.failLink': 'Написати в Instagram',
+    'venue.close': 'Закрити',
+
     // --- map
     'map.searchPlaceholder': 'Введіть назву закладу',
     // --- search autocomplete (topbar)
@@ -480,6 +496,22 @@ export const translations = {
     'bug.failHint': 'Your browser seems to be blocking our analytics, which is what carries the report. Please write to us on Instagram instead.',
     'bug.failLink': 'Write on Instagram',
     'bug.close': 'Close',
+
+    // --- venue closed or moved (the line under the address)
+    'venue.link': 'Closed down or moved?',
+    'venue.title': "What's up with this venue?",
+    'venue.hint': 'Pick what happened.',
+    'venue.closed': 'Closed down',
+    'venue.moved': 'Moved',
+    'venue.notePlaceholder': 'Details, if you know them: the new address, when it closed…',
+    'venue.cancel': 'Cancel',
+    'venue.send': 'Send',
+    'venue.thanksTitle': 'Thank you!',
+    'venue.thanksHint': 'We have it. We cross-check reports like this before changing the map — one person can be mistaken.',
+    'venue.failTitle': 'Could not send',
+    'venue.failHint': 'Your browser seems to be blocking our analytics, which is what carries the report. Please write to us on Instagram instead.',
+    'venue.failLink': 'Write on Instagram',
+    'venue.close': 'Close',
 
     'map.searchPlaceholder': 'Search for a venue',
     'search.nearby': 'Places nearby',
