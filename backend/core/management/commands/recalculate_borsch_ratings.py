@@ -31,7 +31,10 @@ class Command(BaseCommand):
         drifted = 0
         checked = 0
 
-        for borsch in Borsch.objects.all().prefetch_related('reviews').iterator():
+        # chunk_size обовʼязковий для iterator() після prefetch_related() у Django 6
+        # (у 4.2 був лише deprecation-warning). 2000 — дефолт, що Django раніше
+        # підставляв сам; приймається і 4.2, і 6, тож фікс сумісний з обома.
+        for borsch in Borsch.objects.all().prefetch_related('reviews').iterator(chunk_size=2000):
             checked += 1
             wanted = compute_borsch_ratings(borsch)
             before = {field: getattr(borsch, field) for field in RATING_FIELDS}
