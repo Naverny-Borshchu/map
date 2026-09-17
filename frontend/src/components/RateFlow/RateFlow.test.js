@@ -68,6 +68,7 @@ const signInWithRefreshOnly = () => {
 
 describe('RateFlow account wall', () => {
   it('forwards the Google credential callback from the guest sign-in step', async () => {
+  const user = userEvent.setup();
     const onSignIn = jest.fn().mockResolvedValue(undefined);
     render(
       <MemoryRouter>
@@ -94,11 +95,11 @@ describe('RateFlow account wall', () => {
       </MemoryRouter>
     );
 
-    userEvent.click(screen.getByRole('button', { name: /Пропустити/i }));
+    await user.click(screen.getByRole('button', { name: /Пропустити/i }));
     await screen.findByText(/Крок 2 з 3/i);
-    userEvent.click(screen.getByRole('button', { name: /Пропустити/i }));
+    await user.click(screen.getByRole('button', { name: /Пропустити/i }));
     const googleCta = await screen.findByRole('button', { name: /Продовжити з Google/i });
-    userEvent.click(googleCta);
+    await user.click(googleCta);
 
     await waitFor(() =>
       expect(onSignIn).toHaveBeenCalledWith({ credential: 'google-id-token' })
@@ -180,8 +181,9 @@ describe('the photo is asked for while there is still a borsch to photograph', (
   });
 
   it('is still skippable — nobody is blocked by not having a photo', async () => {
+  const user = userEvent.setup();
     withCriteria();
-    userEvent.click(screen.getByRole('button', { name: /Пропустити/i }));
+    await user.click(screen.getByRole('button', { name: /Пропустити/i }));
     // the taste questions begin only after the photo step is passed
     expect(await screen.findByText(/Скільки в ньому було мʼяса/i)).toBeInTheDocument();
   });

@@ -26,6 +26,7 @@ beforeEach(() => {
 });
 
 test('uses the auth response contract and persists JWTs before resuming', async () => {
+  const user = userEvent.setup();
   const response = {
     access: 'access-token',
     refresh: 'refresh-token',
@@ -56,7 +57,7 @@ test('uses the auth response contract and persists JWTs before resuming', async 
     </I18nProvider>
   );
 
-  userEvent.click(screen.getByRole('button', { name: 'Complete Google auth' }));
+  await user.click(screen.getByRole('button', { name: 'Complete Google auth' }));
   await waitFor(() => expect(persistGoogleAuthSession).toHaveBeenCalledWith(response));
   expect(googleAuth).toHaveBeenCalledWith('google-id-token');
   expect(localStorage.getItem('auth')).toBe('true');

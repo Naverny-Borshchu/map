@@ -17,6 +17,7 @@ beforeEach(() => {
 });
 
 test('successful auth resumes the final step and submits exactly once', async () => {
+  const user = userEvent.setup();
   const onSubmit = jest.fn();
   const onSignIn = jest.fn(async () => {
     localStorage.setItem('auth', 'true');
@@ -43,7 +44,7 @@ test('successful auth resumes the final step and submits exactly once', async ()
   );
 
   expect(onSubmit).not.toHaveBeenCalled();
-  userEvent.click(screen.getByRole('button', { name: 'Google test' }));
+  await user.click(screen.getByRole('button', { name: 'Google test' }));
   await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
   expect(onSignIn).toHaveBeenCalledWith({ credential: 'google-id-token' });
 });
