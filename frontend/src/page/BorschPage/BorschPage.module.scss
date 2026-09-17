@@ -5,7 +5,14 @@
   position: relative;
   @include respond(desktop) {
     height: 100%;
-    padding: var(--nb-topbar-h) 18px 0;
+    /* No top offset of its own, deliberately. Layout .sidebarPanel already
+       reserves --nb-topbar-h for whatever panel it holds, so reserving it
+       here too stacked 220px of nothing above the venue name: the close
+       button sat alone at the top of the column and the title began a fifth
+       of the way down a 1140px screen. The filters row that also floats over
+       this column on "/" is hidden on a borsch page, so the top bar is the
+       only thing to clear — and it is cleared once, by the panel. */
+    padding: 0 18px 0;
     overflow-y: auto;
     
     -ms-overflow-style: none;  

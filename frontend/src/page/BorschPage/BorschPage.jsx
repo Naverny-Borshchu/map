@@ -26,6 +26,7 @@ import style from './BorschPage.module.scss';
 import typography from '../../styles/typography.module.css';
 import { formatGrade } from "../../utils/rating";
 import { RouteButton } from "../../components/RouteButton";
+import { VenueReport } from '../../components/VenueReport';
 import { hasRating } from "../../utils/rating";
 import { useT } from "../../i18n";
 import { useVenueLabel } from "../../i18n";
@@ -224,6 +225,18 @@ export const BorschPage=({ borschId: propId })=>{
                 {borschOne && <FotoBorschGallary images={borschOne.photo_urls} height={"215px"}/>}                
                 <h4 className={style.nameBorsch}>{dishLabel(borschOne.name)}</h4>
                 <p className={style.adress}>{place.address || place.adress}</p>
+                {/* Двоє людей у першу годину запуску написали в чат те саме:
+                    поруч на мапі стоять місця, яких давно нема, і одне, що
+                    переїхало. Сказати про це в самому застосунку не було де —
+                    вони змогли лише тому, що знають автора особисто. Рядок
+                    стоїть саме під адресою: там людина й помічає, що адреса
+                    застаріла. */}
+                <VenueReport
+                  placeLabel={venueLabel(place.name)}
+                  placeName={place.name}
+                  placeId={place.id || place.place_id}
+                  borschId={id}
+                />
                 <div className={style.flex}>
                     <p>{borschOne.weight}</p>
                     <p>{borschOne.price}</p>
@@ -238,7 +251,7 @@ export const BorschPage=({ borschId: propId })=>{
                     ) : (
                       <p className={style.grade}>{t('card.noRatings')}</p>
                     )}
-                    <p className={typography.mobileCaption}>{borschComents.length} Reviews</p>
+                    <p className={typography.mobileCaption}>{t('card.reviewCount', { count: borschComents.length })}</p>
                 </div>
                 <div className={style.gradesFlex}>
                     <ProgressLine title={t('rate.meat')} value={borschOne.rating_meat} icon={IconMeat}/>
