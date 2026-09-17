@@ -31,9 +31,15 @@ export default function App() {
     <I18nProvider>
     <AppProvider>
       <BrowserRouter>
+      {/* Лічильник переглядів стоїть ПОЗА Layout навмисно. На десктопі Layout
+          для «/», «/borsch/:id» і «/borsch/:id/evaluations» малює власний
+          split-вигляд і не рендерить children взагалі — тобто все, що лежить
+          усередині, на трьох найголовніших екранах апки просто зникає.
+          Так ми й втратили перегляди десктопних відвідувачів у день лончу:
+          кліки приходили, $pageview — ні. */}
+      <PageviewTracker />
       <Layout>              
           <FilterUrlSync />              
-          <PageviewTracker />
           <Routes>          
             <Route path="/" element={<MapPage />} />
             <Route path="/list" element={<ListPage />} />           
