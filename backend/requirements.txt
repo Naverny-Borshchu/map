@@ -1,6 +1,6 @@
 # Основні залежності для Django API проєкту
 django>=6.1.1,<7.0          # Django фреймворк
-djangorestframework>=3.14 # Django REST Framework для API
+djangorestframework>=3.18.1 # Django REST Framework для API
 djangorestframework-simplejwt>=5.3  # JWT (access/refresh) для API
 django-cors-headers>=4.9.0  # CORS підтримка
 google-auth>=2.57.1         # Верифікація Google ID token
