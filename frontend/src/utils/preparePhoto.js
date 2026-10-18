@@ -7,14 +7,16 @@
  * довша сторона 2048 px — це вже більше, ніж ширина будь-якого екрана, на
  * якому її покажуть, і важить такий знімок сотні кілобайт, а не десятки МБ.
  *
- * Перекодування ще й зрізає EXIF: координати зйомки, модель телефона й дату.
- * Фото лягають у публічний /media/, і все, що їде разом із ними, теж стає
- * публічним.
+ * canvas віддає JPEG без метаданих, тож EXIF оригіналу (GPS, дата, модель)
+ * переносимо в стиснений файл окремо, див. jpegExif.js. GPS лишаємо свідомо:
+ * Андрій, 18.10.2026, «може навіть знадобитись нам потім».
  *
  * Якщо браузер не вміє розкодувати файл (HEIC у десктопному Chrome) або
  * canvas недоступний, віддаємо оригінал: гірше стиснути не вийде, а сервер
  * сам вирішить, чи приймати.
  */
+
+import { insertExifSegment, patchExifForResized, readExifSegment } from './jpegExif';
 
 export const MAX_EDGE = 2048;
 export const JPEG_QUALITY = 0.85;
@@ -33,6 +35,33 @@ const loadImage = (file) =>
     };
     img.src = url;
   });
+
+// APP1 з EXIF не довший за 64 КБ і стоїть на початку файлу; читати весь
+// 15-мегабайтний знімок заради нього нема потреби.
+const EXIF_SCAN_BYTES = 256 * 1024;
+
+const readBytes = (blob) =>
+  blob.arrayBuffer
+    ? blob.arrayBuffer().then((buf) => new Uint8Array(buf))
+    : new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(new Uint8Array(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(blob);
+      });
+
+/** Стиснений JPEG з EXIF оригіналу, або сам стиснений, якщо переносити нічого. */
+const carryExif = async (original, encoded, size) => {
+  try {
+    const segment = readExifSegment(await readBytes(original.slice(0, EXIF_SCAN_BYTES)));
+    const patched = segment && patchExifForResized(segment, size);
+    if (!patched) return encoded;
+    const merged = insertExifSegment(await readBytes(encoded), patched);
+    return merged ? new Blob([merged], { type: 'image/jpeg' }) : encoded;
+  } catch (e) {
+    return encoded;
+  }
+};
 
 const toJpegName = (name) => `${String(name || 'photo').replace(/\.[^./\\]+$/, '') || 'photo'}.jpg`;
 
@@ -72,8 +101,9 @@ export async function preparePhotoForUpload(file, { maxEdge = MAX_EDGE, quality 
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(loaded.img, 0, 0, width, height);
 
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
-    if (!blob || !blob.size) return file;
+    const encoded = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!encoded || !encoded.size) return file;
+    const blob = await carryExif(file, encoded, { width, height });
 
     return new File([blob], toJpegName(file.name), {
       type: 'image/jpeg',
