@@ -59,15 +59,19 @@ export const BugReport = ({ className = '' }) => {
 
   return (
     <>
+      {/* nb-navlink / nb-navicon / nb-navtext: ті самі гачки, що й у NavLink у
+          Layout. Через них варіант map1 стискає таби на телефоні (іконка 26px,
+          підпис 12px); без них жучок лишався зі своїми 32px і 16px і стирчав
+          нижче за сусідів. */}
       <button
         type="button"
-        className={`${style.trigger} ${className}`.trim()}
+        className={`${style.trigger} nb-navlink ${className}`.trim()}
         onClick={() => setOpen(true)}
         aria-label={t('bug.aria')}
         title={t('bug.aria')}
       >
-        <LuBug className={style.icon} aria-hidden="true" />
-        <span className={style.label}>{t('bug.trigger')}</span>
+        <LuBug className={`${style.icon} nb-navicon`} aria-hidden="true" />
+        <span className={`${style.label} nb-navtext`}>{t('bug.trigger')}</span>
       </button>
 
       {open && (

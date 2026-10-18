@@ -71,4 +71,16 @@ describe('BugReport', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Повідомити про помилку' }));
     expect(screen.getByRole('textbox')).toHaveValue('');
   });
+
+  it('wears the same nav hooks as the tabs, so map1 sizes it like them', () => {
+    render(
+      <I18nProvider>
+        <BugReport />
+      </I18nProvider>
+    );
+    const trigger = screen.getByRole('button', { name: 'Повідомити про помилку' });
+    expect(trigger).toHaveClass('nb-navlink');
+    expect(trigger.querySelector('svg')).toHaveClass('nb-navicon');
+    expect(screen.getByText('Помилка')).toHaveClass('nb-navtext');
+  });
 });

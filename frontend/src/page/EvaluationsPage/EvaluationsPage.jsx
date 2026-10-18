@@ -10,6 +10,7 @@ import { useBorsch } from '../../context/BorschContext';
 import { useComments } from '../../context/CommentsContext';
 import { useUser } from '../../context/UserContext';
 import { commentsAPI, borschAPI } from '../../api';
+import { uploadPhotos } from '../../utils/uploadPhotos';
 import { googleAuth, persistGoogleAuthSession } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
 import style from './EvaluationsPage.module.scss';
@@ -40,6 +41,9 @@ export const EvaluationsPage = ({ borschId: propId }) => {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [photos, setPhotos] = useState([]);
+    // which of `photos` already landed, and how the last attempt went
+    const [photosUploaded, setPhotosUploaded] = useState([]);
+    const [photoStatus, setPhotoStatus] = useState(null);
     const navigate = useNavigate();
     const t = useT();
     const dishLabel = useDishLabel();
@@ -132,13 +136,14 @@ export const EvaluationsPage = ({ borschId: propId }) => {
         });
         // Photos are a separate endpoint, one call each; a failure here must not
         // lose the rating the user just spent seven screens on, and one bad
-        // photo must not take the others with it.
-        for (const file of photos) {
-          try {
-            await borschAPI.uploadPhoto(id, file);
-          } catch (e) {
-            console.error('Не вдалося завантажити фото:', e);
-          }
+        // photo must not take the others with it. It must not stay silent
+        // either: the closing screen says how many did not land.
+        if (photos.length) {
+          const result = await uploadPhotos({
+            borschId: id, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
+          });
+          setPhotosUploaded(result.uploaded);
+          setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
         }
 
         // Re-read both server-backed contracts: the reviews list AND the
@@ -175,6 +180,18 @@ export const EvaluationsPage = ({ borschId: propId }) => {
 
     
     
+    // Only the photos; the review is already saved and must not be posted twice.
+    const retryPhotos = async () => {
+      setPhotoStatus((s) => ({ ...(s || {}), retrying: true }));
+      const result = await uploadPhotos({
+        borschId: id, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
+      });
+      setPhotosUploaded(result.uploaded);
+      setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
+      // the new photo_urls only; a failed refresh must not undo the result above
+      await loadBorschData().catch(() => {});
+    };
+
     if (!borschOne) {
       return (
         <div className={style.wrapp}>
@@ -208,6 +225,8 @@ export const EvaluationsPage = ({ borschId: propId }) => {
       saving={saving}
       isSent={isSent}
       error={saveError}
+      photoStatus={photoStatus}
+      onRetryPhotos={retryPhotos}
       borschName={dishLabel(borschOne.name)}
       firstDiscovery={firstDiscovery}
       xpMultiplier={xpMultiplier}

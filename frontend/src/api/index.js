@@ -2,6 +2,7 @@ import { tokenStorage } from "../services/tokenStorage";
 import { AUTH_SESSION_EXPIRED_EVENT, clearAuthSession } from '../services/authSession';
 import { hasRating } from "../utils/rating";
 import { normalizeId } from "../utils/ids";
+import { preparePhotoForUpload } from "../utils/preparePhoto";
 import { track } from "../analytics";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.navernyborshchu.com/api';
@@ -104,7 +105,10 @@ const describeError = (body, status) => {
 const handleResponse = async (response) => {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(describeError(error, response.status));
+    const failure = new Error(describeError(error, response.status));
+    // the code survives for callers that react to it (413 = too big)
+    failure.status = response.status;
+    throw failure;
   }
   if (response.status === 204) {
     return null;
@@ -505,15 +509,29 @@ export const borschAPI = {
   },
 
   uploadPhoto: async (borschId, file) => {
+    // a phone photo is 3-15 MB and nginx takes 10 MB at most; see preparePhoto
+    const photo = await preparePhotoForUpload(file);
     const formData = new FormData();
-    formData.append('photo', file);
-    const uploaded = await request(`/borsches/${borschId}/upload_photo/`, {
-      method: 'POST',
-      body: formData,
-      isFormData: true,
-      authRequired: true,
-    });
-    track('borsch_photo_uploaded', { borsch_id: borschId });
+    formData.append('photo', photo, photo.name);
+    const sizes = {
+      original_kb: Math.round((file?.size || 0) / 1024),
+      sent_kb: Math.round((photo?.size || 0) / 1024),
+    };
+    let uploaded;
+    try {
+      uploaded = await request(`/borsches/${borschId}/upload_photo/`, {
+        method: 'POST',
+        body: formData,
+        isFormData: true,
+        authRequired: true,
+      });
+    } catch (e) {
+      // These failures used to exist only in the uploader's console. 17.10.2026
+      // three of them in a row (413) were visible nowhere but the nginx log.
+      track('borsch_photo_upload_failed', { borsch_id: borschId, status: e?.status || null, ...sizes });
+      throw e;
+    }
+    track('borsch_photo_uploaded', { borsch_id: borschId, ...sizes });
     return uploaded;
   }
 };
