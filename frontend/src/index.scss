@@ -160,7 +160,10 @@ html[data-theme='dark'] {
   --color-filter-btn: #C98A4E;
   --color-akcent-btn: #E0567A;
   --color-akcent-hover: #EC6C8C;
-  --color-modal-black: #000000;
+  /* Чорнило заголовка й тексту модалок. Тут стояв #000 на тлі #171717, тож у
+     темній темі «Без профілю?», «Вийти з акаунту» і «Реєстрація пройшла
+     успішно» були майже невидимі. */
+  --color-modal-black: #ECECEC;
 
   --surface: #1F1F1F;
   --surface-soft: rgba(31, 31, 31, 0.94);

@@ -197,7 +197,11 @@ export const Filters = ({ hideBoxFilter = false }) => {
               <span className={style.userName}>{user.given_name || user.name}</span>
             </button>
           ) : (
-            <Link to="/register" className={style.btnReg}>{t('map.register')}</Link>
+            <>
+              {/* поруч із реєстрацією, бо тут бувають і ті, хто вже з нами */}
+              <Link to="/login" className={style.btnLogin}>{t('map.login')}</Link>
+              <Link to="/register" className={style.btnReg}>{t('map.register')}</Link>
+            </>
           )}
       </div>
       {/* {location.pathname === "/" &&   */}
