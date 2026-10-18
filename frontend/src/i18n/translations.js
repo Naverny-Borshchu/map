@@ -282,6 +282,9 @@ export const translations = {
     'flow.photoRemove': 'Прибрати фото',
     'flow.photoCount': '{n} з {max} фото',
     'flow.photoRetake': 'Інше фото',
+    'flow.photoFailed': 'Оцінку збережено, але фото не завантажилось: {n} з {total}.',
+    'flow.photoRetry': 'Спробувати ще раз',
+    'flow.photoRetryOk': 'Фото завантажено ✅',
     'flow.commentTitle': 'Кілька слів?',
     'flow.commentHint': 'Що запамʼяталось? Теж необовʼязково.',
 
@@ -689,6 +692,9 @@ export const translations = {
     'flow.photoRemove': 'Remove photo',
     'flow.photoCount': '{n} of {max} photos',
     'flow.photoRetake': 'Different photo',
+    'flow.photoFailed': 'Your rating is saved, but {n} of {total} photos did not upload.',
+    'flow.photoRetry': 'Try again',
+    'flow.photoRetryOk': 'Photos uploaded ✅',
     'flow.commentTitle': 'A few words?',
     'flow.commentHint': 'What stood out? Also optional.',
 

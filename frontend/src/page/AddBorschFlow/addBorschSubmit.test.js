@@ -1,4 +1,4 @@
-import { submitAddBorsch, emptyProgress, STAGES } from './addBorschSubmit';
+import { submitAddBorsch, uploadPendingPhotos, emptyProgress, STAGES } from './addBorschSubmit';
 
 const place = { name: 'Ватра', location: { lat: 50.4, lng: 30.5 }, type: 'restaurant' };
 
@@ -98,7 +98,11 @@ test('a photo that fails to upload does not lose the rating', async () => {
     progress: emptyProgress(), apis,
   });
   expect(progress.reviewDone).toBe(true);
-  expect(progress.photoDone).toBe(true);
+  // the rating stands, but the photo is NOT reported as done: that is what let
+  // three 413s on 2026-10-17 end on "Борщ на мапі!" with no word about photos
+  expect(progress.photoDone).toBe(false);
+  expect(progress.photosFailed).toBe(1);
+  expect(progress.photosUploaded).toEqual([]);
   console.error.mockRestore();
 });
 
@@ -178,7 +182,50 @@ test('one photo failing does not take the others — or the rating — with it',
 
   expect(uploadPhoto).toHaveBeenCalledTimes(3);
   expect(progress.reviewDone).toBe(true);
+  expect(progress.photoDone).toBe(false);
+  expect(progress.photosFailed).toBe(1);
+  expect(progress.photosUploaded).toEqual([0, 2]);
+  console.error.mockRestore();
+});
+
+test('all photos landing marks the step done with nothing failed', async () => {
+  const progress = await submitAddBorsch({
+    place, street: 's', city: 'c',
+    values: { ...values, photos: [photoFile('a.jpg'), photoFile('b.jpg')] },
+    progress: emptyProgress(), apis: makeApis(),
+  });
   expect(progress.photoDone).toBe(true);
+  expect(progress.photosFailed).toBe(0);
+  expect(progress.photosUploaded).toEqual([0, 1]);
+});
+
+test('retrying the photos sends only the ones that failed, and nothing else', async () => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  const photos = [photoFile('a.jpg'), photoFile('b.jpg'), photoFile('c.jpg')];
+  const first = makeApis({
+    borschAPI: {
+      uploadPhoto: jest.fn()
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce(new Error('413'))
+        .mockRejectedValueOnce(new Error('network')),
+    },
+  });
+  const progress = await submitAddBorsch({
+    place, street: 's', city: 'c', values: { ...values, photos }, progress: emptyProgress(), apis: first,
+  });
+  expect(progress.photosFailed).toBe(2);
+
+  const retry = makeApis();
+  await uploadPendingPhotos({ photos, progress, borschAPI: retry.borschAPI });
+
+  // a.jpg already landed the first time, so it must not be posted twice
+  expect(retry.borschAPI.uploadPhoto.mock.calls.map(([id, f]) => [id, f.name]))
+    .toEqual([['borsch-1', 'b.jpg'], ['borsch-1', 'c.jpg']]);
+  expect(progress).toMatchObject({ photoDone: true, photosFailed: 0, photosUploaded: [0, 1, 2] });
+  // and the retry never touched the venue, the borsch or the review
+  expect(retry.placesAPI.create).not.toHaveBeenCalled();
+  expect(retry.borschAPI.create).not.toHaveBeenCalled();
+  expect(retry.commentsAPI.createByBorschId).not.toHaveBeenCalled();
   console.error.mockRestore();
 });
 
