@@ -62,7 +62,7 @@ export const Filters = ({ hideBoxFilter = false }) => {
     window.addEventListener('storage', readProfile);
     return () => window.removeEventListener('storage', readProfile);
   }, [isAuthenticated]);  
-  // Синхронизация с фильтрами при изменении
+  // Синхронізація з фільтрами, коли вони змінюються
   useEffect(() => {
     setSearchValue(search);
   }, [search]);
@@ -79,12 +79,12 @@ export const Filters = ({ hideBoxFilter = false }) => {
   const handleSearch = (queryArg) => {
     const query = (typeof queryArg === 'string' ? queryArg : searchValue).trim();
 
-    // обновляем filters context
+    // оновлюємо filters context
     updateSearchQuery(query);
 
     activateSearch();
 
-    // запускаем фильтрацию мест
+    // запускаємо фільтрацію закладів
     applyFilters({
       filters: {
         ...filters,

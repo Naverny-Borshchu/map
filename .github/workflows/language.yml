@@ -1,0 +1,30 @@
+name: language
+
+# Російської в репозиторії бути не повинно: ні в інтерфейсі, ні в коментарях,
+# ні в повідомленнях у консоль. Деталі й словник винятків — .github/no-russian/.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: language-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-russian:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: .github/no-russian/requirements.txt
+      - name: Install dictionaries
+        run: pip install -r .github/no-russian/requirements.txt
+      - name: Check
+        run: python .github/no-russian/check.py

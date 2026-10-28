@@ -402,7 +402,7 @@ export const translations = {
 
     // --- city sheet
     'city.title': 'Населений пункт',
-    'city.placeholder': 'Назва населенного пункта',
+    'city.placeholder': 'Назва населеного пункту',
     'city.popular': 'Популярні',
     'city.all': 'Всі',
 

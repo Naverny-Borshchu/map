@@ -133,7 +133,7 @@ export const Layout = ({ children }) => {
                 <EvaluationsPage borschId={matchBorschEvaluations.params.borschId} />
               )}
 
-            {/* 🔹 По умолчанию — показываем children, чтобы работали все другие маршруты */}
+            {/* 🔹 За замовчуванням показуємо children, щоб працювали всі інші маршрути */}
             {!(
               location.pathname === "/" ||
               matchBorsch ||
