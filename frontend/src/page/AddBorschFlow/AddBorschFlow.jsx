@@ -15,7 +15,7 @@ import {
   writeSessionDraft,
 } from '../../components/QuestFlow/sessionDraft';
 import { useT } from '../../i18n';
-import { submitAddBorsch, emptyProgress, STAGES } from './addBorschSubmit';
+import { submitAddBorsch, uploadPendingPhotos, emptyProgress, STAGES } from './addBorschSubmit';
 import { getPriceChipsForCountry } from '../../utils/currency';
 import style from './AddBorschFlow.module.scss';
 
@@ -164,7 +164,11 @@ export const AddBorschFlow = () => {
 
       window.dispatchEvent(new Event('borschDataUpdated'));
       clearSessionDraft(DRAFT_KEY);
-      setStatus({ saving: false, sent: true, error: '', stage: '' });
+      setStatus({
+        saving: false, sent: true, error: '', stage: '',
+        photosFailed: progress.current.photosFailed || 0,
+        photosTotal: (values.photos || []).length,
+      });
     } catch (err) {
       releaseSessionDraftSubmission(DRAFT_KEY);
       // 401 here means the token expired between signing in and saving; say so
@@ -178,6 +182,20 @@ export const AddBorschFlow = () => {
       });
     }
   }, [flowContext, values, t]);
+
+  // Only the photos that did not land; the borsch and the rating are already
+  // saved, so this must not run the whole submit (and its XP) a second time.
+  const retryPhotos = useCallback(async () => {
+    if (!progress.current.borschId) return;
+    setStatus((s) => ({ ...s, photoRetrying: true }));
+    await uploadPendingPhotos({ photos: values.photos || [], progress: progress.current, borschAPI });
+    window.dispatchEvent(new Event('borschDataUpdated'));
+    setStatus((s) => ({
+      ...s,
+      photoRetrying: false,
+      photosFailed: progress.current.photosFailed || 0,
+    }));
+  }, [values.photos]);
 
   const onExit = useCallback(() => {
     const started = Object.entries(values).some(
@@ -213,6 +231,7 @@ export const AddBorschFlow = () => {
       done={{ title: t('flow.addedTitle'), text: t('flow.addedText'), cta: t('flow.toBorsch') }}
       onSubmit={runSubmit}
       onRetry={runSubmit}
+      onRetryPhotos={retryPhotos}
       onExit={onExit}
       onSignIn={onSignIn}
       initialStep={draftStep}

@@ -53,7 +53,7 @@ const MAP = {
   с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh',
   щ: 'shch', ь: '', "'": '', '’': '', ʼ: '',
   // Russian letters that survive in some names
-  ы: 'y', э: 'e', ё: 'yo', ъ: '',
+  ы: 'y', э: 'e', ё: 'yo', ъ: '', // lang-check: allow — літери в таблиці транслітерації, не текст
 };
 const POSITIONAL = {
   є: ['ye', 'ie'],
@@ -81,7 +81,7 @@ export const transliterate = (input) => {
     const ch = chars[i];
     const lower = ch.toLowerCase();
     const prev = i > 0 ? chars[i - 1].toLowerCase() : '';
-    const wordStart = i === 0 || !/[а-яіїєґёыэʼ'’]/i.test(prev);
+    const wordStart = i === 0 || !/[а-яіїєґёыэʼ'’]/i.test(prev); // lang-check: allow
 
     // зг → zgh (otherwise it would collide with ж → zh)
     if (lower === 'г' && prev === 'з') {
@@ -104,7 +104,7 @@ export const transliterate = (input) => {
   return out;
 };
 
-const HAS_CYRILLIC = /[А-Яа-яІіЇїЄєҐґЁёЫыЭэ]/;
+const HAS_CYRILLIC = /[А-Яа-яІіЇїЄєҐґЁёЫыЭэ]/; // lang-check: allow
 
 /**
  * Display label for any stored Cyrillic string shown as a name — venues and

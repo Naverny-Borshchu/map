@@ -2,6 +2,7 @@ import { tokenStorage } from "../services/tokenStorage";
 import { AUTH_SESSION_EXPIRED_EVENT, clearAuthSession } from '../services/authSession';
 import { hasRating } from "../utils/rating";
 import { normalizeId } from "../utils/ids";
+import { preparePhotoForUpload } from "../utils/preparePhoto";
 import { track } from "../analytics";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.navernyborshchu.com/api';
@@ -104,7 +105,10 @@ const describeError = (body, status) => {
 const handleResponse = async (response) => {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(describeError(error, response.status));
+    const failure = new Error(describeError(error, response.status));
+    // the code survives for callers that react to it (413 = too big)
+    failure.status = response.status;
+    throw failure;
   }
   if (response.status === 204) {
     return null;
@@ -285,7 +289,7 @@ const mapBorsch = (apiBorsch) => {
     rating_aftertaste,
     rating_serving,
     overall_rating,
-    // "290.00" -> "≈290 ₴"; цена 0/пусто в базе = не показываем
+    // "290.00" -> "≈290 ₴"; ціна 0 або порожня в базі = не показуємо
     price: parseFloat(apiBorsch.price) > 0 ? `≈${parseFloat(apiBorsch.price)} ₴` : '',
     weight: apiBorsch.grams ? `${apiBorsch.grams} g.` : '',
     photo_urls: apiBorsch.photo_urls || [],
@@ -505,51 +509,30 @@ export const borschAPI = {
   },
 
   uploadPhoto: async (borschId, file) => {
+    // a phone photo is 3-15 MB and nginx takes 10 MB at most; see preparePhoto
+    const photo = await preparePhotoForUpload(file);
     const formData = new FormData();
-    formData.append('photo', file);
-    const uploaded = await request(`/borsches/${borschId}/upload_photo/`, {
-      method: 'POST',
-      body: formData,
-      isFormData: true,
-      authRequired: true,
-    });
-    track('borsch_photo_uploaded', { borsch_id: borschId });
+    formData.append('photo', photo, photo.name);
+    const sizes = {
+      original_kb: Math.round((file?.size || 0) / 1024),
+      sent_kb: Math.round((photo?.size || 0) / 1024),
+    };
+    let uploaded;
+    try {
+      uploaded = await request(`/borsches/${borschId}/upload_photo/`, {
+        method: 'POST',
+        body: formData,
+        isFormData: true,
+        authRequired: true,
+      });
+    } catch (e) {
+      // These failures used to exist only in the uploader's console. 17.10.2026
+      // three of them in a row (413) were visible nowhere but the nginx log.
+      track('borsch_photo_upload_failed', { borsch_id: borschId, status: e?.status || null, ...sizes });
+      throw e;
+    }
+    track('borsch_photo_uploaded', { borsch_id: borschId, ...sizes });
     return uploaded;
-  }
-};
-
-// API for users (auth flow handled by separate task)
-export const userAPI = {
-  login: async (credentials) => {
-    console.log('API: Login (localStorage only)', credentials);
-    return {
-      id: Date.now().toString(),
-      email: credentials.email,
-      name: credentials.name || 'Пользователь'
-    };
-  },
-
-  register: async (userData) => {
-    console.log('API: Register (localStorage only)', userData);
-    return {
-      id: Date.now().toString(),
-      ...userData
-    };
-  },
-
-  logout: async () => {
-    console.log('API: Logout (localStorage only)');
-    return true;
-  },
-
-  updateProfile: async (updates) => {
-    console.log('API: Update profile (localStorage only)', updates);
-    return updates;
-  },
-
-  changePassword: async (passwordData) => {
-    console.log('API: Change password (not implemented)');
-    return true;
   }
 };
 
@@ -661,7 +644,6 @@ export const usersAPI = {
 export const api = {
   places: placesAPI,
   borsch: borschAPI,
-  user: userAPI,
   comments: commentsAPI,
   favorites: favoritesAPI,
   placeTypes: placeTypesAPI,

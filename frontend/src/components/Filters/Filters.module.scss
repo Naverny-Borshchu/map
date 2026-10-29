@@ -3,7 +3,9 @@
 .desctop{
   display: none;
   @include respond(desktop) {
-    display:block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }   
 }
 .filterWrap{
@@ -293,6 +295,17 @@
     text-decoration: none;
     background-color: var(--color-text-active); 
     color:var( --color-text-btn-active);
+}
+.btnLogin{
+  @include button;
+  padding: 10px 16px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--color-text-active);
+}
+.btnLogin:hover{
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .btnReg:hover{
     cursor: pointer;   

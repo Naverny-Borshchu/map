@@ -22,6 +22,7 @@ from django.db.models import Avg, Count
 
 from .models import PlaceType, Place, Borsch, UserProfile, Review, FavoriteBorsch
 from .ratings import recalculate_borsch_ratings
+from .photo_upload import EXTENSIONS as PHOTO_EXTENSIONS, PhotoRejected, detect_photo_kind
 from .serializers import (
     PlaceTypeSerializer,
     PlaceSerializer, PlaceCreateSerializer, PlaceUpdateSerializer,
@@ -242,6 +243,9 @@ class BorschViewSet(viewsets.ModelViewSet):
         
         Приймає multipart/form-data з полем 'photo'.
         Зберігає файл у медіа-директорію та повертає URL.
+
+        Лише JPEG, PNG і HEIC/HEIF, тип визначається за вмістом
+        (див. core/photo_upload.py). Інше: 400, завеликий файл: 413.
         """
         borsch = self.get_object()
         
@@ -252,10 +256,19 @@ class BorschViewSet(viewsets.ModelViewSet):
             )
         
         photo_file = request.FILES['photo']
-        
-        # Генерація унікального імені файлу
-        file_extension = os.path.splitext(photo_file.name)[1]
-        unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+
+        try:
+            kind = detect_photo_kind(photo_file)
+        except PhotoRejected as rejected:
+            return Response(
+                {'error': str(rejected)},
+                status=(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE if rejected.too_large
+                        else status.HTTP_400_BAD_REQUEST),
+            )
+
+        # Розширення — від справжнього типу, ніколи з імені від клієнта:
+        # саме ім'я `x.html` робило з фото сторінку на нашому домені.
+        unique_filename = f"{uuid.uuid4().hex}{PHOTO_EXTENSIONS[kind]}"
         
         # Шлях для збереження (URL завжди з прямими слешами; шлях на диску — окремо)
         rel = ('borsches', str(borsch.id), 'photos')
