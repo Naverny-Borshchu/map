@@ -15,7 +15,7 @@ info:
     Реєстрація та вхід — через **Google Sign-In**: клієнт надсилає `id_token` на
     `POST /auth/google/` і отримує JWT (`access`, `refresh`). Для захищених операцій
     використовуйте заголовок `Authorization: Bearer <access>`. Оновлення access —
-    `POST /auth/token/refresh/` з телом `{"refresh": "..."}`. Вихід —
+    `POST /auth/token/refresh/` з тілом `{"refresh": "..."}`. Вихід —
     `POST /auth/logout/` з тим самим `refresh` (blacklist).
   version: 1.0.0
   contact:

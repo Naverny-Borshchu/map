@@ -289,7 +289,7 @@ const mapBorsch = (apiBorsch) => {
     rating_aftertaste,
     rating_serving,
     overall_rating,
-    // "290.00" -> "≈290 ₴"; цена 0/пусто в базе = не показываем
+    // "290.00" -> "≈290 ₴"; ціна 0 або порожня в базі = не показуємо
     price: parseFloat(apiBorsch.price) > 0 ? `≈${parseFloat(apiBorsch.price)} ₴` : '',
     weight: apiBorsch.grams ? `${apiBorsch.grams} g.` : '',
     photo_urls: apiBorsch.photo_urls || [],
@@ -536,41 +536,6 @@ export const borschAPI = {
   }
 };
 
-// API for users (auth flow handled by separate task)
-export const userAPI = {
-  login: async (credentials) => {
-    console.log('API: Login (localStorage only)', credentials);
-    return {
-      id: Date.now().toString(),
-      email: credentials.email,
-      name: credentials.name || 'Пользователь'
-    };
-  },
-
-  register: async (userData) => {
-    console.log('API: Register (localStorage only)', userData);
-    return {
-      id: Date.now().toString(),
-      ...userData
-    };
-  },
-
-  logout: async () => {
-    console.log('API: Logout (localStorage only)');
-    return true;
-  },
-
-  updateProfile: async (updates) => {
-    console.log('API: Update profile (localStorage only)', updates);
-    return updates;
-  },
-
-  changePassword: async (passwordData) => {
-    console.log('API: Change password (not implemented)');
-    return true;
-  }
-};
-
 // API for reviews/comments
 // Реальні ендпоінти: GET/POST /api/reviews/, фільтр ?borsch_id=<uuid>
 export const commentsAPI = {
@@ -679,7 +644,6 @@ export const usersAPI = {
 export const api = {
   places: placesAPI,
   borsch: borschAPI,
-  user: userAPI,
   comments: commentsAPI,
   favorites: favoritesAPI,
   placeTypes: placeTypesAPI,
