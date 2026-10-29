@@ -1,9 +1,11 @@
 import { fitWithin, preparePhotoForUpload, MAX_EDGE } from './preparePhoto';
+import { readExifSegment } from './jpegExif';
+import { APP0, SCAN, buildExifSegment, jpeg } from './exifFixture';
 
 // jsdom не має ні декодера картинок, ні canvas, тож тут підставляємо обидва:
 // Image «розкодовує» файл у задані розміри, а canvas.toBlob віддає блоб і
 // запамʼятовує, що на ньому намалювали.
-const installFakeBrowser = ({ width, height, decodeFails = false, blobSize = 300_000 }) => {
+const installFakeBrowser = ({ width, height, decodeFails = false, blobSize = 300_000, blobBytes = null }) => {
   const drawn = [];
   const originalImage = global.Image;
   const originalCreate = URL.createObjectURL;
@@ -32,7 +34,7 @@ const installFakeBrowser = ({ width, height, decodeFails = false, blobSize = 300
         drawImage: (_img, x, y, w, h) => drawn.push({ w, h, canvasW: canvas.width, canvasH: canvas.height }),
         set fillStyle(_) {},
       }),
-      toBlob: (cb, type, quality) => cb(new Blob([new Uint8Array(blobSize)], { type })),
+      toBlob: (cb, type, quality) => cb(new Blob([blobBytes || new Uint8Array(blobSize)], { type })),
     };
     return canvas;
   });
@@ -74,6 +76,42 @@ describe('preparePhotoForUpload', () => {
       expect(fake.drawn).toEqual([{ w: MAX_EDGE, h: 1536, canvasW: MAX_EDGE, canvasH: 1536 }]);
       // the object URL is released, or every photo would leak its decoded copy
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:fake');
+    } finally {
+      fake.restore();
+    }
+  });
+
+  it('carries the original EXIF (GPS included) into the smaller JPEG, upright', async () => {
+    // а canvas, як і справжній, віддає JPEG без жодних метаданих
+    const fake = installFakeBrowser({ width: 6048, height: 8064, blobBytes: jpeg(APP0, SCAN) });
+    try {
+      const exif = buildExifSegment({ littleEndian: false });
+      const original = new File([jpeg(APP0, exif, SCAN)], 'IMG_4821.JPG', { type: 'image/jpeg' });
+      const out = await preparePhotoForUpload(original);
+      const bytes = new Uint8Array(await new Promise((resolve) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.readAsArrayBuffer(out);
+      }));
+      const carried = readExifSegment(bytes);
+      expect(carried).not.toBeNull();
+      const v = new DataView(carried.buffer, carried.byteOffset, carried.byteLength);
+      // IFD0 перший запис — Orientation: тепер 1, бо кадр уже повернутий
+      expect(v.getUint16(10 + 10)).toBe(0x0112);
+      expect(v.getUint16(10 + 10 + 8)).toBe(1);
+      // GPS-вказівник і сам GPS-блок на місці
+      expect(v.getUint16(10 + 34)).toBe(0x8825);
+      expect(carried[10 + 130]).toBe(0x4e);
+    } finally {
+      fake.restore();
+    }
+  });
+
+  it('a canvas JPEG is sent as is when the original had no EXIF', async () => {
+    const fake = installFakeBrowser({ width: 100, height: 100, blobBytes: jpeg(APP0, SCAN) });
+    try {
+      const out = await preparePhotoForUpload(new File([jpeg(APP0, SCAN)], 'a.jpg', { type: 'image/jpeg' }));
+      expect(out.size).toBe(jpeg(APP0, SCAN).length);
     } finally {
       fake.restore();
     }
