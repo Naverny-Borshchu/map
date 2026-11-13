@@ -1,0 +1,53 @@
+// A small confirmation dialog (logout, registration done): plate, MAK title,
+// one line, the red pill and a ghost pill under it.
+@use "./mixin_font.scss" as *;
+@use "./brand.scss" as *;
+
+.panel {
+    @include sheet;
+    width: min(100%, 400px);
+    max-height: 88dvh;
+    overflow-y: auto;
+    padding: 28px 22px 22px;
+    text-align: center;
+}
+
+.art {
+    display: block;
+    width: 170px;
+    height: auto;
+    margin: -8px auto 6px;
+}
+
+.plate {
+    display: block;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #FFFAF5;
+}
+
+.title {
+    @include displayM;
+    margin: 0 0 10px;
+    color: var(--color-text-btn);
+}
+
+.text {
+    @include body;
+    margin: 0 0 20px;
+    color: var(--nb-ink-2);
+}
+
+.error {
+    @include footnote;
+    margin: -8px 0 16px;
+    color: var(--nb-red-text);
+}
+
+.ghost {
+    @include btnGhost;
+    width: 100%;
+    margin-top: 10px;
+}

@@ -4,7 +4,9 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: rgba(23, 11, 11, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     transition: opacity var(--transition-slow), visibility var(--transition-slow);
     animation: backdropIn var(--dur-base) var(--ease-standard);
     overflow-y: scroll;
@@ -61,6 +63,6 @@
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  from { opacity: 0; transform: translateY(calc(14px * var(--nb-move, 1))) scale(calc(1 - 0.02 * var(--nb-move, 1))); }
   to   { opacity: 1; transform: none; }
 }

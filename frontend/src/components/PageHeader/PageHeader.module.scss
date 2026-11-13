@@ -1,0 +1,54 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 4px 0 22px;
+  text-align: left;
+}
+
+.center {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.back {
+  @include iconBtn(44px);
+  flex: none;
+  margin-top: 2px;
+  color: var(--nb-red-text);
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.kicker {
+  @include kicker;
+  margin: 0;
+}
+
+.title {
+  @include displayL;
+  margin: 0;
+  color: var(--color-text-btn);
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  @include body;
+  margin: 2px 0 0;
+  color: var(--nb-ink-2);
+}
+
+@media (min-width: 744px) {
+  .title {
+    font-size: 34px;
+  }
+}
