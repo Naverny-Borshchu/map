@@ -1,23 +1,30 @@
+/* Google's own sign-in look (white, the four-colour G, «Continue with
+   Google»), in the brand's pill shape. */
 .googleBtn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
 
     width: 100%;
-    height: 50px;
-    border: 2px solid rgba(208, 213, 221, 0.1);
-    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-    border-radius: var(--radius-md);
+    min-height: 52px;
+    border: 1.5px solid var(--color-border-input);
+    box-shadow: 0 3px 0 var(--color-border-input);
+    border-radius: var(--radius-pill);
 
-    padding: 0px 20px;
-    background: var(--color-text-btn-active);
+    padding: 0 22px;
+    background: #FFFFFF;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
-.googleBtn:hover {
-    border: 1px solid var(--color-border-input);
+.googleBtn:hover:not(:disabled) {
+    border-color: var(--color-border-mid);
+}
+
+.googleBtn:active:not(:disabled) {
+    transform: translateY(calc(2px * var(--nb-move, 1)));
+    box-shadow: 0 1px 0 var(--color-border-input);
 }
 
 .googleIcon {
@@ -25,8 +32,9 @@
 }
 
 .googleLabel {
-    font-size: 15px;
+    font-family: var(--font-family-main);
+    font-size: 16px;
     font-weight: 600;
-    color: var(--color-text-btn);
+    color: #1A1A1A;
     white-space: nowrap;
 }

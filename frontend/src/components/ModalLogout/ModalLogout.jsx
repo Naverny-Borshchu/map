@@ -1,25 +1,19 @@
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {Modal} from "../../components/Modal";
 import {Button} from "../../components/Button";
-import { ReactComponent as Logo } from '../../assets/images/logo.svg';
-import typography from '../../styles/typography.module.css';
-import style from './ModalLogout.module.css';
+import letterArt from '../../assets/illustrations/letter.webp';
+import dialog from '../../styles/dialog.module.scss';
 import { tokenStorage } from "../../services/tokenStorage";
 import { useUser } from "../../context/UserContext";
+import { useT } from "../../i18n";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.navernyborshchu.com/api';
 
 export const ModalLogout = ({onClose, onLogoutSuccess}) => {
     const {logout} = useUser();
-    const [spin, setSpin] = useState(false);
+    const t = useT();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-
-    useEffect(() => {
-        setSpin(true);
-        const t = setTimeout(() => setSpin(false), 1000);
-        return () => clearTimeout(t);
-    }, []);
 
     const handleLogout = async () => {
         if (isSubmitting) {
@@ -48,7 +42,7 @@ export const ModalLogout = ({onClose, onLogoutSuccess}) => {
             onClose();
         } catch (error) {
             console.error("Logout error:", error);
-            setErrorMessage("Не вдалося завершити вихід на сервері. Локальну сесію очищено.");
+            setErrorMessage(t('logout.error'));
         } finally {
             logout();
             setIsSubmitting(false);
@@ -61,29 +55,24 @@ export const ModalLogout = ({onClose, onLogoutSuccess}) => {
 
     return (
         <Modal onClose={onClose}>
-            <div className={style.modalContent}>
-                <Logo className={`${style.modalLogo} ${spin ? style["spin-once"] : ""}`} />
-                <h2 className={`${typography.modalTitle} ${style.modalTitle}`}>Вийти з акаунту</h2>
-                <p className={`${typography.modalParagraph} ${style.modalParagraph}`}>
-                    Все збережено! Повертайся Навертати Борщі разом з нами
-                </p>
-                {errorMessage && (
-                    <p className={`${typography.mobileFootnote} ${style.errorMessage}`}>
-                        {errorMessage}
-                    </p>
-                )}
+            <div className={dialog.panel} role="dialog" aria-modal="true" aria-labelledby="nb-logout-title">
+                <img className={dialog.art} src={letterArt} alt="" width="520" height="388" />
+                <h2 className={dialog.title} id="nb-logout-title">{t('logout.title')}</h2>
+                <p className={dialog.text}>{t('logout.text')}</p>
+                {errorMessage && <p className={dialog.error}>{errorMessage}</p>}
                 <Button
                     type="button"
-                    name={isSubmitting ? "Вихід..." : "Вийти"}
+                    name={isSubmitting ? t('logout.pending') : t('logout.confirm')}
                     onClick={handleLogout}
                     disabled={isSubmitting}
                 />
                 <button
-                    className={`${typography.fontBtn} ${style.modalCloseBtn}`}
+                    type="button"
+                    className={dialog.ghost}
                     onClick={onClose}
                     disabled={isSubmitting}
                 >
-                    Продовжити Навертати Борщі
+                    {t('logout.stay')}
                 </button>
             </div>
         </Modal>

@@ -1,0 +1,106 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+.brand {
+    justify-content: center;
+    margin: 4px auto 18px;
+}
+
+.card {
+    @include card(22px);
+    position: relative;
+    overflow: hidden;
+    padding-top: 8px;
+}
+
+.art {
+    display: block;
+    width: 170px;
+    height: auto;
+    margin: 0 auto -4px;
+}
+
+.kicker {
+    @include kicker;
+    margin: 0 0 8px;
+}
+
+.title {
+    @include displayL;
+    margin: 0 0 10px;
+    color: var(--color-text-btn);
+}
+
+.subtitle {
+    margin: 0 auto 22px;
+    max-width: 320px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--nb-ink-2);
+}
+
+.googleBtnWrapper {
+    margin-top: 18px;
+}
+
+.checkboxWrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-main);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-text-btn);
+    text-align: left;
+    cursor: pointer;
+}
+
+.hiddenCheckbox {
+    display: none;
+}
+
+.customCheckbox {
+    position: relative;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-border-mid);
+    border-radius: 7px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.checked {
+    background: var(--nb-borshch);
+    border-color: var(--nb-borshch);
+}
+
+.checkboxSign {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-bottom: 3px solid #FFFAF5;
+    border-left: 3px solid #FFFAF5;
+    width: 12px;
+    height: 6px;
+    transform: translate(-50%, -70%) rotate(-45deg);
+}
+
+.link {
+    color: var(--nb-red-text);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.error {
+    @include footnote;
+    margin: 14px 0 0;
+    color: var(--nb-red-text);
+    font-weight: 600;
+}

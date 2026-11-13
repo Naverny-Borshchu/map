@@ -1,26 +1,13 @@
 import { useNavigate} from "react-router-dom";
 import { useFavorites } from '../../context/FavoritesContext';
-import { ButtonVertion } from "../../components/ButtonVersion";
-import { ReactComponent as IconLikeActive } from './likeActive.svg';
-import { ReactComponent as IconLink } from './link.svg';
-import { FotoBorschGallary } from "../../components/FotoBorschGallary";
-import { RatingIconsSvg } from "../../components/RatingIconsSvg";
+import { BorschTile } from "../../components/BorschTile";
+import { EmptyState } from "../../components/EmptyState";
+import { PageHeader } from "../../components/PageHeader";
 import { useBorsch } from '../../context/BorschContext';
 import { usePlaces } from '../../context/PlacesContext';
 import { useState, useEffect } from 'react';
 import style from "./LikeBorsch.module.scss";
 import { useT } from "../../i18n";
-
-const fallbackCopy = (text) => {
-  const tempInput = document.createElement("input");
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  document.execCommand("copy");
-  document.body.removeChild(tempInput);
-  console.log("Скопійовано через fallback:", text);
-};
-
 
 export const LikeBorsch=()=>{
   const t = useT();   
@@ -59,95 +46,34 @@ export const LikeBorsch=()=>{
   
   const nameBorsch = (place_id) => {
     const place = getPlaceById(place_id);
-    return place ? place.name : "Невідоме місце";
+    return place ? place.name : '';
   };  
 
-   const handleCopyAndShare = (id_borsch) => {
-    const url = `${window.location.origin}/borsch/${id_borsch}`;
-
-    // Якщо браузер має Web Share API — відкриваємо системне вікно «Поділитися»
-    if (navigator.share) {
-      navigator.share({
-        title: 'Перегляньте цей борщ',
-        text: 'Дивись ось цю сторінку борща:',
-        url: url,
-      })
-      .then(() => console.log("Поділитися успішно"))
-      .catch((err) => {
-        console.error("Помилка при шерингу:", err);
-        // Поділитися не вийшло або людина відмовилась — один раз копіюємо в буфер
-        copyToClipboardWithAlert(url);
-      });
-    } else {
-      // Web Share API немає — просто копіюємо в буфер і показуємо alert
-      copyToClipboardWithAlert(url);
-    }
-  };
-
-  const copyToClipboardWithAlert = (text) => {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text)
-        .then(() => {
-          alert(t('card.shareCopied'));
-        })
-        .catch((err) => {
-          console.error("Помилка копіювання:", err);
-          fallbackCopy(text);
-          alert(t('card.shareCopied'));
-        });
-    } else {
-      fallbackCopy(text);
-      alert(t('card.shareCopied'));
-    }
-  };
-  return( 
+  return(
     <div className={style.page}>
-      <h2 className={style.title}>{t('fav.title')}</h2>        
-        {loading && <p>Завантаження...</p>}
+      <PageHeader back="/profile" kicker={t('profile.kicker')} title={t('fav.title')} />
+        {loading && <EmptyState loading title={t('common.loading')} compact />}
         {!loading && borschList.length === 0 && (
-          <div style={{ padding: '32px 16px', textAlign: 'center', opacity: 0.6 }}>
-            <p style={{ fontSize: 32 }}>🍲</p>
-            <p>{t('fav.empty')}</p>
-            <p style={{ fontSize: 13 }}>{t('fav.emptyHint')}</p>
-          </div>
+          <EmptyState
+            art="find"
+            title={t('fav.empty')}
+            text={t('fav.emptyHint')}
+            action={{ to: '/list', label: t('nav.showList') }}
+          />
         )}
         <div className={style.wrappBorsch}>
-            {borschList.map((el,index)=>{                   
-              return (
-                <div key={index} className={style.card}>
-                  <FotoBorschGallary images={el.photo_urls} height={"120px"}/>                  
-                  <div className={style.box}>                
-                    <ButtonVertion
-                      label={t('card.share')}
-                      type="button"
-                      onClick={() => handleCopyAndShare(el.id_borsch)}
-                      icon={IconLink}
-                    />
-                    <ButtonVertion
-                      label={t('card.share')}
-                      type="button"
-                      onClick={() => handleUnlike(el.id_borsch)}
-                      icon={IconLikeActive}
-                    />
-                  </div>                  
-                  <div className={style.flex}>
-                    <p className={style.borschName}>{el.name}</p>
-                    <p className={style.borschPrice}>{el.price}</p>                    
-                  </div>
-                  <p className={style.grade}>{t('fav.myScore')}</p>
-                  <RatingIconsSvg overall_rating={el.overall_rating} /> 
-                  <div className={style.flex}>
-                    <p className={style.namePlace}>{nameBorsch(el.place_id)}</p>
-                    <button
-                      className={style.btnAbout}
-                      type="button"
-                      onClick={() => onClickCard(el.id_borsch)}
-                    >Про борщик</button>
-                  </div>                  
-                </div>
-              )                    
-            })} 
-        </div>         
+            {borschList.map((el) => (
+              <BorschTile
+                key={el.id_borsch}
+                borsch={el}
+                venueName={nameBorsch(el.place_id)}
+                scoreLabel={t('card.rating')}
+                liked
+                onToggleLike={() => handleUnlike(el.id_borsch)}
+                onOpen={() => onClickCard(el.id_borsch)}
+              />
+            ))}
+        </div>
       </div>
-  )   
+  )
 }
