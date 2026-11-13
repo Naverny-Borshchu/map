@@ -2,19 +2,16 @@ import { useState, useEffect } from "react";
 import { useFavorites } from '../../context/FavoritesContext';
 import { useRequireAuthAction } from '../../hook/useRequireAuthAction';
 import {Link,useParams,useNavigate } from "react-router-dom";
-import { ReactComponent as IconDelete } from './close.svg';
 import { ReactComponent as IconMeat } from './meat.svg';
 import { ReactComponent as IconBeetroot } from './beetroot.svg';
 import { ReactComponent as IconDensity } from './vegetable.svg';
 import { ReactComponent as IconSalt } from './salt.svg';
 import { ReactComponent as IconAftertaste } from './aftertaste.svg';
 import { ReactComponent as IconServing } from './serving.svg';
-import { ReactComponent as IconArrowLeft } from './arrow_left.svg';
-import { ReactComponent as IconArrowRight } from './arrow_right.svg';
-import { ReactComponent as IconLike } from './like.svg';
-import { ReactComponent as IconLikeActive } from './like.svg';
-import { ReactComponent as IconLink } from './link.svg';
-import { ButtonVertion } from "../../components/ButtonVersion";
+import { IconClose, IconHeart, IconShare, IconChevronLeft, IconChevronRight, IconMapPin } from "../../components/Icons";
+import { EmptyState } from "../../components/EmptyState";
+import { shareBorsch } from "../../utils/share";
+import { priceLabel, weightLabel } from "../../utils/price";
 import { RatingIconsSvg } from "../../components/RatingIconsSvg";
 import { ProgressLine } from "../../components/ProgressLine/ProgressLine";
 import { FotoBorschGallary } from "../../components/FotoBorschGallary";
@@ -23,7 +20,6 @@ import { usePlaces } from '../../context/PlacesContext';
 import { useComments } from '../../context/CommentsContext';
 import { placesAPI } from '../../api';
 import style from './BorschPage.module.scss';
-import typography from '../../styles/typography.module.css';
 import { formatGrade } from "../../utils/rating";
 import { RouteButton } from "../../components/RouteButton";
 import { VenueReport } from '../../components/VenueReport';
@@ -31,17 +27,9 @@ import { hasRating } from "../../utils/rating";
 import { useT } from "../../i18n";
 import { useVenueLabel } from "../../i18n";
 import { useDishLabel } from "../../i18n";
+import { useCityLabel } from "../../i18n";
 
 
-const fallbackCopy = (text) => {
-  const tempInput = document.createElement("input");
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  document.execCommand("copy");
-  document.body.removeChild(tempInput);
-  console.log("Скопійовано через fallback:", text); 
-};
 export const BorschPage=({ borschId: propId })=>{
   const [currentPage, setCurrentPage] = useState(0); const commentsPerPage = 2;
   // Account-scoped and server-backed; see FavoritesContext.
@@ -62,6 +50,7 @@ export const BorschPage=({ borschId: propId })=>{
     const t = useT();
     const venueLabel = useVenueLabel();
     const dishLabel = useDishLabel();
+    const cityLabel = useCityLabel();
 
     const { getBorschById, loading: borschLoading } = useBorsch();
     const { getPlaceById, loading: placesLoading } = usePlaces();
@@ -101,8 +90,8 @@ export const BorschPage=({ borschId: propId })=>{
 
       if (!id) {
         return (
-          <div style={{ padding: 20 }}>
-            <p>Не передано ID борща</p>
+          <div className={style.BorschPage}>
+            <EmptyState art="spoon" title={t('borsch.noId')} action={{ to: '/', label: t('common.toMap') }} />
           </div>
         );
       }
@@ -117,7 +106,7 @@ export const BorschPage=({ borschId: propId })=>{
     if (borschLoading || placesLoading || (missingPlaceId && placeFetchState !== 'error' && !place)) {
       return (
         <div className={style.BorschPage}>
-          <p>Завантаження борща...</p>
+          <EmptyState loading title={t('borsch.loading')} />
         </div>
       );
     }
@@ -125,8 +114,12 @@ export const BorschPage=({ borschId: propId })=>{
     if (!borschOne || !place) {
       return (
         <div className={style.BorschPage}>
-          <p>Борщ не знайдено</p>
-          <button onClick={() => navigate('/')} className={style.btn}>На головну</button>
+          <EmptyState
+            art="spoon"
+            title={t('borsch.notFound')}
+            text={t('borsch.notFoundText')}
+            action={{ onClick: () => navigate('/'), label: t('common.toMap') }}
+          />
         </div>
       );
     }
@@ -135,7 +128,7 @@ export const BorschPage=({ borschId: propId })=>{
     const result = borschComents
         .filter(comment => comment.messege && comment.messege.trim())
         .map((comment, index) => ({
-            name: comment.author_username || `Користувач ${index + 1}`,
+            name: comment.author_username || t('borsch.userFallback', { n: index + 1 }),
             photo: "avatar.png",
             overall_rating: comment.overall_rating,
             created_at: comment.created_at ? String(comment.created_at).slice(0, 10) : '',
@@ -161,98 +154,91 @@ export const BorschPage=({ borschId: propId })=>{
         navigate("/");
     }
 
-    const handleCopyAndShare = (id_borsch) => {
-  const url = `${window.location.origin}/borsch/${id_borsch}`;
+  const rated = hasRating(borschOne.overall_rating);
+  const price = priceLabel(borschOne.price, t);
+  const weight = weightLabel(borschOne.weight, t);
 
- 
-  if (navigator.share) {
-    navigator.share({
-      title: 'Перегляньте цей борщ',
-      text: 'Дивись ось цю сторінку борща:',
-      url: url,
-    })
-    .then(() => console.log("Поділитися успішно"))
-    .catch((err) => {
-      console.error("Помилка при шерингу:", err);
-      
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => {
-          alert("Посилання скопійоване в буфер. Поділитись можна вручну.");
-        });
-      } else {
-        fallbackCopy(url);
-      }
-    });
-  } else {
-    
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(() => {
-        alert("Посилання скопійоване в буфер. Поділитись можна вручну.");
-      });
-    } else {
-      fallbackCopy(url);
-    }
-  }
-  };
-  return( 
-    <div className={style.BorschPage}>       
-        <div className={style.btnClose}>       
-            <ButtonVertion
-                type="button"
-                onClick={clickClose}
-                icon={IconDelete}
-                label={t('card.close')}
-            />
-        </div>        
-        <div className={style.wrap}>
-            <h2 className={style.title}>{venueLabel(place.name)}</h2>
-            <div className={style.card}>
-                <div className={style.box}>
-                    <ButtonVertion
+  return(
+    <div className={style.BorschPage}>
+        {/* Photo first, full bleed, with the actions over it: on a phone the
+            borshch is what you came to see. */}
+        <div className={style.hero}>
+            {borschOne.photo_urls?.length ? (
+              <FotoBorschGallary images={borschOne.photo_urls} height={"100%"}/>
+            ) : (
+              <div className={style.heroEmpty} aria-hidden="true" />
+            )}
+            <div className={style.heroBar}>
+                <button type="button" className={style.roundBtn} onClick={clickClose} aria-label={t('card.close')}>
+                    <IconClose />
+                </button>
+                <div className={style.heroActions}>
+                    <button type="button" className={style.roundBtn} onClick={() => shareBorsch(id, t)} aria-label={t('card.share')}>
+                        <IconShare />
+                    </button>
+                    <button
                         type="button"
-                        onClick={() => handleCopyAndShare(id)}
-                        icon={IconLink}
-                        label={t('card.share')}
-                    />
-                    <ButtonVertion
-                        type="button"
+                        className={`${style.roundBtn} ${style.like} ${isLiked ? style.liked : ''}`}
                         onClick={() => handleToggleLike(id)}
-                        icon={isLiked ? IconLikeActive : IconLike}
-                        label={isLiked ? t('card.unlike') : t('card.like')}
-                        pressed={isLiked}
-                    />
-                </div>                
-                {borschOne && <FotoBorschGallary images={borschOne.photo_urls} height={"215px"}/>}                
-                <h4 className={style.nameBorsch}>{dishLabel(borschOne.name)}</h4>
-                <p className={style.adress}>{place.address || place.adress}</p>
-                {/* Двоє людей у першу годину запуску написали в чат те саме:
-                    поруч на мапі стоять місця, яких давно нема, і одне, що
-                    переїхало. Сказати про це в самому застосунку не було де —
-                    вони змогли лише тому, що знають автора особисто. Рядок
-                    стоїть саме під адресою: там людина й помічає, що адреса
-                    застаріла. */}
-                <VenueReport
-                  placeLabel={venueLabel(place.name)}
-                  placeName={place.name}
-                  placeId={place.id || place.place_id}
-                  borschId={id}
-                />
-                <div className={style.flex}>
-                    <p>{borschOne.weight}</p>
-                    <p>{borschOne.price}</p>
+                        aria-pressed={isLiked}
+                        aria-label={isLiked ? t('card.unlike') : t('card.like')}
+                    >
+                        <IconHeart filled={isLiked} />
+                    </button>
                 </div>
-                <h4 className={style.nameBorsch}>{t('card.rating')}</h4>
-                <div className={style.flex}>
-                    {hasRating(borschOne.overall_rating) ? (
+            </div>
+        </div>
+
+        <div className={style.wrap}>
+            {place.city && <p className={style.kicker}>{cityLabel(place.city)}</p>}
+            <h1 className={style.title}>{venueLabel(place.name)}</h1>
+            <p className={style.dish}>{dishLabel(borschOne.name)}</p>
+
+            {(weight || price) && (
+              <div className={style.facts}>
+                {weight && <span className={style.fact}><small>{t('borsch.portion')}</small>{weight}</span>}
+                {price && <span className={style.fact}><small>{t('borsch.price')}</small>{price}</span>}
+              </div>
+            )}
+
+            <p className={style.adress}>
+                <IconMapPin size={18} />
+                <span>{place.address || place.adress}</span>
+            </p>
+            {/* Двоє людей у першу годину запуску написали в чат те саме:
+                поруч на мапі стоять місця, яких давно нема, і одне, що
+                переїхало. Сказати про це в самому застосунку не було де.
+                Рядок стоїть саме під адресою: там людина й помічає, що адреса
+                застаріла. */}
+            <VenueReport
+              placeLabel={venueLabel(place.name)}
+              placeName={place.name}
+              placeId={place.id || place.place_id}
+              borschId={id}
+            />
+
+            <section className={style.scoreCard} aria-label={t('card.rating')}>
+                <p className={style.scoreLabel}>{t('card.rating')}</p>
+                <div className={style.scoreRow}>
+                    {rated ? (
                       <>
                         <p className={style.grade}>{formatGrade(borschOne.overall_rating)}</p>
                         <RatingIconsSvg overall_rating={borschOne.overall_rating} size={18}/>
                       </>
                     ) : (
-                      <p className={style.grade}>{t('card.noRatings')}</p>
+                      <p className={style.gradeEmpty}>{t('card.noRatings')}</p>
                     )}
-                    <p className={typography.mobileCaption}>{t('card.reviewCount', { count: borschComents.length })}</p>
                 </div>
+                <p className={style.reviewCount}>{t('card.reviewCount', { count: borschComents.length })}</p>
+
+                <div className={style.boxBtn}>
+                    <Link to={`/borsch/${id}/evaluations`} className={style.btn}>{t('card.rate')}</Link>
+                    <RouteButton place={place} label={t('card.routeLong')} className={style.routeBtn}/>
+                </div>
+            </section>
+
+            <section className={style.criteria}>
+                <h2 className={style.sectionTitle}>{t('borsch.criteria')}</h2>
                 <div className={style.gradesFlex}>
                     <ProgressLine title={t('rate.meat')} value={borschOne.rating_meat} icon={IconMeat}/>
                     <ProgressLine title={t('rate.beetroot')} value={borschOne.rating_beet} icon={IconBeetroot}/>
@@ -260,46 +246,47 @@ export const BorschPage=({ borschId: propId })=>{
                     <ProgressLine title={t('rate.salt')} value={borschOne.rating_salt} icon={IconSalt}/>
                     <ProgressLine title={t('rate.aftertaste')} value={borschOne.rating_aftertaste} icon={IconAftertaste}/>
                     <ProgressLine title={t('rate.serving')} value={borschOne.rating_serving} icon={IconServing}/>
-                </div> 
-                <div className={style.boxBtn}>
-                    <RouteButton place={place} label={t('card.routeLong')} className={style.routeBtn}/>
-                    <Link to={`/borsch/${id}/evaluations`} className={style.btn}>{t('card.rate')}</Link>
                 </div>
-                <div className={style.comentsBox}>
+            </section>
+
+            {paginatedComments.length > 0 && (
+            <section className={style.comentsBox}>
+                <h2 className={style.sectionTitle}>{t('borsch.reviewsTitle')}</h2>
                    { paginatedComments.map((item, index) => (
-                        <div key={index}>
+                        <article key={index} className={style.review}>
                             <div className={style.avatarBox}>
                                 <div className={style.photoBox}>
                                     <img
                                     src={`/${item.photo}`}
-                                    alt={`${item.name}`}
+                                    alt=""
                                     className={style.photoStyle}
                                     />
                                 </div>
                                 <div className={style.textWrapp}>
                                     <div className={style.textBox}>
-                                        <h4 className={style.textAvatar}>{item.name}</h4>
+                                        <h3 className={style.textAvatar}>{item.name}</h3>
                                         <p className={style.textDate}>{item.created_at}</p>
                                     </div>
-                                    <RatingIconsSvg overall_rating={item.overall_rating} size={15}/>
+                                    <RatingIconsSvg overall_rating={item.overall_rating} size={14}/>
                                 </div>
                             </div>
-                            <p>{item.messege}</p>
-                        </div>
-                    ))} 
+                            <p className={style.reviewText}>{item.messege}</p>
+                        </article>
+                    ))}
                     {totalPages > 1 && (
                         <div className={style.paginationControls}>
-                            <button onClick={handlePrev} disabled={currentPage === 0} >
-                                <IconArrowLeft/>
-                            </button>                            
-                            <button onClick={handleNext} disabled={currentPage === totalPages - 1}>
-                                <IconArrowRight/>
+                            <button onClick={handlePrev} disabled={currentPage === 0} aria-label={t('borsch.prevReviews')}>
+                                <IconChevronLeft/>
+                            </button>
+                            <span className={style.pageNum}>{currentPage + 1}/{totalPages}</span>
+                            <button onClick={handleNext} disabled={currentPage === totalPages - 1} aria-label={t('borsch.nextReviews')}>
+                                <IconChevronRight/>
                             </button>
                         </div>
-                    )}                 
-                </div>                          
-            </div>  
-        </div>                     
-    </div>   
-  )   
+                    )}
+            </section>
+            )}
+        </div>
+    </div>
+  )
 }
