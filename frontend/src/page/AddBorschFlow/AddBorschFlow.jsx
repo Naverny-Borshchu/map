@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QuestFlow, XP_PER_STEP } from '../../components/QuestFlow';
+import { EmptyState } from '../../components/EmptyState';
 import { hasTenPointScale } from '../../variant';
 import { tasteSteps } from '../../components/QuestFlow/answers';
 import { placesAPI, borschAPI, commentsAPI } from '../../api';
@@ -211,10 +212,11 @@ export const AddBorschFlow = () => {
   if (!flowContext?.place) {
     return (
       <div className={style.fallback}>
-        <p>{t('flow.noPlace')}</p>
-        <button type="button" className={style.fallbackBtn} onClick={() => navigate('/add-borsch')}>
-          {t('flow.pickPlace')}
-        </button>
+        <EmptyState
+          art="find"
+          title={t('flow.noPlace')}
+          action={{ onClick: () => navigate('/add-borsch'), label: t('flow.pickPlace') }}
+        />
       </div>
     );
   }
