@@ -201,6 +201,10 @@
         border-color: var(--nb-borshch);
         box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.12);
     }
+    // the red border and ring are the focus indicator; no second outline
+    &:focus-visible {
+        outline: none;
+    }
 }
 
 // A sheet or dialog panel.

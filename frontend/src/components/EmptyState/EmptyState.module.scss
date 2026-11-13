@@ -26,6 +26,8 @@
   width: 170px;
   height: auto;
   margin-bottom: 4px;
+  // the scene illustrations are not cut out: round their corners like cards
+  border-radius: var(--radius-md);
 }
 
 .title {
