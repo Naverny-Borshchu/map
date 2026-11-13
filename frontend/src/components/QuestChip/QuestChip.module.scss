@@ -1,7 +1,7 @@
 @use "../../styles/mixin_font.scss" as *;
 
 // Sits over the map as a floating call to action. Beet, because on this map
-// beet means "unscouted" — the chip and the pins it sends you to match.
+// beet means "unscouted": the chip and the pins it sends you to match.
 .chip {
   /* fixed, not absolute: the nav is fixed, and on iOS the two disagree. While
      Safari shows its bottom bar, a fixed inset:0 ancestor still reaches behind
@@ -23,19 +23,19 @@
   padding: 9px 16px 9px 12px;
   border: none;
   border-radius: 999px;
-  background: #a71e5b;
-  color: #fff;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  background: var(--nb-beet);
+  color: #FFFAF5;
+  box-shadow: 0 4px 0 #5E0A22, 0 10px 24px rgba(134, 1, 48, 0.28);
   cursor: pointer;
   text-align: left;
 }
 
 .chip:hover {
-  background: #93194f;
+  background: #9A0A3A;
 }
 
 .icon {
-  font-size: 20px;
+  display: inline-flex;
   line-height: 1;
   flex: 0 0 auto;
 }
@@ -84,17 +84,15 @@
   width: auto;
   align-self: stretch;
   max-width: none;
-  border-radius: 12px;
-  padding: 7px 10px;
+  border-radius: 14px;
+  padding: 8px 10px;
   gap: 8px;
   box-shadow: none;
   // the badge is pointer-events: none so the map stays draggable around it
   pointer-events: auto;
 }
 
-.inline .icon {
-  font-size: 15px;
-}
+
 
 .inline .text strong {
   font-size: 12px;

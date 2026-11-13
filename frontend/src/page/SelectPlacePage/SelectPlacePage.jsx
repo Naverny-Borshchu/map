@@ -3,12 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { defaultTheme } from "../../components/Map/Theme";
 import { Button } from "../../components/Button";
-import { BtnNavigate } from "../../components/BtnNavigate/BtnNavigate";
+import { PageHeader } from "../../components/PageHeader";
+import { EmptyState } from "../../components/EmptyState";
+import { ratingPinIcon } from "../../components/Map/markerIcons";
 import { useT } from "../../i18n";
 import style from "./SelectPlacePage.module.scss";
 const containerStyle = {
   width: "100%",
-  height: "450px",
+  height: "100%",
 };
 
 const defoultOptions = {
@@ -65,8 +67,8 @@ export const SelectPlacePage = () => {
   if (!state) {
     return (
       <div className={style.containerPage}>
-        <BtnNavigate />
-        <p>Дані відсутні. Поверніться назад і виберіть заклад.</p>
+        <PageHeader back kicker={t('add.kicker')} title={t('add.title')} />
+        <EmptyState art="find" title={t('add.noData')} action={{ to: '/add-borsch', label: t('flow.pickPlace') }} />
       </div>
     );
   }
@@ -75,7 +77,7 @@ export const SelectPlacePage = () => {
 
   return (
     <div className={style.containerPage}>
-      <BtnNavigate />
+      <PageHeader back kicker={t('add.kicker')} title={t('add.confirmTitle')} />
       <div className={style.container}>
         {/* Editable: Google's answer is sometimes the previous tenant, and the
             person standing in the door knows better than the API does. */}
@@ -90,15 +92,16 @@ export const SelectPlacePage = () => {
           />
         </label>
         <div className={style.card}>
-          <span className={style.label}>Місто</span>
+          <span className={style.label}>{t('add.city')}</span>
           <p className={style.value}>{city}</p>
         </div>
         <div className={style.card}>
-          <span className={style.label}>Вулиця</span>
+          <span className={style.label}>{t('add.street')}</span>
           <p className={style.value}>{street}</p>
         </div>
       </div>
-      <div className={style.container}>
+      <div className={`${style.container} ${style.mapBlock}`}>
+      <div className={style.mapBox}>
       {isLoaded ? (
               <GoogleMap
                 mapContainerStyle={containerStyle}
@@ -110,29 +113,18 @@ export const SelectPlacePage = () => {
               >
                 <Marker
                   position={place.location}
-                  icon={{
-                    url: `${process.env.PUBLIC_URL}/marker.png`,
-                    scaledSize: new window.google.maps.Size(140, 40),
-                    labelOrigin: new window.google.maps.Point(90, 20), 
-                  }}
-                  label={{
-                    text:
-                      place.name.length > 10
-                        ? place.name.slice(0, 12) + " ..."
-                        : place.name,
-                    color: "#1A1A1A",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                  }}
+                  icon={ratingPinIcon('', { height: 54, selected: true })}
+                  title={venueName || place.name}
                 />
               </GoogleMap>
             ) : (
-              <p>Завантаження карти...</p>
+              <p className={style.mapLoading}>{t('map.loadingMap')}</p>
             )}
+      </div>
             <div className={style.btn}>
               <Button
                 type="button"
-                name="Підтвердити адресу"
+                name={t('add.confirm')}
                 onClick={handleSelect}
               />
             </div>

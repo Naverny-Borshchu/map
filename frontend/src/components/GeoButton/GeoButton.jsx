@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { hasSeenIntro, REQUEST_LOCATION_EVENT } from "../Onboarding";
-import { ReactComponent as IconGeoActive } from './geoActive.svg';
+import { IconLocate, IconMapPin } from '../Icons';
 import { Modal } from '../Modal/Modal';
 import { ButtonVertion } from "../../components/ButtonVersion";
 import { ReactComponent as IconClose } from './close.svg';
@@ -193,8 +193,8 @@ export const GeoButton = () => {
 
   return (
     <div className={`nb-geo ${style.container || ''}`.trim()}>
-      <button type="button" className={style.btnGeo} onClick={() => runGeolocation(isMobile)}>
-        <IconGeoActive  />
+      <button type="button" className={style.btnGeo} onClick={() => runGeolocation(isMobile)} aria-label={t('map.nearby')}>
+        <IconLocate size={20} className={style.iconGeo} />
         <span className={style.btnGeoText}>{t('map.nearby')}</span>
       </button>
 
@@ -204,8 +204,9 @@ export const GeoButton = () => {
             <div className={style.btnClose}>
               <ButtonVertion type="button" onClick={closeMessage} icon={IconClose} label={t('card.close')} />
             </div>
+            <span className={style.geoArt} aria-hidden="true"><IconMapPin size={30} /></span>
             <h4 className={style.error_title}>{geoMessage.title}</h4>
-            <span className={style.error_sub_titl}>{geoMessage.sub_title}</span>
+            <span className={style.error_sub_title}>{geoMessage.sub_title}</span>
             <button
               type="button"
               className={style.manualBtn}

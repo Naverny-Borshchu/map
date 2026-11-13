@@ -1,16 +1,29 @@
+@use "../../styles/brand.scss" as *;
+
 .actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Unliked the button is just the themed surface (white on light, near-black on
-   dark) with a neutral heart; liking turns the whole button red. */
-.like svg [stroke] {
-  stroke: currentColor;
+.btn {
+  @include iconBtn(44px);
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.like {
+  color: var(--nb-red-text);
 }
 
 .liked {
-  background-color: var(--color-akcent-btn) !important;
-  color: #fff;
+  color: #FFFAF5;
+  background: var(--nb-borshch);
+  @media (hover: hover) {
+    &:hover {
+      color: #FFFAF5;
+    }
+  }
 }

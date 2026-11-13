@@ -4,6 +4,7 @@ import { usePlaces } from '../../context/PlacesContext';
 import { useFilters } from '../../context/FiltersContext';
 import { distanceMeters, formatDistance, getUserLocation } from '../../utils/distance';
 import { useT } from '../../i18n';
+import { IconSearch } from '../Icons';
 import style from './QuestChip.module.scss';
 
 /**
@@ -72,7 +73,7 @@ export const QuestChip = ({ inline = false }) => {
       className={`${inline ? style.inline : style.chip} nb-questchip`}
       onClick={go}
     >
-      <span className={style.icon} aria-hidden="true">🔍</span>
+      <span className={style.icon} aria-hidden="true"><IconSearch size={inline ? 16 : 20} /></span>
       <span className={style.text}>
         <strong>
           {virginCount
