@@ -28,7 +28,7 @@ html[data-variant='map1'] {
   // carries it, and Layout overwrites this with the measured height a moment
   // later. A bare 78px left every floating control 8px under the nav on a
   // notched phone until that measurement landed.
-  --nb-nav-h: calc(78px + var(--nb-safe-b, 0px));
+  --nb-nav-h: calc(66px + var(--nb-safe-b, 0px));
   // The height Safari is actually showing right now, published by Layout.
   // 100dvh is the fallback for the first paint and for browsers without JS.
   --nb-vh: 100dvh;
@@ -39,7 +39,7 @@ html[data-variant='map1'] {
   // --nb-nav-h already contains the safe-area inset, whether seeded or measured,
   // so nothing below adds --nb-safe-b a second time.
   --nb-float-1: calc(var(--nb-nav-h) + 16px);
-  --nb-float-2: calc(var(--nb-nav-h) + 72px);
+  --nb-float-2: calc(var(--nb-nav-h) + 76px);
 
   @media (max-width: 1279.98px) {
     height: 100%;
@@ -47,10 +47,10 @@ html[data-variant='map1'] {
     body {
       height: 100%;
       overscroll-behavior: none;
-      // whatever shows in a transient gap should read as part of the chrome;
-      // the solid surface, because --surface-soft is translucent and would let
+      // whatever shows in a transient gap should read as part of the page:
+      // the solid cream, because --surface-soft is translucent and would let
       // the black canvas through exactly where we are trying to hide it
-      background-color: var(--surface);
+      background-color: var(--color-bg-grey);
     }
 
     // ------------------------------------------------------------------
@@ -137,8 +137,8 @@ html[data-variant='map1'] {
 
       background-color: var(--surface);
       border: none;
-      border-radius: 26px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--nb-shadow-float);
       padding: 0;
     }
 
@@ -151,9 +151,9 @@ html[data-variant='map1'] {
       width: 100%;
       height: 48px;
       border: none;
-      border-radius: 26px;
+      border-radius: var(--radius-pill);
       background-color: transparent;
-      padding: 8px 40px 8px 48px;
+      padding: 8px 44px 8px 48px;
 
       &:focus,
       &:hover {
@@ -172,13 +172,13 @@ html[data-variant='map1'] {
 
       width: auto;
       max-width: 62vw;
-      height: 36px;
-      padding: 0 14px;
+      height: 40px;
+      padding: 0 16px 0 12px;
 
       border: none;
-      border-radius: 18px;
+      border-radius: var(--radius-pill);
       background-color: var(--surface);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      box-shadow: var(--nb-shadow-float);
 
       display: inline-flex;
       align-items: center;
@@ -193,7 +193,8 @@ html[data-variant='map1'] {
       }
 
       span {
-        font-size: 14px;
+        font-size: 15px;
+        font-weight: 700;
         line-height: 1;
         white-space: nowrap;
         overflow: hidden;
@@ -211,12 +212,12 @@ html[data-variant='map1'] {
       > button {
         pointer-events: auto;
         flex: 0 0 auto;
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border: none;
-        border-radius: 18px;
+        border-radius: 50%;
         background-color: var(--surface);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        box-shadow: var(--nb-shadow-float);
       }
     }
 
@@ -227,17 +228,17 @@ html[data-variant='map1'] {
     .nb-searchrow .nb-geo {
       position: absolute;
       top: calc(100% + 8px);
-      right: 44px; // 36px filter button + 8px gap
+      right: 48px; // 40px filter button + 8px gap
       bottom: auto;
       z-index: 111;
 
       button {
-        width: 36px;
-        height: 36px;
-        border-radius: 18px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        box-shadow: var(--nb-shadow-float);
 
-        svg { width: 18px; height: 18px; }
+        svg { width: 20px; height: 20px; }
       }
     }
 
@@ -255,13 +256,13 @@ html[data-variant='map1'] {
       pointer-events: auto;
 
       button {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
         padding: 0;
         border: none;
         border-radius: 50%;
         background-color: var(--surface);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+        box-shadow: var(--nb-shadow-float);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -280,9 +281,9 @@ html[data-variant='map1'] {
       z-index: 115;
 
       background-color: var(--surface);
-      border-radius: 20px;
+      border-radius: var(--radius-pill);
       padding: 3px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--nb-shadow-float);
 
       a {
         width: auto;
@@ -310,8 +311,12 @@ html[data-variant='map1'] {
     }
 
     // ------------------------------------------------------------------
-    //  4. Bottom nav — floating, and never under Chrome's UI again
+    //  4. Bottom bar: floating, and never under Chrome's UI again
     // ------------------------------------------------------------------
+    // Its look (three-column grid, the centred add pill, the tabs) lives in
+    // Layout.module.scss; here only what the full-screen map needs: pinned to
+    // the visual viewport, translucent cream over the map, the home-indicator
+    // inset carried inside so --nb-nav-h measures all of it.
     .nb-bottomnav {
       position: fixed;
       left: 0;
@@ -320,53 +325,13 @@ html[data-variant='map1'] {
       z-index: 130;
 
       margin: 0;
-      padding: 6px 12px calc(6px + var(--nb-safe-b));
+      padding: 8px 12px calc(8px + var(--nb-safe-b));
 
       background-color: var(--surface-soft);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(0, 0, 0, 0.07);
-      box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.1);
-
-      // tighter than production so the map keeps more of the screen
-      .nb-navicon {
-        width: 26px;
-        height: 26px;
-      }
-
-      .nb-navtext {
-        /* primary navigation should not be the smallest text on screen */
-        font-size: 12px;
-        line-height: 1.2;
-      }
-
-      .nb-navlink {
-        padding: 6px 8px;
-        gap: 3px;
-      }
-
-      // Рівні слоти замість space-between: пункти різної ширини («Список»,
-      // кругла «+», «Ви», «Помилка») давали проміжки 105/96/102 px, і ряд
-      // виглядав розсипаним. Тепер центри стоять через однаковий крок.
-      nav li {
-        flex: 1 1 0;
-        display: flex;
-        justify-content: center;
-        // без цього flex розтягує кнопку «+» на висоту слота і коло стає еліпсом
-        align-items: flex-start;
-      }
-
-      // central "add borsch" button, slightly enlarged as the primary action
-      // (44px stock → 56px; 1.5x/66px read as too heavy)
-      .nb-addbtn {
-        padding: 12px;
-        margin-top: -16px;
-
-        svg {
-          width: 32px;
-          height: 32px;
-        }
-      }
+      backdrop-filter: saturate(1.4) blur(14px);
+      -webkit-backdrop-filter: saturate(1.4) blur(14px);
+      border-top: 1px solid var(--nb-line);
+      box-shadow: 0 -6px 20px rgba(134, 1, 48, 0.08);
     }
 
     // ------------------------------------------------------------------

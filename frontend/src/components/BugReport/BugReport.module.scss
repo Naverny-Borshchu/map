@@ -1,49 +1,105 @@
 @use "../../styles/mixin_adaptiv.scss" as *;
 @use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
 
-/* Кнопка живе в тому самому <ul>, що й посилання навігації, тож і виглядати
-   має так само: на телефоні — іконка з підписом під нею, на десктопі — рядок.
-   Геометрію взято з .link у Layout.module.scss; повторюємо її тут, бо це
-   <button>, а не NavLink, і чужий модуль стилів йому не видно. */
+/* The trigger has three looks, one per place it lives (NAV-203). */
 .trigger {
-    transition: color var(--transition-fast);
-    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
     border: none;
     background: none;
     cursor: pointer;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    color: var(--color-text-layout);
-    @include body;
-    @include respond(desktop) {
-        flex-direction: row;
-        width: 100%;
-        justify-content: flex-start;
-    }
+    text-align: left;
+    color: var(--color-text-btn);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
 }
-.trigger:hover {
-    color: var(--color-text-active);
+
+.iconWrap {
+    flex: none;
+    display: grid;
+    place-items: center;
+    color: var(--nb-red-text);
 }
 
 .icon {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+}
+
+.words {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .label {
-    white-space: nowrap;
+    font-family: var(--font-family-main);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.3;
 }
 
-/* Modal дає лише центрування — фон, поля і радіус кожен лист малює собі сам
-   (див. .cardFilters у CitySelect). */
+.sub {
+    @include footnote;
+    color: var(--nb-ink-2);
+}
+
+/* profile list row: same rhythm as ButtonProfile */
+.row {
+    min-height: 52px;
+    padding: 10px 4px;
+    .iconWrap {
+        width: 24px;
+    }
+}
+
+/* Help page: a card */
+.card {
+    @include card(18px);
+    min-height: 76px;
+    .iconWrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--nb-smetana);
+    }
+    .label {
+        font-weight: 700;
+    }
+    @media (hover: hover) {
+        &:hover .label {
+            color: var(--nb-red-text);
+        }
+    }
+}
+
+/* desktop sidebar: a quiet link under the socials */
+.link {
+    width: auto;
+    padding: 6px 0;
+    gap: 8px;
+    color: inherit;
+    .icon {
+        width: 18px;
+        height: 18px;
+    }
+    .label {
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    &:hover .label {
+        color: var(--nb-red-text);
+    }
+}
+
+/* Modal only centres; each sheet draws its own panel. */
 .sheet {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    background-color: var(--color-text-btn-active);
-    border-radius: var(--radius-lg);
+    @include sheet;
     width: min(92vw, 440px);
     max-height: 90dvh;
     overflow-y: auto;
@@ -53,79 +109,51 @@
     gap: 12px;
 }
 
+.art {
+    width: 200px;
+    height: auto;
+    align-self: center;
+    margin: -6px 0 2px;
+}
+
 .title {
     margin: 0;
+    @include displayM;
     color: var(--color-text-btn);
-    @include mobileH4;
 }
 
 .hint {
     margin: 0;
-    color: var(--color-text-main);
+    color: var(--nb-ink-2);
     @include footnote;
 }
 
 .input {
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 120px;
+    @include field;
+    min-height: 130px;
     resize: vertical;
-    padding: 12px;
-    border: 1px solid var(--color-border-input);
-    border-radius: var(--radius-sm);
-    background-color: var(--color-text-btn-active);
-    color: var(--color-text-btn);
-    @include body;
-}
-.input:focus {
-    outline: none;
-    border-color: var(--color-input-active);
-}
-.input::placeholder {
-    color: var(--color-input-search);
 }
 
 .fallbackLink {
-    color: var(--color-text-active);
+    color: var(--nb-red-text);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
     @include footnote;
 }
 
 .actions {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin-top: 4px;
-}
-
-.primary,
-.ghost {
-    border: none;
-    cursor: pointer;
-    padding: 12px 20px;
-    border-radius: var(--radius-pill);
-    transition: background-color var(--transition-fast), color var(--transition-fast);
-    @include button;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
 }
 
 .primary {
-    background-color: var(--color-add-btn);
-    color: var(--color-text-btn);
-}
-.primary:hover:not(:disabled) {
-    background-color: var(--color-add-btn-active);
-}
-/* Кнопка лишається на місці й вимкненою, поки скарга коротша за кілька слів:
-   зникла кнопка змушує гадати, що не так. */
-.primary:disabled {
-    background-color: var(--color-grey-400);
-    color: var(--color-text-grade);
-    cursor: not-allowed;
+    @include btnPrimary(sm);
 }
 
 .ghost {
-    background-color: transparent;
-    color: var(--color-text-main);
-}
-.ghost:hover {
-    color: var(--color-text-btn);
+    @include btnText;
 }
