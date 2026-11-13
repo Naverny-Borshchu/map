@@ -102,7 +102,7 @@ export const AddBorschFlow = () => {
         chips: ['chip.borsch', 'chip.borschRed', 'chip.borschGreen', 'chip.borschPampushky'],
       },
       { type: 'number', key: 'price', i18n: 'flow.qPrice', hint: 'flow.qPriceHint', unit: priceChips.unit, chips: priceChips.chips, min: 0 },
-      { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: [250, 300, 350, 400, 500], min: 0 },
+      { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: [250, 280, 350, 400, 500], min: 0 },
       { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
       ...(needsSignIn
         ? [{ type: 'signin', key: 'signin', i18n: 'flow.signinTitle', hint: 'flow.signinHint' }]

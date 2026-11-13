@@ -40,6 +40,13 @@
   :global([class*="FotoBorschGallary_skeleton"]) {
     border-radius: 0;
   }
+  // the cream sheet overlaps the photo's last 22px on phones
+  :global([class*="FotoBorschGallary_dots"]) {
+    bottom: 36px;
+    @include respond(desktop) {
+      bottom: 14px;
+    }
+  }
 }
 
 .heroEmpty {

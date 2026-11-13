@@ -1,4 +1,8 @@
 .Backdrop {
+    /* the same layer as the overlay (it comes first in the DOM, so it stays
+       under it): without a z-index the dim stopped at the desktop top bar,
+       the sidebar and the filter row, which all sit at z-index 99..999 */
+    z-index: 1000;
     position: fixed;
     top: 0;
     left: 0;
@@ -65,4 +69,14 @@
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(calc(14px * var(--nb-move, 1))) scale(calc(1 - 0.02 * var(--nb-move, 1))); }
   to   { opacity: 1; transform: none; }
+}
+
+/* A sheet sized as min(100%, Npx) inside a shrink-to-fit box resolves its
+   100% against the box's max-content width, which can be wider than the cap:
+   the box then centres, the sheet does not (the desktop filter sheet sat
+   64px left of centre). Centring the content inside the box closes that. */
+.Modal > div,
+.ModalFilters > div {
+    display: flex;
+    justify-content: center;
 }

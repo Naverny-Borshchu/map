@@ -675,25 +675,27 @@
 }
 
 .cta {
+  /* The landing's pill on a coloured section: cream with red type, standing
+     on a deep underside. */
   width: 100%;
   max-width: 460px;
   height: 56px;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   background: #FFFAF5;
-  color: color-mix(in srgb, var(--hue) 72%, #000 28%);
-  font-size: 17px;
+  color: var(--nb-borshch);
+  font-family: var(--font-family-main);
+  font-size: 18px;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.2);
-  transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.15s ease;
+  box-shadow: 0 5px 0 rgba(60, 0, 18, 0.45);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
 }
 
 .cta:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(calc(4px * var(--nb-move, 1)));
+  box-shadow: 0 1px 0 rgba(60, 0, 18, 0.45);
 }
 
 .cta:disabled {
@@ -748,10 +750,12 @@
   .card { min-height: 68px; }
 }
 
+/* Gentle mode (reduced motion, rule of 13.11.2026): steps still fade in and
+   out (their slide distance is --nb-move, 0 here), colours still change, the
+   spinner still turns. Only the bounces go. Switching everything off read as
+   a dead screen on Andrii's desktop, where «reduce motion» is on. */
 @media (prefers-reduced-motion: reduce) {
-  .stage, .leaving, .back.leaving, .piece, .xp, .xpBig, .praise, .ctaReady,
-  .segNow, .blob1, .blob2, .blob3, .cardOn, .dotOn, .spinner { animation: none; }
-  .flow, .segment, .cta, .card, .chip, .dot { transition: none; }
+  .cardOn, .dotOn, .xp, .xpBig, .ctaReady { animation: none; }
 }
 
 /* the photo types the server takes (HEIC, JPG, PNG) */

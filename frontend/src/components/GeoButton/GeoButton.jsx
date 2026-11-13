@@ -131,9 +131,7 @@ export const GeoButton = () => {
 
       if (code === 1 || permissionState === "denied") {
         title = t('geo.blockedTitle');
-        sub_title = isMobile
-          ? "Дозвольте геодані для цього сайту: натисніть іконку замка біля адреси → Дозволи → Геодані. Якщо сайт відкрито всередині іншого застосунку (Telegram тощо) — відкрийте його в Chrome/Safari."
-          : "Дозвольте геодані для цього сайту в налаштуваннях браузера (іконка замка біля адреси).";
+        sub_title = isMobile ? t('geo.hintDeniedMobile') : t('geo.hintDenied');
       } else if (code === 3) {
         title = t('geo.failedTimeout');
         sub_title = t('geo.hintTimeout');
@@ -144,7 +142,8 @@ export const GeoButton = () => {
 
       setGeoMessage({
         title,
-        sub_title: `${sub_title} (код: ${code != null ? code : "?"}${permissionState ? ", дозвіл: " + permissionState : ""})`,
+        // the code and permission state stay: they are what a bug report needs
+        sub_title: `${sub_title} (${t('geo.code')}: ${code != null ? code : "?"}${permissionState ? `, ${t('geo.permission')}: ${permissionState}` : ""})`,
         type: "error",
       });
       localStorage.removeItem("user_location");

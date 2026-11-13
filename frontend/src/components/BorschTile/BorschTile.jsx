@@ -1,6 +1,6 @@
 import { FotoBorschGallary } from '../FotoBorschGallary';
 import { RatingIconsSvg } from '../RatingIconsSvg';
-import { IconHeart, IconShare, IconMapPin } from '../Icons';
+import { IconHeart, IconShare, IconMapPin, IconBowl } from '../Icons';
 import { shareBorsch } from '../../utils/share';
 import { priceLabel } from '../../utils/price';
 import { useT, useDishLabel, useVenueLabel } from '../../i18n';
@@ -21,7 +21,11 @@ export const BorschTile = ({ borsch, venueName, scoreLabel, liked, onToggleLike,
   return (
     <article className={style.card}>
       <div className={style.photo}>
-        <FotoBorschGallary images={borsch.photo_urls} height="100%" />
+        {borsch.photo_urls?.length ? (
+          <FotoBorschGallary images={borsch.photo_urls} height="100%" />
+        ) : (
+          <span className={style.noPhoto} aria-hidden="true"><IconBowl size={44} /></span>
+        )}
         <div className={style.actions}>
           <button type="button" className={style.round} onClick={() => shareBorsch(borsch.id_borsch, t)} aria-label={t('card.share')}>
             <IconShare size={20} />

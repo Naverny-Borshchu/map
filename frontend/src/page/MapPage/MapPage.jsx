@@ -181,9 +181,24 @@ export const MapPage = ( )=> {
       </>
       }
       {isDesktop && mode===MODES.SET_MARKER &&
-      <div div className={style.boxGeoDesctop}>
+      <div className={style.boxGeoDesctop}>
         <Autocomplete isLoaded={isLoaded} onSelect={onPlaceSelect} onPickPlace={setPickedPlace} center={center}/>
-      </div>      
+        {/* the same card as on phones: what to do here, and a way out */}
+        <div className={`${style.addHint} ${style.addHintDesktop}`}>
+          <span className={style.addHintIcon} aria-hidden="true"><IconSpoonPlus size={24} /></span>
+          <div className={style.addHintText}>
+            <strong>{t('add.title')}</strong>
+            <span>{t('add.hintVenue')}</span>
+          </div>
+          <button
+            type="button"
+            className={style.addHintCancel}
+            onClick={() => navigate('/')}
+          >
+            {t('add.cancel')}
+          </button>
+        </div>
+      </div>
       }
       {mode===MODES.MOVE &&
       <>

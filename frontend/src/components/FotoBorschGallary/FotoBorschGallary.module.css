@@ -95,6 +95,4 @@
   transform: scale(1.25);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .image { transition: none; }
-}
+/* reduced motion keeps this fade: it is a fade, not movement */

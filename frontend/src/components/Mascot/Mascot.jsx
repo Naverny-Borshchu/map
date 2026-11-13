@@ -33,9 +33,9 @@ export const Mascot = ({ mood = 'idle', size = 96, className = '' }) => {
     <div className={`${style.wrap} ${style[mood] || ''} ${className}`} aria-hidden="true">
       <svg width={size} height={size} viewBox="0 0 96 96" className={style.svg}>
         {/* leaves */}
-        <path d="M48 22 C46 10 38 6 32 6 c2 8 6 14 14 17" fill="#5D7E52" />
-        <path d="M48 22 C50 10 58 6 64 6 c-2 8 -6 14 -14 17" fill="#6E9161" />
-        <path d="M48 24 L48 14" stroke="#5D7E52" strokeWidth="3" strokeLinecap="round" />
+        <path d="M48 22 C46 10 38 6 32 6 c2 8 6 14 14 17" fill="#2E9E48" />
+        <path d="M48 22 C50 10 58 6 64 6 c-2 8 -6 14 -14 17" fill="#40D05F" />
+        <path d="M48 24 L48 14" stroke="#2E9E48" strokeWidth="3" strokeLinecap="round" />
         {/* body */}
         <path
           d="M48 24 C30 24 20 38 20 52 C20 72 34 88 48 88 C62 88 76 72 76 52 C76 38 66 24 48 24 Z"

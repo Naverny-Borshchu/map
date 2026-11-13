@@ -102,7 +102,7 @@ export const List = () => {
           <BorschTile
             key={el.id_borsch}
             borsch={{ ...el, overall_rating: el.my_overall_rating ?? el.overall_rating }}
-            venueName={nameBorsch(el.place_id)}
+            venueName={nameBorsch(el.place_id) || el.place_name}
             scoreLabel={t('fav.myScore')}
             liked={isFavorite(el.id_borsch)}
             onToggleLike={() => handleToggleLike(el.id_borsch)}

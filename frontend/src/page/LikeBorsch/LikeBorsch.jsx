@@ -66,7 +66,7 @@ export const LikeBorsch=()=>{
               <BorschTile
                 key={el.id_borsch}
                 borsch={el}
-                venueName={nameBorsch(el.place_id)}
+                venueName={nameBorsch(el.place_id) || el.place_name}
                 scoreLabel={t('card.rating')}
                 liked
                 onToggleLike={() => handleUnlike(el.id_borsch)}
