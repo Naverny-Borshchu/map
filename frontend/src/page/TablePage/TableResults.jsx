@@ -178,7 +178,7 @@ export const TableResults = ({ code, table, guestToken = null }) => {
                 <span className={style.badge}>{t('table.numberShort', { n: b.position })}</span>
                 <div className={style.cardWords}>
                   <h3 className={style.cardName}>{borschTitle(b, t, dishLabel)}</h3>
-                  <p className={style.cardMeta}>{t('table.ratersLabel', { count: b.rater_count || 0 })}</p>
+                  <p className={style.cardMeta}>{t('table.ratersCount', { count: b.rater_count || 0 })}</p>
                 </div>
                 <p className={style.cardScore}>{formatAverage(avg.overall_rating) || '0'}</p>
               </div>

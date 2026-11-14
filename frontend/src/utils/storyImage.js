@@ -189,15 +189,32 @@ export const drawStory = (ctx, content, logo = null) => {
 
   // the footer is fixed to the bottom; the rows and the divisive line share what is left
   const footerTop = H - 190;
-  const divH = content.divisive ? 210 : 0;
-  const rowH = 128;
+  const divBorsch = content.divisive && content.divisive.borsch;
+  const divH = content.divisive ? (divBorsch ? 270 : 210) : 0;
   y += 48;
-  const room = footerTop - y - divH;
-  const fits = Math.max(0, Math.floor(room / rowH));
-  const shown = content.rows.slice(0, Math.min(fits, content.rows.length));
+  // A long dish name takes two lines when every borshch still fits that way;
+  // otherwise one line each: all three of a tasting matter more than full names.
+  const layout = (maxLines) => content.rows.map((row) => {
+    ctx.font = TEXT(64, 800);
+    const valueW = ctx.measureText(row.value || '').width;
+    ctx.font = WORDS(46);
+    const lines = wrap(ctx, row.name, IW - 150 - valueW - 24, maxLines);
+    return { ...row, lines, h: 128 + (lines.length - 1) * 52 };
+  });
+  let room = footerTop - y - divH;
+  let rows = layout(2);
+  if (rows.reduce((sum, r) => sum + r.h, 0) > room) rows = layout(1);
+  const shown = [];
+  for (const row of rows) {
+    if (row.h > room) break;
+    shown.push(row);
+    room -= row.h;
+  }
+  // the «і ще N» line needs its own 40 px
+  if (shown.length < rows.length && room < 40 && shown.length) room += shown.pop().h;
   const hidden = content.rows.length - shown.length;
-  shown.forEach((row, i) => {
-    const top = y + i * rowH;
+  shown.forEach((row) => {
+    const top = y;
     // number badge
     ctx.fillStyle = 'rgba(255, 250, 245, 0.18)';
     roundRect(ctx, X, top, 112, 72, 36);
@@ -209,24 +226,24 @@ export const drawStory = (ctx, content, logo = null) => {
     ctx.textAlign = 'right';
     ctx.font = TEXT(64, 800);
     ctx.fillText(row.value || '', X + IW, top + 58);
-    const valueW = ctx.measureText(row.value || '').width;
     ctx.textAlign = 'left';
-    ctx.font = WORDS(48);
-    ctx.fillText(fit(ctx, row.name, IW - 150 - valueW - 24), X + 140, top + 54);
+    ctx.font = WORDS(46);
+    row.lines.forEach((line, i) => ctx.fillText(line, X + 140, top + 52 + i * 52));
     // meter
+    const meterTop = top + 84 + (row.lines.length - 1) * 52;
     ctx.fillStyle = 'rgba(255, 250, 245, 0.22)';
-    roundRect(ctx, X + 140, top + 84, IW - 140, 14, 7);
+    roundRect(ctx, X + 140, meterTop, IW - 140, 14, 7);
     ctx.fill();
     if (row.percent > 0) {
       const grad = ctx.createLinearGradient(X + 140, 0, X + IW, 0);
       grad.addColorStop(0, '#FC7536');
       grad.addColorStop(1, '#F7D774');
       ctx.fillStyle = grad;
-      roundRect(ctx, X + 140, top + 84, Math.max(14, ((IW - 140) * row.percent) / 100), 14, 7);
+      roundRect(ctx, X + 140, meterTop, Math.max(14, ((IW - 140) * row.percent) / 100), 14, 7);
       ctx.fill();
     }
+    y += row.h;
   });
-  y += shown.length * rowH;
   if (hidden > 0) {
     ctx.fillStyle = 'rgba(255, 250, 245, 0.85)';
     ctx.font = TEXT(32, 600);
@@ -237,7 +254,7 @@ export const drawStory = (ctx, content, logo = null) => {
   if (content.divisive) {
     y += 30;
     ctx.fillStyle = 'rgba(255, 250, 245, 0.12)';
-    roundRect(ctx, X, y, IW, 170, 40);
+    roundRect(ctx, X, y, IW, divH - 40, 40);
     ctx.fill();
     ctx.fillStyle = 'rgba(255, 250, 245, 0.85)';
     ctx.font = TEXT(28, 800);
@@ -246,13 +263,11 @@ export const drawStory = (ctx, content, logo = null) => {
     if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
     ctx.fillStyle = CREAM;
     ctx.font = WORDS(60);
-    const crit = fit(ctx, content.divisive.criterion, IW * 0.5);
-    ctx.fillText(crit, X + 44, y + 128);
-    if (content.divisive.borsch) {
-      const critW = ctx.measureText(crit).width;
+    ctx.fillText(fit(ctx, content.divisive.criterion, IW - 88), X + 44, y + 128);
+    if (divBorsch) {
       ctx.font = TEXT(34, 500);
       ctx.fillStyle = 'rgba(255, 250, 245, 0.9)';
-      ctx.fillText(fit(ctx, content.divisive.borsch, IW - critW - 120), X + 44 + critW + 28, y + 126);
+      ctx.fillText(fit(ctx, divBorsch, IW - 88), X + 44, y + 186);
     }
   }
 

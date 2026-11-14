@@ -303,6 +303,7 @@ describe('the results', () => {
     const first = screen.getByTestId('table-borsch-1');
     expect(within(first).getByRole('heading', { name: 'Червоний' })).toBeInTheDocument();
     expect(within(first).getByText('7.9')).toBeInTheDocument();
+    expect(within(first).getByText('3 людини оцінили')).toBeInTheDocument();
     expect(within(first).getByText('Буряковість')).toBeInTheDocument();
     expect(within(first).getByText('8.2')).toBeInTheDocument();
     expect(within(first).getByText('Тут найбільше розійшлись: Солоність')).toBeInTheDocument();

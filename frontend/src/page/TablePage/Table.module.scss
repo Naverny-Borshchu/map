@@ -280,7 +280,7 @@
   color: #FFFAF5;
 }
 
-// a guest without an account: dashed, so the host sees who could join later
+// a guest without an account: outlined, so the host sees who has no account
 .nameGuest {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px rgba(255, 250, 245, 0.55);
