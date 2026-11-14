@@ -96,7 +96,7 @@ describe('RateFlow account wall', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /Пропустити/i }));
-    await screen.findByText(/Крок 2 з 3/i);
+    await screen.findByText(/Крок 2 \/ 3/i);
     await user.click(screen.getByRole('button', { name: /Пропустити/i }));
     const googleCta = await screen.findByRole('button', { name: /Продовжити з Google/i });
     await user.click(googleCta);
@@ -109,14 +109,14 @@ describe('RateFlow account wall', () => {
   it('adds a sign-in step for a guest, so the save is never attempted anonymously', () => {
     renderFlow();
     // 2 criteria + photo + comment + signin = 5 answerable steps
-    expect(screen.getByText(/КРОК 1 З 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Крок 1 \/ 5/i)).toBeInTheDocument();
   });
 
   it('drops the sign-in step once an account is present', () => {
     signIn();
     renderFlow();
     // 2 criteria + photo + comment = 4, no wall
-    expect(screen.getByText(/КРОК 1 З 4/i)).toBeInTheDocument();
+    expect(screen.getByText(/Крок 1 \/ 4/i)).toBeInTheDocument();
   });
 
   it('does not treat a stale auth flag with no token as signed in', () => {
@@ -124,13 +124,13 @@ describe('RateFlow account wall', () => {
     localStorage.setItem('auth', 'true');
     localStorage.setItem('user', JSON.stringify({ id: 1, username: 'u' }));
     renderFlow();
-    expect(screen.getByText(/КРОК 1 З 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Крок 1 \/ 5/i)).toBeInTheDocument();
   });
 
   it('keeps a session active when only its refresh token remains', () => {
     signInWithRefreshOnly();
     renderFlow();
-    expect(screen.getByText(/КРОК 1 З 4/i)).toBeInTheDocument();
+    expect(screen.getByText(/Крок 1 \/ 4/i)).toBeInTheDocument();
   });
 });
 

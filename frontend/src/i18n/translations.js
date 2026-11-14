@@ -248,7 +248,8 @@ export const translations = {
     'rate.progress': 'Оцінено {done} з {total}',
 
     // --- gamified rating flow
-    'flow.step': 'Крок {n} з {total}',
+    // a slash, not «з»: the label is set in letter-spaced capitals, where «КРОК 1 З 10» reads «1 3 10»
+    'flow.step': 'Крок {n} / {total}',
     'flow.next': 'Далі',
     'flow.back': 'Назад',
     'flow.skip': 'Пропустити',
