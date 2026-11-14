@@ -11,6 +11,9 @@
        // third hand-typed number (was 100px next to the pages' 110px)
        height: 100%;
        padding: calc(var(--nb-topbar-h) + 16px) 16px 16px 16px;
+       // the add-mode search and hint are placed against the map's own box,
+       // not the page (they used to land on top of the sidebar)
+       position: relative;
     }
 }
 
@@ -151,7 +154,7 @@
     text-align: center;
     max-width: 300px;
     @include respond(desktop) {
-       left: 75%;
+       left: 50%;
     }
 }
 
