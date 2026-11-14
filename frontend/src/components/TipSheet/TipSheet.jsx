@@ -9,6 +9,7 @@ import { GoogleAuth } from '../GoogleAuth';
 import { IconClose, IconMapPin } from '../Icons';
 import { useI18n, useVenueLabel, useCityLabel } from '../../i18n';
 import style from './TipSheet.module.scss';
+import { dayMonth, joinMeta } from '../../utils/dates';
 
 /** A tip's venue in the shape the bowl's venue screen speaks. */
 export const tipPlaceForFlow = (p = {}) => ({
@@ -26,7 +27,7 @@ const quote = (note, lang) => (lang === 'en' ? `“${note}”` : `«${note}»`);
 const tipDate = (iso, lang) => {
   const d = iso ? new Date(iso) : null;
   if (!d || Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'long' });
+  return dayMonth(d, lang);
 };
 
 /**
@@ -152,7 +153,7 @@ export const TipSheet = ({ tip: initial, onClose, onChanged, from = 'map' }) => 
       {tip.note && <blockquote className={style.note}>{quote(tip.note, lang)}</blockquote>}
 
       <p className={style.meta}>
-        {[author, when].filter(Boolean).join(' · ')}
+        {joinMeta([author, when])}
       </p>
       <p className={style.status}>
         <span className={`${style.badge} ${tip.status === 'confirmed' ? style.badgeOn : ''}`}>
