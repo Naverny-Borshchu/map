@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { buildReviewList } from './reviewList';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useRequireAuthAction } from '../../hook/useRequireAuthAction';
 import {Link,useParams,useNavigate } from "react-router-dom";
@@ -31,7 +32,7 @@ import { useCityLabel } from "../../i18n";
 
 
 export const BorschPage=({ borschId: propId })=>{
-  const [currentPage, setCurrentPage] = useState(0); const commentsPerPage = 2;
+  const [currentPage, setCurrentPage] = useState(0); const commentsPerPage = 4;
   // Account-scoped and server-backed; see FavoritesContext.
   const { isFavorite, toggle } = useFavorites();
   const { requireAuth } = useRequireAuthAction();
@@ -124,16 +125,8 @@ export const BorschPage=({ borschId: propId })=>{
       );
     }
 
-    // Реальні відгуки з бекенду: імʼя автора приходить у author_username
-    const result = borschComents
-        .filter(comment => comment.messege && comment.messege.trim())
-        .map((comment, index) => ({
-            name: comment.author_username || t('borsch.userFallback', { n: index + 1 }),
-            photo: "avatar.png",
-            overall_rating: comment.overall_rating,
-            created_at: comment.created_at ? String(comment.created_at).slice(0, 10) : '',
-            messege: comment.messege
-        }));
+    // Усі оцінки, нові зверху; текст лише там, де він є (reviewList.js)
+    const result = buildReviewList(borschComents, (n) => t('borsch.userFallback', { n }));
 
 
     const paginatedComments = result.slice(
@@ -279,7 +272,7 @@ export const BorschPage=({ borschId: propId })=>{
                                     <RatingIconsSvg overall_rating={item.overall_rating} size={14}/>
                                 </div>
                             </div>
-                            <p className={style.reviewText}>{item.messege}</p>
+                            {item.messege && <p className={style.reviewText}>{item.messege}</p>}
                         </article>
                     ))}
                     {totalPages > 1 && (
