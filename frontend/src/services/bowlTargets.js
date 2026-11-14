@@ -65,7 +65,10 @@ export const ensureBowlTargets = async (bowl, { places = placesAPI, borsches = b
       created = await borsches.create({ name, place_id: placeId, type_meat: 'other' });
       borschId = requireId(created?.id_borsch ?? created?.id, 'created borsch');
     }
-    updateDraft(bowl.id, { borsch: { ...bowl.borsch, id: borschId } });
+    // `created`: this device put the borshch on the map, so the closing screen
+    // may ask its meat type (the API lets its creator set it once, while it is
+    // «other»). Kept in the draft for a retry after a failed rating.
+    updateDraft(bowl.id, { borsch: { ...bowl.borsch, id: borschId, ...(created ? { created: true } : {}) } });
   }
 
   return { placeId, borschId, borsch: created };
