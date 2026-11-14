@@ -40,7 +40,8 @@ test('a new venue and a new borshch: both created, both ids kept in the bowl', a
   const res = await ensureBowlTargets(bowl, api);
   expect(res).toMatchObject({ placeId: 'p-new', borschId: 'b-new' });
   expect(api.borsches.create).toHaveBeenCalledWith({ name: 'Борщ з квасолею', place_id: 'p-new', type_meat: 'other' });
-  expect(getDraft(bowl.id)).toMatchObject({ place: { id: 'p-new' }, borsch: { id: 'b-new', name: 'Борщ з квасолею' } });
+  // `created`: the closing screen may ask its meat type, also after a retry
+  expect(getDraft(bowl.id)).toMatchObject({ place: { id: 'p-new' }, borsch: { id: 'b-new', name: 'Борщ з квасолею', created: true } });
 
   // a retry after a failed rating creates nothing again
   const again = apis();
@@ -54,6 +55,8 @@ test('a venue the backend already had may already serve this borshch: that one i
   const api = apis({ reused: true, existing: [{ id_borsch: 'b-old', name: 'Борщ червоний' }] });
   expect(await ensureBowlTargets(bowl, api)).toMatchObject({ placeId: 'p-new', borschId: 'b-old', borsch: null });
   expect(api.borsches.create).not.toHaveBeenCalled();
+  // somebody else's borshch: its meat is not this person's to set
+  expect(getDraft(bowl.id).borsch.created).toBeUndefined();
 });
 
 test('our venue with a new borshch creates only the borshch', async () => {

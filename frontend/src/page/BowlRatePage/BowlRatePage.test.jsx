@@ -5,7 +5,7 @@ import { I18nProvider } from '../../i18n';
 import { UserProvider } from '../../context/UserContext';
 import { track } from '../../analytics';
 import { borschAPI, commentsAPI, placesAPI } from '../../api';
-import { createDraft, getDraft } from '../../services/bowlDrafts';
+import { createDraft, getDraft, updateDraft } from '../../services/bowlDrafts';
 import { createMemoryPhotoStore, setPhotoStoreForTests } from '../../services/bowlPhotoStore';
 import { BowlRatePage } from './BowlRatePage';
 
@@ -69,7 +69,7 @@ beforeEach(() => {
   track.mockClear();
   URL.createObjectURL = jest.fn(() => 'blob:qa');
   URL.revokeObjectURL = jest.fn();
-  [commentsAPI.createByBorschId, borschAPI.getByPlaceId, borschAPI.create, borschAPI.uploadPhoto, placesAPI.create].forEach((f) => f.mockReset());
+  [commentsAPI.createByBorschId, borschAPI.getByPlaceId, borschAPI.getById, borschAPI.create, borschAPI.update, borschAPI.uploadPhoto, placesAPI.create].forEach((f) => f.mockReset());
 });
 
 test('a new venue and a new borshch are created at the rating, and the photo lands on the new borshch', async () => {
@@ -85,7 +85,8 @@ test('a new venue and a new borshch are created at the rating, and the photo lan
   sessionStorage.setItem(`nb:quest-draft:bowl:${bowl.id}`, JSON.stringify({ version: 1, step: 7, values: { grades: GRADES, comment: '' } }));
   placesAPI.create.mockResolvedValue({ id: 'p-new', reused: false });
   borschAPI.getByPlaceId.mockResolvedValue([]);
-  borschAPI.create.mockResolvedValue({ id_borsch: 'b-new', name: 'Борщ з квасолею', place_id: 'p-new', price: '', weight: '', price_value: 0, weight_value: 0 });
+  borschAPI.create.mockResolvedValue({ id_borsch: 'b-new', name: 'Борщ з квасолею', place_id: 'p-new', type_meat: 'other', price: '', weight: '', price_value: 0, weight_value: 0 });
+  borschAPI.update.mockResolvedValue({ id_borsch: 'b-new', type_meat: 'pork' });
   commentsAPI.createByBorschId.mockResolvedValue({ id: 'r1' });
   borschAPI.uploadPhoto.mockResolvedValue({});
 
@@ -104,6 +105,44 @@ test('a new venue and a new borshch are created at the rating, and the photo lan
   // the new card has neither price nor weight: both «only if missing» questions
   expect(await screen.findByText('Скільки грамів була порція?')).toBeInTheDocument();
   expect(screen.getByText('Скільки коштував Борщ?')).toBeInTheDocument();
+  // and the meat, which the bowl never asked: the creator sets it once
+  expect(screen.getByText('Яке мʼясо в «Борщ з квасолею»?')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Свинина' }));
+  expect(borschAPI.update).toHaveBeenCalledWith('b-new', { type_meat: 'pork' });
+});
+
+test('a bowl that rated a borshch already on the map asks no meat', async () => {
+  signIn();
+  const bowl = await createDraft({ place: { id: null, name: 'Криївка', google: GOOGLE }, borsch: { id: null, name: 'борщ  ЧЕРВОНИЙ' } });
+  sessionStorage.setItem(`nb:quest-draft:bowl:${bowl.id}`, JSON.stringify({ version: 1, step: 8, values: { grades: GRADES, comment: '' } }));
+  placesAPI.create.mockResolvedValue({ id: 'p-new', reused: true });
+  borschAPI.getByPlaceId.mockResolvedValue([{ id_borsch: 'b-old', name: 'Борщ червоний' }]);
+  borschAPI.getById.mockResolvedValue({ id_borsch: 'b-old', name: 'Борщ червоний', type_meat: 'other', price: '', weight: '' });
+  commentsAPI.createByBorschId.mockResolvedValue({ id: 'r1' });
+
+  const user = userEvent.setup();
+  renderRate(bowl.id);
+  await user.click(await screen.findByRole('button', { name: 'Готово' }));
+  await waitFor(() => expect(commentsAPI.createByBorschId).toHaveBeenCalledWith('b-old', expect.anything()));
+  expect(await screen.findByText('Скільки грамів була порція?')).toBeInTheDocument();
+  expect(screen.queryByTestId('meat-question')).not.toBeInTheDocument();
+  expect(borschAPI.create).not.toHaveBeenCalled();
+});
+
+test('reopened after a failed rating, the bowl still knows it created the borshch and asks the meat', async () => {
+  signIn();
+  // what ensureBowlTargets left in the bowl before the rating failed
+  const bowl = await createDraft({ place: { id: 'p-new', name: 'Криївка' }, borsch: { id: 'b-new', name: 'Борщ дня' } });
+  updateDraft(bowl.id, { borsch: { id: 'b-new', name: 'Борщ дня', created: true } });
+  sessionStorage.setItem(`nb:quest-draft:bowl:${bowl.id}`, JSON.stringify({ version: 1, step: 8, values: { grades: GRADES, comment: '' } }));
+  borschAPI.getById.mockResolvedValue({ id_borsch: 'b-new', name: 'Борщ дня', type_meat: 'other', price: '', weight: '' });
+  commentsAPI.createByBorschId.mockResolvedValue({ id: 'r1' });
+
+  const user = userEvent.setup();
+  renderRate(bowl.id);
+  await user.click(await screen.findByRole('button', { name: 'Готово' }));
+  expect(await screen.findByText('Яке мʼясо в «Борщ дня»?')).toBeInTheDocument();
+  expect(borschAPI.create).not.toHaveBeenCalled();
 });
 
 test('a failed rating keeps the created ids in the bowl: the retry creates nothing twice', async () => {

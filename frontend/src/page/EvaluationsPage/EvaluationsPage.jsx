@@ -15,6 +15,7 @@ import { googleAuth } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
 import { EmptyState } from '../../components/EmptyState';
 import { FactsQuestion } from '../../components/FactsQuestion';
+import { MeatQuestion } from '../../components/MeatQuestion';
 import { usePlaces } from '../../context/PlacesContext';
 import { track } from '../../analytics';
 import { deleteDraft, getDraft, updateDraft } from '../../services/bowlDrafts';
@@ -69,6 +70,9 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const location = useLocation();
     // the id of a bowl's new borshch, once it has been created
     const [createdId, setCreatedId] = useState(null);
+    // this bowl put its borshch on the map (now, or before a failed attempt):
+    // the closing screen asks its meat type, which the bowl never asked
+    const [madeBorsch, setMadeBorsch] = useState(() => Boolean(bowl && (getDraft(bowl.id) || bowl)?.borsch?.created));
     const id = propId || params?.borschId || bowl?.borsch?.id || createdId;
     const draftKey = bowl ? `nb:quest-draft:bowl:${bowl.id}` : `nb:quest-draft:rate:${id}`;
     const [restoredDraft] = useState(() => readSessionDraft(draftKey));
@@ -178,7 +182,10 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         if (!targetId && bowl) {
           const made = await ensureBowlTargets(getDraft(bowl.id) || bowl);
           targetId = made.borschId;
-          if (made.borsch) setFetched(made.borsch);
+          if (made.borsch) {
+            setFetched(made.borsch);
+            setMadeBorsch(true);
+          }
           setCreatedId(targetId);
         }
         // Реальний бекенд: POST /api/reviews/ з Bearer-токеном (id борщу — UUID-рядок)
@@ -307,11 +314,14 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       cover={withPhotoStep ? null : photos[0] || null}
       analytics={analytics}
       doneExtra={
-        <FactsQuestion
-          borsch={borschOne}
-          country={getPlaceById(borschOne.place_id)?.country || bowl?.place?.google?.country || ''}
-          context={{ from_bowl: Boolean(bowl), entry }}
-        />
+        <>
+          <MeatQuestion borsch={borschOne} created={madeBorsch} context={{ from_bowl: Boolean(bowl), entry }} />
+          <FactsQuestion
+            borsch={borschOne}
+            country={getPlaceById(borschOne.place_id)?.country || bowl?.place?.google?.country || ''}
+            context={{ from_bowl: Boolean(bowl), entry }}
+          />
+        </>
       }
       onSignIn={handleGoogleSignIn}
       saving={saving}

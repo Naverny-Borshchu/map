@@ -46,12 +46,20 @@ export const priceToUAH = (raw) => {
   return !Number.isFinite(n) || n <= 0 ? NaN : n;
 };
 
-// The DB carries free text ("Свинячі ребра", "на яловичому бульйоні", no_meat…).
+// The backend's codes (no_meat, chicken, pork, beef, other) and the free text
+// older rows carried until 14.11.2026 ("Свинячі ребра", "на яловичому
+// бульйоні"). Before then «pork», «beef» and «chicken» fell through to «інше»,
+// so a pork filter dropped the borshch marked pork by the add flow.
+// «other» is the default of a borshch nobody described, kept in «інше» as
+// before: as «unknown» it would pass every meat filter and drown it.
 // null = unknown, which never excludes a borsch.
+const MEAT_CODES = { no_meat: "без м'яса", chicken: 'курка', pork: 'свинина', beef: 'телятина', other: 'інше' };
+
 export const categorizeMeat = (raw) => {
   const v = String(raw || '').toLowerCase().trim();
+  if (MEAT_CODES[v]) return MEAT_CODES[v];
   if (!v || v.includes('невідомо') || v.includes('немає')) return null;
-  if (v.includes('без м') || v === 'no_meat') return "без м'яса";
+  if (v.includes('без м')) return "без м'яса";
   if (v.includes('курк') || v.includes('курч')) return 'курка';
   if (v.includes('теля') || v.includes('телят')) return 'телятина';
   if (v.includes('ялович')) return 'телятина';
