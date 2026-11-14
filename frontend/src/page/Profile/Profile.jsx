@@ -21,6 +21,7 @@ import {AddedBorschesPage} from "../AddedBorschesPage";
 import {PasswordChangePage} from "../PasswordChangePage";
 import {useT} from "../../i18n";
 import {selectProfileLinks} from "./profileLinks";
+import {MyBowls} from "../../components/MyBowls";
 
 
 export const Profile = () => {
@@ -37,7 +38,11 @@ export const Profile = () => {
     const user = JSON.parse(localStorage.getItem('userProfile'));
 
     if (!user) {
+        // A bowl needs no account, so a guest can have some waiting: they stay
+        // reachable above the invitation to sign up.
         return (
+            <>
+            <MyBowls className={style.guestBowls} />
             <ModalPleaseRegister
                 asPage
                 onClose={() => navigate('/')}
@@ -45,6 +50,7 @@ export const Profile = () => {
                 onLoginPage={() => navigate('/login')}
                 onGoToMap={() => navigate('/')}
             />
+            </>
         );
     }
 
@@ -194,6 +200,7 @@ export const Profile = () => {
                     </aside>
 
                     <section className={style.content}>
+                        <MyBowls />
                         {advert}
 
                         <div className={style.settingsCard}>
@@ -219,6 +226,7 @@ export const Profile = () => {
                 <>
                     <PageHeader back="/" kicker={t('profile.kicker')} title={t('profile.title')} />
                     {userCard}
+                    <MyBowls />
                     {advert}
 
                     <div className={style.userButtons} role="tablist">

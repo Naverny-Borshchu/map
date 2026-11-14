@@ -211,3 +211,13 @@ html[data-theme='dark'] .bugRow span[aria-hidden="true"] {
     gap: 20px;
     min-width: 0;
 }
+
+// «Мої миски» for a guest, above the invitation to sign up.
+.guestBowls {
+    max-width: 560px;
+    margin: calc(20px + env(safe-area-inset-top, 0px)) auto -4px;
+    width: calc(100% - 32px);
+    @include respond(desktop) {
+        margin-top: calc(var(--nb-topbar-h) + 32px);
+    }
+}

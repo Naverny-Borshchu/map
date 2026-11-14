@@ -12,7 +12,7 @@ import style from './BorschTile.module.scss';
  * into the borshch page. The three screens carried three copies of this card,
  * each with its own share code and its own hardcoded words.
  */
-export const BorschTile = ({ borsch, venueName, scoreLabel, liked, onToggleLike, onOpen }) => {
+export const BorschTile = ({ borsch, venueName, scoreLabel, liked, onToggleLike, onOpen, extra = null }) => {
   const t = useT();
   const dishLabel = useDishLabel();
   const venueLabel = useVenueLabel();
@@ -57,6 +57,7 @@ export const BorschTile = ({ borsch, venueName, scoreLabel, liked, onToggleLike,
             {t('card.about')}
           </button>
         </div>
+        {extra}
       </div>
     </article>
   );

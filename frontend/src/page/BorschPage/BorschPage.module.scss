@@ -232,6 +232,16 @@ html[data-theme='dark'] .fact {
   width: 100%;
 }
 
+// Secondary to «Оцінити»: the bowl, for a borshch that has only just arrived.
+.broughtBtn {
+  @include btnGhost;
+  width: 100%;
+  white-space: normal;
+  line-height: 1.25;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 // --- criteria ----------------------------------------------------------------
 .criteria {
   margin-top: 26px;

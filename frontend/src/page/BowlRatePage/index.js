@@ -1,0 +1,1 @@
+export { BowlRatePage } from './BowlRatePage';

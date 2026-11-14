@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ReactComponent as IconMeat } from './meat.svg';
 import { ReactComponent as IconBeetroot } from './beetroot.svg';
 import { ReactComponent as IconDensity } from './vegetable.svg';
@@ -14,6 +14,10 @@ import { uploadPhotos } from '../../utils/uploadPhotos';
 import { googleAuth } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
 import { EmptyState } from '../../components/EmptyState';
+import { FactsQuestion } from '../../components/FactsQuestion';
+import { usePlaces } from '../../context/PlacesContext';
+import { track } from '../../analytics';
+import { deleteDraft, updateDraft } from '../../services/bowlDrafts';
 import style from './EvaluationsPage.module.scss';
 import { useT, useDishLabel } from "../../i18n";
 import {
@@ -33,15 +37,24 @@ const GradesArray = [
   { key: "serving", icon: IconServing, i18n: "serving" },
 ];
 
-export const EvaluationsPage = ({ borschId: propId }) => {
+/**
+ * bowl           moment 2 of a bowl (services/bowlDrafts): the rating of a
+ *                borshch whose photo was taken when it arrived
+ * initialPhotos  that photo, read back from IndexedDB by BowlRatePage
+ */
+export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos = [] }) => {
     const params = useParams();
-    const id = propId || params?.borschId;
-    const draftKey = `nb:quest-draft:rate:${id}`;
+    const location = useLocation();
+    const id = propId || params?.borschId || bowl?.borsch?.id;
+    const draftKey = bowl ? `nb:quest-draft:bowl:${bowl.id}` : `nb:quest-draft:rate:${id}`;
     const [restoredDraft] = useState(() => readSessionDraft(draftKey));
     const [isSent, setIsSent] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
-    const [photos, setPhotos] = useState([]);
+    const [photos, setPhotos] = useState(() => initialPhotos || []);
+    // The bowl's photo was taken while the borshch was untouched; the photo
+    // screen is only shown when there is none.
+    const [withPhotoStep] = useState(() => !(bowl && (initialPhotos || []).length > 0));
     // which of `photos` already landed, and how the last attempt went
     const [photosUploaded, setPhotosUploaded] = useState([]);
     const [photoStatus, setPhotoStatus] = useState(null);
@@ -62,12 +75,24 @@ export const EvaluationsPage = ({ borschId: propId }) => {
     const { getBorschById, getBorschExploration, loadBorschData} = useBorsch();
     const { syncWithServer } = useComments();
     const { completeGoogleSignIn } = useUser();
+    const { getPlaceById } = usePlaces();
+    // Where the rating was opened from, for the step events: a borshch card,
+    // the venue picker of the add chooser (two screens before this one), or a
+    // bowl's reminder.
+    const fromPicker = Boolean(location?.state?.fromPicker);
+    const entry = bowl ? 'bowl' : (location?.state?.entry || 'card');
+    const analytics = {
+      flow: 'rate',
+      offset: fromPicker ? 2 : 0,
+      context: { entry, ...(fromPicker ? { picker: true } : {}), ...(bowl ? { bowl_id: bowl.id } : {}) },
+    };
     // Deep links (and slow list loads) used to hang forever on "Завантаження
     // даних…", because the page waited for the whole borsch list to arrive and
     // gave up silently if this borsch was not in it. Fetch the one we need.
     const [fetched, setFetched] = useState(null);
     const [notFound, setNotFound] = useState(false);
     const [xpTotal, setXpTotal] = useState(null);
+    const bowlRated = useRef(false);
     const fromContext = getBorschById(id);
     const borschOne = fromContext || fetched;
 
@@ -138,13 +163,16 @@ export const EvaluationsPage = ({ borschId: propId }) => {
         // lose the rating the user just spent seven screens on, and one bad
         // photo must not take the others with it. It must not stay silent
         // either: the closing screen says how many did not land.
+        let photosFailed = 0;
         if (photos.length) {
           const result = await uploadPhotos({
             borschId: id, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
           });
+          photosFailed = result.failed;
           setPhotosUploaded(result.uploaded);
           setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
         }
+        if (bowl) settleBowl(photosFailed);
 
         // Re-read both server-backed contracts: the reviews list AND the
         // borsch aggregate the backend recalculated after the POST. Without
@@ -180,6 +208,25 @@ export const EvaluationsPage = ({ borschId: propId }) => {
 
     
     
+    // The bowl is done once its rating is saved and its photos are on the
+    // borshch. A photo that did not upload keeps the bowl (marked as rated, so
+    // the reminder stops asking): a camera shot exists nowhere else, and «Мої
+    // миски» can still send it.
+    function settleBowl(photosFailed) {
+      if (!bowl) return;
+      if (!bowlRated.current) {
+        bowlRated.current = true;
+        track('bowl_rated', {
+          bowl_id: bowl.id,
+          borsch_id: id,
+          photos: photos.length,
+          minutes_since_brought: Math.round((Date.now() - bowl.createdAt) / 60000),
+        });
+      }
+      if (photosFailed > 0) updateDraft(bowl.id, { reviewedAt: Date.now() });
+      else deleteDraft(bowl.id);
+    }
+
     // Only the photos; the review is already saved and must not be posted twice.
     const retryPhotos = async () => {
       setPhotoStatus((s) => ({ ...(s || {}), retrying: true }));
@@ -188,6 +235,7 @@ export const EvaluationsPage = ({ borschId: propId }) => {
       });
       setPhotosUploaded(result.uploaded);
       setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
+      if (bowl) settleBowl(result.failed);
       // the new photo_urls only; a failed refresh must not undo the result above
       await loadBorschData().catch(() => {});
     };
@@ -221,6 +269,15 @@ export const EvaluationsPage = ({ borschId: propId }) => {
       onPhotos={setPhotos}
       onSubmit={handleSubmitForm}
       onExit={() => navigate(`/borsch/${id}`)}
+      withPhotoStep={withPhotoStep}
+      analytics={analytics}
+      doneExtra={
+        <FactsQuestion
+          borsch={borschOne}
+          country={getPlaceById(borschOne.place_id)?.country || ''}
+          context={{ from_bowl: Boolean(bowl), entry }}
+        />
+      }
       onSignIn={handleGoogleSignIn}
       saving={saving}
       isSent={isSent}
