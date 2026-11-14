@@ -64,3 +64,15 @@ export const tableDate = (iso, lang = 'uk') => {
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'long' });
 };
+
+/**
+ * The venue's address line. Google's addresses usually carry the city already
+ * («…, 10А, Київ, 04070»), so the city is added only when it is missing.
+ */
+export const addressLine = (place, cityLabel = (c) => c) => {
+  const address = String(place?.address || '').trim();
+  const city = String(place?.city || '').trim();
+  if (!address) return city ? cityLabel(city) : '';
+  if (!city || address.includes(city)) return address;
+  return `${address}, ${cityLabel(city)}`;
+};

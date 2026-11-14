@@ -1,4 +1,4 @@
-import { borschTitle, divisiveLabel, formatAverage, nextUnrated } from './tableView';
+import { addressLine, borschTitle, divisiveLabel, formatAverage, nextUnrated } from './tableView';
 import { storyContent } from './storyImage';
 import { qrMatrix, qrPath } from './qr';
 import { translations } from '../i18n/translations';
@@ -44,6 +44,13 @@ describe('reading a table', () => {
     expect(nextUnrated(bs, [1])).toBe(2);
     expect(nextUnrated(bs, [2, 1])).toBe(3);
     expect(nextUnrated(bs, [1, 2, 3])).toBeNull();
+  });
+
+  it('writes the city after the address only when the address lacks it', () => {
+    expect(addressLine({ address: 'вул. Набережно-Хрещатицька, 10А, Київ, 04070', city: 'Київ' })).toBe('вул. Набережно-Хрещатицька, 10А, Київ, 04070');
+    expect(addressLine({ address: 'пл. Ринок, 1', city: 'Львів' }, () => 'Lviv')).toBe('пл. Ринок, 1, Lviv');
+    expect(addressLine({ address: '', city: 'Львів' })).toBe('Львів');
+    expect(addressLine(null)).toBe('');
   });
 
   it('averages with one decimal at most', () => {

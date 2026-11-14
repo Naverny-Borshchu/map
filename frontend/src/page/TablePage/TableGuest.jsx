@@ -14,7 +14,7 @@ import { useVisiblePolling } from '../../hook/useVisiblePolling';
 import { useFlowTracking } from '../../hook/useFlowTracking';
 import { track } from '../../analytics';
 import { hasTenPointScale } from '../../variant';
-import { borschTitle, formatAverage, nextUnrated } from '../../utils/tableView';
+import { addressLine, borschTitle, formatAverage, nextUnrated } from '../../utils/tableView';
 import { useI18n, useDishLabel, useVenueLabel, useCityLabel } from '../../i18n';
 import { TableFrame } from './TableFrame';
 import q from '../../components/QuestFlow/QuestFlow.module.scss';
@@ -326,7 +326,7 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
         <span className={bowl.venueWords}>
           <span className={bowl.venueName}>{venue}</span>
           <span className={bowl.venueAddr}>
-            {[table.place?.address, table.place?.city && cityLabel(table.place.city)].filter(Boolean).join(', ')}
+            {addressLine(table.place, cityLabel)}
           </span>
         </span>
       </div>
