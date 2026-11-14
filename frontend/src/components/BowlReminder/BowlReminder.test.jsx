@@ -10,7 +10,7 @@ jest.mock('react-router-dom', () => require('react-router'));
 jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), track: jest.fn() }));
 
 /**
- * «Як Борщ у «Ватрі»?» comes back 20 minutes after the bowl was brought, or
+ * «Як Борщ у закладі «Ватра»?» comes back 20 minutes after the bowl was brought, or
  * whenever the app is opened later, and offers rate / still eating / drop.
  */
 
@@ -57,13 +57,13 @@ describe('bowl reminder banner', () => {
     await bowl();
     jest.setSystemTime(T0 + 19 * MIN);
     renderBanner();
-    expect(screen.queryByText('Як Борщ у «Ватра»?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Як Борщ у закладі «Ватра»?')).not.toBeInTheDocument();
 
     // the fake clock moves Date.now and the timers together
     act(() => {
       jest.advanceTimersByTime(REMIND_AFTER_MS - 19 * MIN + 1000);
     });
-    expect(screen.getByText('Як Борщ у «Ватра»?')).toBeInTheDocument();
+    expect(screen.getByText('Як Борщ у закладі «Ватра»?')).toBeInTheDocument();
     expect(screen.getByText('Борщ український')).toBeInTheDocument();
   });
 
@@ -88,18 +88,18 @@ describe('bowl reminder banner', () => {
     jest.setSystemTime(T0 + 25 * MIN);
     renderBanner();
     fireEvent.click(screen.getByRole('button', { name: 'Ще їм' }));
-    expect(screen.queryByText('Як Борщ у «Ватра»?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Як Борщ у закладі «Ватра»?')).not.toBeInTheDocument();
     expect(getDraft(d.id).snoozedUntil).toBe(T0 + 25 * MIN + SNOOZE_MS);
     expect(track).toHaveBeenCalledWith('bowl_reminder', expect.objectContaining({ action: 'snooze' }));
 
     act(() => {
       jest.advanceTimersByTime(SNOOZE_MS - 1000);
     });
-    expect(screen.queryByText('Як Борщ у «Ватра»?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Як Борщ у закладі «Ватра»?')).not.toBeInTheDocument();
     act(() => {
       jest.advanceTimersByTime(2000);
     });
-    expect(screen.getByText('Як Борщ у «Ватра»?')).toBeInTheDocument();
+    expect(screen.getByText('Як Борщ у закладі «Ватра»?')).toBeInTheDocument();
   });
 
   it('«Не оцінюватиму» drops the bowl', async () => {
@@ -107,7 +107,7 @@ describe('bowl reminder banner', () => {
     jest.setSystemTime(T0 + 25 * MIN);
     renderBanner();
     fireEvent.click(screen.getByRole('button', { name: 'Не оцінюватиму' }));
-    expect(screen.queryByText('Як Борщ у «Ватра»?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Як Борщ у закладі «Ватра»?')).not.toBeInTheDocument();
     expect(listDrafts()).toEqual([]);
     expect(track).toHaveBeenCalledWith('bowl_reminder', expect.objectContaining({ action: 'drop' }));
   });

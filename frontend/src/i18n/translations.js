@@ -538,7 +538,8 @@ export const translations = {
     'bowl.doneHint': 'Миска чекає в «Моїх мисках». Ми нагадаємо, коли повернешся.',
     'bowl.rateNow': 'Я вже поїв, оцінити',
     'bowl.remindAria': 'Нагадування про миску',
-    'bowl.remindTitle': 'Як Борщ у «{venue}»?',
+    // «у закладі», бо назви закладів не відмінюються автоматично: «у «Ватра»» було б з помилкою
+    'bowl.remindTitle': 'Як Борщ у закладі «{venue}»?',
     'bowl.remindRate': 'Оцінити',
     'bowl.remindSnooze': 'Ще їм',
     'bowl.remindDrop': 'Не оцінюватиму',

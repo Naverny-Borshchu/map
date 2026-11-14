@@ -12,7 +12,7 @@ import style from './BowlReminder.module.scss';
 const MAX_DELAY = 2 ** 31 - 1;
 
 /**
- * «Як Борщ у «Ватрі»?»: the bowl comes back by itself 20 minutes after it was
+ * «Як Борщ у закладі «Ватра»?»: the bowl comes back by itself 20 minutes after it was
  * brought, or whenever the app is opened later. Shown on the map, the list and
  * the profile, the screens a person lands on when they pick the phone up
  * again; never over a flow.
