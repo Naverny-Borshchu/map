@@ -1,0 +1,7 @@
+@use "../../styles/brand.scss" as *;
+
+// The app's primary button: the landing's red pill on its dark-red underside.
+.btn {
+    @include btnPrimary(lg);
+    width: 100%;
+}

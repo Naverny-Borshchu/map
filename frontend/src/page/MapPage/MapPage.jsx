@@ -13,6 +13,8 @@ import { useMediaQuery } from "../../hook/useMediaQuery";
 import { MapBrandBadge } from '../../components/MapBrandBadge';
 import { QuestChip } from '../../components/QuestChip';
 import { hasFullscreenMap } from '../../variant';
+import { IconSpoonPlus, IconClose } from '../../components/Icons';
+import { BowlLoader } from '../../components/EmptyState';
 import style from './MapPage.module.scss';
 import { useT } from "../../i18n";
 
@@ -159,6 +161,7 @@ export const MapPage = ( )=> {
             search placeholder — nothing said a tap was required, and there was
             no way back out. */}
         <div className={style.addHint}>
+          <span className={style.addHintIcon} aria-hidden="true"><IconSpoonPlus size={24} /></span>
           <div className={style.addHintText}>
             <strong>{t('add.title')}</strong>
             <span>{t('add.hintVenue')}</span>
@@ -178,9 +181,24 @@ export const MapPage = ( )=> {
       </>
       }
       {isDesktop && mode===MODES.SET_MARKER &&
-      <div div className={style.boxGeoDesctop}>
+      <div className={style.boxGeoDesctop}>
         <Autocomplete isLoaded={isLoaded} onSelect={onPlaceSelect} onPickPlace={setPickedPlace} center={center}/>
-      </div>      
+        {/* the same card as on phones: what to do here, and a way out */}
+        <div className={`${style.addHint} ${style.addHintDesktop}`}>
+          <span className={style.addHintIcon} aria-hidden="true"><IconSpoonPlus size={24} /></span>
+          <div className={style.addHintText}>
+            <strong>{t('add.title')}</strong>
+            <span>{t('add.hintVenue')}</span>
+          </div>
+          <button
+            type="button"
+            className={style.addHintCancel}
+            onClick={() => navigate('/')}
+          >
+            {t('add.cancel')}
+          </button>
+        </div>
+      </div>
       }
       {mode===MODES.MOVE &&
       <>
@@ -191,9 +209,9 @@ export const MapPage = ( )=> {
             into the bottom nav as a single tab that swaps the two views, so the
             map keeps the width and there is one obvious place to switch. */}
         <div className={`${style.borsch} nb-borschcount`}>
-          {borschLoading || placesLoading ? 'Завантаження...' : (
+          {borschLoading || placesLoading ? t('common.loading') : (
             <span className={style.borschCount}>
-              (зареєстровано {borsch?.length || 0} борщів)
+              {t('map.borschesShort', { count: borsch?.length || 0 })}
             </span>
           )}
         </div>
@@ -211,7 +229,7 @@ export const MapPage = ( )=> {
                 onClick={() => resetAllFilters()}
                 aria-label={t('map.closeMessage')}
               >
-                ×
+                <IconClose size={20} />
               </button>
               {t('map.noResults')}
             </div>
@@ -226,7 +244,8 @@ export const MapPage = ( )=> {
           {hasFullscreenMap && !isDesktop && mode === MODES.MOVE && <MapBrandBadge />}
         </>
       ) : (
-        <div className={style.loadingContainer}>
+        <div className={style.loadingContainer} role="status">
+          <BowlLoader size={52} />
           {!isLoaded ? t('map.loadingMap') : t('map.loadingPlaces')}
         </div>
       )} 

@@ -1,15 +1,137 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
 
-/* "Not this one?" — the venues Google also knows within the same few metres.
+// The venue a tap on the map resolved to, before the add flow starts.
+.container{
+    position: relative;
+}
+
+.card{
+    @include sheet;
+    position: relative;
+    padding: 18px;
+    width: min(100%, 420px);
+    max-height: 85dvh;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.boxClose{
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+}
+
+.boxContext{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.loading {
+    display: grid;
+    place-items: center;
+    min-height: 140px;
+}
+
+.boxAddress{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 6px;
+    padding-right: 48px;
+}
+
+.kicker {
+    @include kicker;
+    margin: 4px 0 2px;
+}
+
+.name{
+    @include displayL;
+    margin: 0;
+    color: var(--color-text-btn);
+    overflow-wrap: anywhere;
+}
+
+.type {
+    margin: 2px 0 0;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--nb-smetana);
+    color: var(--nb-beet);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: lowercase;
+}
+html[data-theme='dark'] .type {
+    background: var(--color-bg-main);
+    color: var(--nb-ink);
+}
+
+.street{
+    @include footnote;
+    margin: 4px 0 0;
+    color: var(--nb-ink-2);
+}
+
+.box_time{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+.time{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-btn);
+    &::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--nb-borshch);
+    }
+}
+.open::before {
+    background: var(--nb-dill);
+}
+.close{
+    font-size: 13px;
+    color: var(--nb-ink-2);
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.photo {
+  width: 100%;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+/* "Not this one?": the venues Google also knows within the same few metres.
    Without this the sheet stated a guess as a fact. */
 .others {
-  margin: 14px 0 4px;
+  margin: 0;
 }
 
 .othersTitle {
-  @include caption;
-  color: var(--color-text-grey, #6B6B6B);
+  @include kicker;
+  color: var(--nb-ink-2);
   margin-bottom: 8px;
 }
 
@@ -17,7 +139,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 168px;
+  max-height: 176px;
   overflow-y: auto;
 }
 
@@ -27,98 +149,26 @@
   align-items: flex-start;
   gap: 2px;
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   padding: 10px 14px;
-  border: 1px solid var(--color-header-border, #DDD);
-  border-radius: var(--radius-md);
-  background: transparent;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   text-align: left;
   cursor: pointer;
+  transition: border-color var(--transition-fast);
+  &:hover {
+    border-color: var(--nb-borshch);
+  }
 }
 
 .otherName {
-  @include footnote;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-text-btn);
 }
 
 .otherAddr {
-  @include caption;
-  color: var(--color-text-grey, #6B6B6B);
-}
-.container{
-    position: relative;
-}
-
-.card{
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    /* see note in ModalPleaseRegister: the right:-50vw offset was a
-       workaround for the old uncentred overlay */
-    padding: 16px;
-    background-color: var(--color-bg-main);
-    width: min(100%, 420px);
-    max-height: 85dvh;
-    overflow-y: auto;
-    border-radius: var(--radius-lg);
-    text-align: center;
-}
-
-.boxClose{
-    display: flex;
-    justify-content: right;
-}
-
-.boxContext{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align:center;
-    gap: 24px;
-   
-}
-.boxAddress{
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    width: 100%;
-    gap: 10px;
-    padding: 16px;
-    
-}
-
-.name{
-    @include caption;
-    color:var(--color-text-btn);
-}
-.street{
-    @include caption;
-    color:var(--color-text-main);
-}
-.box_time{
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.time{
-    @include caption;
-    color:var(--color-text-active);
-}
-.close{
-    @include caption;
-    color:var(--color-text-btn);
-}
-.photos {
-  display: flex;
-  gap: 16px;
-  margin-top: 16px;
-
-}
-
-.photo {
-  width: 150px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 12px;
-  display: block;
+  font-size: 13px;
+  color: var(--nb-ink-2);
 }

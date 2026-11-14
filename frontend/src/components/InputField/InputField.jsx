@@ -1,6 +1,5 @@
 import {ReactComponent as IconPen} from '../../assets/icons/pen_grey.svg';
 import style from './InputField.module.css';
-import typography from '../../styles/typography.module.css';
 
 export const InputField = ({
                                label,
@@ -12,7 +11,7 @@ export const InputField = ({
                                disabled = false }) => {
     return (
         <div className={style.inputGroup}>
-            <label htmlFor={id} className={`${typography.mobileLabel} ${style.inputLabel}`}>
+            <label htmlFor={id} className={style.inputLabel}>
                 {label}
             </label>
 

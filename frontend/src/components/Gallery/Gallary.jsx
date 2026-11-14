@@ -5,6 +5,7 @@ import { CardActions } from "../../components/CardActions";
 import { RouteButton } from "../../components/RouteButton";
 import { usePlaces } from "../../context/PlacesContext";
 import style from './Gallery.module.scss';
+import { IconClose, IconChevronLeft, IconChevronRight } from '../Icons';
 import { useT } from "../../i18n";
 
 /**
@@ -33,7 +34,7 @@ export const Gallery = ({ onClose, id_place }) => {
       onClick={onClose}
       aria-label={t('card.close')}
     >
-      ×
+      <IconClose />
     </button>
   );
 
@@ -67,7 +68,7 @@ export const Gallery = ({ onClose, id_place }) => {
             onClick={() => go(-1)}
             aria-label={t('card.prevBorsch')}
           >
-            ‹
+            <IconChevronLeft />
           </button>
         )}
 
@@ -85,7 +86,7 @@ export const Gallery = ({ onClose, id_place }) => {
             onClick={() => go(1)}
             aria-label={t('card.nextBorsch')}
           >
-            ›
+            <IconChevronRight />
           </button>
         )}
       </div>
@@ -104,7 +105,7 @@ export const Gallery = ({ onClose, id_place }) => {
             ))}
           </div>
           <span className={style.counter}>
-            {safeIndex + 1} / {total}
+            {safeIndex + 1}/{total}
           </span>
         </div>
       )}

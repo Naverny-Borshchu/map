@@ -18,6 +18,7 @@ import {HelpPage} from "./page/HelpPage/HelpPage";
 import {AppGuide} from "./page/AppGuide/AppGuide";
 import {FAQ} from "./page/FAQ";
 import {AddedBorschesPage} from "./page/AddedBorschesPage";
+import { NotFound } from "./page/NotFound";
 import { Auth } from "./page/Auth";
 import { AppProvider } from "./context/AppProvider";
 import { I18nProvider } from "./i18n";
@@ -59,7 +60,9 @@ export default function App() {
             <Route path="/help" element={<HelpPage />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/app-guide" element={<AppGuide />} />
-            {/*<Route path="/profile/password" element={<UserPasswordPage/>}/>*/}            
+            {/*<Route path="/profile/password" element={<UserPasswordPage/>}/>*/}
+            {/* Unknown paths used to render nothing at all. */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
       </Layout>
     </BrowserRouter> 

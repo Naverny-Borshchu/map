@@ -38,7 +38,9 @@ const EUR_COUNTRY_NAMES = [
 ];
 
 export const PRICE_CHIPS_BY_CURRENCY = {
-  UAH: { unit: 'flow.unitUah', chips: [120, 160, 200, 240, 300] },
+  // No bare 200 or 300 on a chip: the brand kit rules them out as a visual
+  // sign (11.2026), so the quick taps step around them.
+  UAH: { unit: 'flow.unitUah', chips: [120, 160, 220, 250, 280] },
   // A bowl of borsch at a sit-down place in the eurozone realistically runs
   // 8-18 EUR — nowhere near the UAH numbers once converted.
   EUR: { unit: 'flow.unitEur', chips: [8, 10, 12, 15, 18] },

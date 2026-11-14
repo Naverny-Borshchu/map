@@ -1,13 +1,12 @@
 import { useT } from '../../i18n';
 import {useEffect, useState} from "react";
-import {Link} from "react-router-dom";
 import {AvatarUploader} from "../../components/AvatarUploader";
-import { ReactComponent as IconBack } from '../../assets/icons/arrow_back.svg';
+import {PageHeader} from "../../components/PageHeader";
+import {useMediaQuery} from "../../hook/useMediaQuery";
 import {Button} from "../../components/Button";
 import {InputField} from "../../components/InputField";
 import Logo from '../../assets/images/logo.svg';
 import layout from '../../styles/layout.module.scss';
-import typography from '../../styles/typography.module.css';
 import style from './PersonalInfo.module.scss';
 
 // Map Google locale codes to country names
@@ -22,6 +21,7 @@ const localeToCountry = {
 
 export const PersonalInfo = () => {
     const t = useT();
+    const isDesktop = useMediaQuery("(min-width: 1280px)");
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [country, setCountry] = useState('');
@@ -55,14 +55,13 @@ export const PersonalInfo = () => {
 
     return (
         <div className={`${layout.wrapper} ${style.desktopWrapper}`}>
-            <h1 className={typography.mobileTitle}>{t('personal.title')}</h1>
-            <Link className={style.back} to={`/profile`}><IconBack/></Link>
+            <PageHeader back={isDesktop ? undefined : '/profile'} kicker={t('profile.kicker')} title={t('personal.title')} />
             <div className={style.infoContainer}>
 
                 <AvatarUploader initialAvatar={avatar} />
 
                 <div>
-                    <h2 className={typography.mobileTitleSmall}>{name || t('personal.name')}</h2>
+                    <h2 className={style.name}>{name || t('personal.name')}</h2>
                 </div>
             </div>
 
@@ -90,7 +89,7 @@ export const PersonalInfo = () => {
                     label={t('personal.country')}
                     id="country"
                     type="text"
-                    placeholder="Country"
+                    placeholder={t('personal.country')}
                     value={country}
                     onChange={e => setCountry(e.target.value)}
                 />

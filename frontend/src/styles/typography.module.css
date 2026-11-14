@@ -1,27 +1,26 @@
+/* Shared text styles. Headings are MAK (words only: digits fall back to
+   Roboto through the unicode-range in index.scss), everything else Roboto. */
 
 .mobileTitle {
-    /* mobile/h2 */
-    font-family: var(--font-family-main);
+    font-family: var(--font-display);
     font-style: normal;
-    font-weight: 500;
-    font-size: 22px;
-    line-height: 26px;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.1;
     text-align: center;
     color: var(--color-text-btn);
 }
 
 .mobileTitleSmall {
-    /* mobile/h4 */
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 500;
+    font-weight: 700;
     font-size: 18px;
-    line-height: 25px;
+    line-height: 24px;
     color: var(--color-text-btn);
 }
 
 .mobileBody {
-    /* mobile/body */
     font-family: var(--font-family-main);
     font-style: normal;
     font-weight: 400;
@@ -31,87 +30,94 @@
 }
 
 .mobileFootnote {
-       /* mobile/footnote */
     font-family: var(--font-family-main);
     font-style: normal;
     font-weight: 400;
     font-size: 14px;
-    line-height: 17px;
-    color: var(--color-text-btn);
+    line-height: 19px;
+    color: var(--color-text-main);
 }
-.mobileCaption{
+
+.mobileCaption {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 300;
-    font-size: 12px;
-    line-height: 16px;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 17px;
     color: var(--color-text-main);
 }
 
 .fontBtn {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 500;
-    font-size: 17px;
-    line-height: 22px;
-    letter-spacing: -0.408px;
-    color: var(--color-text-btn-active);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    color: #FFFAF5;
 }
-.mobileH2{
-    font-family: var(--font-family-main);
+
+.mobileH2 {
+    font-family: var(--font-display);
     font-style: normal;
-    font-weight: 500;
-    font-size: 22px;
-    line-height: 26px;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.1;
     color: var(--color-text-btn);
 }
-.mobileH3{
-    font-family: var(--font-family-main);
+
+.mobileH3 {
+    font-family: var(--font-display);
     font-style: normal;
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 24px;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.12;
     color: var(--color-text-btn);
 }
 
 .mobileLabel {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 400;
+    font-weight: 500;
     font-size: 14px;
-    line-height: 25px;
-    letter-spacing: 0.01em;
+    line-height: 20px;
     color: var(--color-text-btn);
 }
 
 .modalTitle {
-    font-family: var(--font-family-main);
+    font-family: var(--font-display);
     font-style: normal;
-    font-weight: 500;
-    font-size: 24px;
-    line-height: 28px;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.1;
     text-align: center;
     color: var(--color-modal-black);
 }
 
 .modalParagraph {
-    /* mobile/caption */
     font-family: var(--font-family-main);
     font-style: normal;
     font-weight: 400;
-    font-size: 12px;
-    line-height: 130%;
+    font-size: 15px;
+    line-height: 1.45;
     text-align: center;
-    color: var(--color-modal-black);
+    color: var(--nb-ink-2);
 }
 
 .mobileBtn {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 500;
+    font-weight: 700;
     font-size: 16px;
     line-height: 130%;
-    /* identical to box height, or 21px */
     color: var(--color-btn-link);
 }
 
+.kicker {
+    font-family: var(--font-family-main);
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--nb-red-text);
+}

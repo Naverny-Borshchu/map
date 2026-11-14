@@ -1,13 +1,12 @@
 @use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
 
 .sheet {
   display: flex;
   flex-direction: column;
   width: min(100%, 480px);
   max-height: 88dvh;
-  background-color: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  @include sheet;
   overflow: hidden;
 }
 
@@ -23,7 +22,8 @@
 }
 
 .title {
-  @include mobileH4;
+  @include displayL;
+  margin: 0;
   color: var(--color-text-btn);
 }
 
@@ -34,28 +34,14 @@
 }
 
 .reset {
-  padding: 6px 12px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text-active);
-  cursor: pointer;
-  @include footnote;
+  @include btnText;
+  color: var(--nb-red-text);
+  font-weight: 700;
 }
 
 .close {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-header-border);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-
-  svg { width: 16px; height: 16px; }
+  @include iconBtn(44px);
+  svg { width: 22px; height: 22px; }
 }
 
 /* --- body --------------------------------------------------------------- */
@@ -74,12 +60,8 @@
 }
 
 .legend {
-  @include footnote;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--color-text-main);
-  margin-bottom: 10px;
+  @include kicker;
+  margin: 0 0 10px;
 }
 
 .chips {
@@ -89,21 +71,12 @@
 }
 
 .chip {
-  padding: 9px 14px;
-  border: 1px solid var(--color-header-border);
-  border-radius: var(--radius-pill);
-  background-color: var(--surface);
-  color: var(--color-text-btn);
-  cursor: pointer;
+  @include chip;
   white-space: nowrap;
-  @include footnote;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .chipOn {
-  background-color: var(--color-text-active);
-  border-color: var(--color-text-active);
-  color: var(--color-text-btn-active);
+  @include chipOn;
 }
 
 .note {
@@ -171,30 +144,25 @@
 
 .slider {
   width: 100%;
-  accent-color: var(--color-text-active);
+  accent-color: var(--nb-borshch);
 }
 
 /* --- footer ------------------------------------------------------------- */
 .footer {
   flex: 0 0 auto;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--color-header-border);
-  background-color: var(--surface);
+  background-color: var(--color-bg-grey);
 }
 
 .apply {
+  @include btnPrimary(lg);
   width: 100%;
-  height: 48px;
-  border: none;
-  border-radius: var(--radius-md);
-  background-color: var(--color-text-active);
-  color: var(--color-text-btn-active);
-  cursor: pointer;
-  @include button;
 }
 
 .applyEmpty {
-  background-color: var(--color-grey-400);
-  color: var(--color-text-main);
+  background: var(--color-grey-400);
+  color: var(--nb-ink-2);
+  box-shadow: none;
   cursor: default;
 }

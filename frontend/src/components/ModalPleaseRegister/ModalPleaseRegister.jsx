@@ -1,9 +1,7 @@
-import {useEffect, useState} from "react";
 import {Modal} from "../../components/Modal";
 import {Button} from "../../components/Button";
-import {ReactComponent as Logo} from '../../assets/images/logo.svg';
-import typography from '../../styles/typography.module.css';
-import style from './ModalPleaseRegister.module.css';
+import tableArt from '../../assets/illustrations/table.webp';
+import style from './ModalPleaseRegister.module.scss';
 import {useT} from "../../i18n";
 
 /**
@@ -14,46 +12,44 @@ import {useT} from "../../i18n";
  */
 export const ModalPleaseRegister = ({onClose, onRegisterPage, onLoginPage, onGoToMap, asPage = false}) => {
     const t = useT();
-    const [spin, setSpin] = useState(false);
-
-    useEffect(() => {
-        setSpin(true);
-        const timer = setTimeout(() => setSpin(false), 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
     const dismiss = onClose || (() => {});
 
     const content = (
             <div className={`${style.modalContent} ${asPage ? style.asPage : ''}`}>
-                <Logo className={`${style.modalLogo} ${spin ? style["spin-once"] : ""}`}/>
-                <h2 className={`${typography.modalTitle} ${style.modalTitle}`}>{t('modal.noProfileTitle')}</h2>
-                <p className={`${typography.modalParagraph} ${style.modalParagraph}`}>
-                    {t('modal.noProfileText')}
-                </p>
-                <Button type="button"
-                        name={t('modal.createProfile')}
-                        onClick={onRegisterPage}/>
-                {/* Текст кличе лише створити профіль, і хто вже має акаунт, не
-                    бачив, куди йому. Google-вхід один для обох випадків, але
-                    людина цього не знає, доки не натисне. */}
-                {onLoginPage && (
-                    <p className={style.haveProfile}>
-                        {t('modal.haveProfile')}{' '}
-                        <button type="button" className={style.loginLink} onClick={onLoginPage}>
-                            {t('modal.signIn')}
-                        </button>
+                {/* The landing's family table: a profile is a seat at it. */}
+                <div className={style.art}>
+                    <img src={tableArt} alt="" width="720" height="538" />
+                </div>
+                <div className={style.body}>
+                    <h2 className={style.modalTitle}>{t('modal.noProfileTitle')}</h2>
+                    <p className={style.modalParagraph}>
+                        {t('modal.noProfileText')}
                     </p>
-                )}
-                <button
-                    className={`${typography.fontBtn} ${style.modalCloseBtn}`}
-                    onClick={() => {
-                        onGoToMap();
-                        dismiss();
-                    }}
-                >
-                    {t('modal.notNow')}
-                </button>
+                    <Button type="button"
+                            name={t('modal.createProfile')}
+                            onClick={onRegisterPage}/>
+                    {/* Текст кличе лише створити профіль, і хто вже має акаунт, не
+                        бачив, куди йому. Google-вхід один для обох випадків, але
+                        людина цього не знає, доки не натисне. */}
+                    {onLoginPage && (
+                        <p className={style.haveProfile}>
+                            {t('modal.haveProfile')}{' '}
+                            <button type="button" className={style.loginLink} onClick={onLoginPage}>
+                                {t('modal.signIn')}
+                            </button>
+                        </p>
+                    )}
+                    <button
+                        type="button"
+                        className={style.modalCloseBtn}
+                        onClick={() => {
+                            onGoToMap();
+                            dismiss();
+                        }}
+                    >
+                        {t('modal.notNow')}
+                    </button>
+                </div>
             </div>
     );
 

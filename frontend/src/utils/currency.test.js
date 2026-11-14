@@ -43,3 +43,10 @@ describe('guessCountryFromAddress', () => {
     expect(guessCountryFromAddress(undefined)).toBe('');
   });
 });
+
+test('no quick-tap chip is a bare 200 or 300 (brand kit)', () => {
+  Object.values(PRICE_CHIPS_BY_CURRENCY).forEach(({ chips }) => {
+    expect(chips).not.toContain(200);
+    expect(chips).not.toContain(300);
+  });
+});

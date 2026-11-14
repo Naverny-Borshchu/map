@@ -1,51 +1,63 @@
+/* A labelled text field: the label sits above, the field is the landing's
+   form input (white, warm border, red focus ring). */
 .inputGroup {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    position: relative;
+    gap: 6px;
+    margin-bottom: 18px;
 }
 
 .inputLabel {
-    position: absolute;
-    top: -12px;
-    left: 20px;
-    display: block;
-    background-color: var(--color-bg-grey);
-    padding: 0 5px;
-    z-index: 1;
+    font-family: var(--font-family-main);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--nb-ink-2);
 }
 
 .inputWrapper {
-    margin-bottom: 24px;
     position: relative;
     width: 100%;
 }
 
 .inputField {
-    background-color: inherit;
-    border-radius: 24px;
-    border: 1px solid var(--color-border-mid);
-    padding: 13px 40px 13px 24px;
     width: 100%;
+    min-height: 52px;
+    padding: 13px 44px 13px 18px;
+    border: 1.5px solid var(--color-border-input);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--color-text-btn);
+    font-size: 16px;
+    outline: 0;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.inputField:focus,
-.inputField:hover,
-.inputFieldActive {
-    border-color: var(--color-input-active);
+.inputField::placeholder {
+    color: var(--color-input-search);
+}
+
+.inputField:hover {
+    border-color: var(--color-border-mid);
+}
+
+.inputField:focus {
+    border-color: var(--nb-borshch);
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.12);
 }
 
 .icon {
     position: absolute;
-    right: 17px;
+    right: 16px;
     top: 50%;
     transform: translateY(-50%);
-    width: 19px;
+    width: 18px;
     height: 18px;
-    color: var(--color-text-main);
-    transition: fill 0.2s ease-in-out;
+    color: var(--nb-ink-2);
+    pointer-events: none;
 }
 
 .iconActive {
-    color: var(--color-text-btn);
+    color: var(--nb-red-text);
 }

@@ -1,24 +1,18 @@
-import typography from '../../styles/typography.module.css';
-import style from './Button.module.css';
+import style from './Button.module.scss';
 
 export const Button = ({
                     name,
                     onClick,
                     disabled = false,
                     type = 'button',
-                }) => {
-
-
-    const classes = `${typography.fontBtn} ${style.btn} ${disabled ? style.disabled : style.active}`;
-
-    return (
-        <button
-            type={type}
-            onClick={onClick}
-            className={classes}
-            disabled={disabled}
-        >
-            {name}
-        </button>
-    );
-};
+                    className = '',
+                }) => (
+    <button
+        type={type}
+        onClick={onClick}
+        className={`${style.btn} ${className}`.trim()}
+        disabled={disabled}
+    >
+        {name}
+    </button>
+);

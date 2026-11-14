@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { SORTS } from '../../utils/filterUrl';
 import { useSearchParams } from "react-router-dom";
-import { ReactComponent as IconLocation } from "../../components/Filters/location-red.svg";
+import { IconMapPin as IconLocation, IconSearch, IconClose } from "../../components/Icons";
+import { EmptyState } from "../../components/EmptyState";
 import { BorschListItem } from "../../components/BorschListItem/BorschListItem";
 import { Modal } from "../../components/Modal/Modal";
 import { CitySelect } from "../../components/CitySelect";
@@ -92,7 +93,7 @@ export const ListPage = () => {
       <header className={style.header}>
         <div className={style.searchRow}>
           <label className={style.searchWrap}>
-            <span className={style.searchIcon} aria-hidden="true">🔍</span>
+            <span className={style.searchIcon} aria-hidden="true"><IconSearch size={20} /></span>
             <input
               className={style.search}
               type="text"
@@ -107,7 +108,7 @@ export const ListPage = () => {
                 onClick={() => runSearch("")}
                 aria-label={t('list.clear')}
               >
-                ×
+                <IconClose size={18} />
               </button>
             )}
           </label>
@@ -116,7 +117,7 @@ export const ListPage = () => {
             className={style.cityBtn}
             onClick={() => setCityOpen(true)}
           >
-            <IconLocation />
+            <IconLocation size={18} />
             <span>{cityLabel(city)}</span>
           </button>
         </div>
@@ -127,6 +128,7 @@ export const ListPage = () => {
             sat one row below the sidebar's own List tab and did the same
             thing. One obvious place to switch views. */}
         <div className={style.toolbar}>
+          <p className={style.count}>{t('list.count', { count: sorted.length })}</p>
           <label className={style.sortControl}>
             <span className={style.sortLabel}>{t('sort.label')}</span>
             <select
@@ -142,20 +144,16 @@ export const ListPage = () => {
             </select>
           </label>
         </div>
-
-        <p className={style.count}>{t('list.count', { count: sorted.length })}</p>
       </header>
 
       <div className={style.list}>
         {sorted.length === 0 ? (
-          <div className={style.empty}>
-            {query ? t('list.emptySearch') : t('list.empty')}
-            {query && (
-              <button type="button" className={style.emptyReset} onClick={() => runSearch("")}>
-                {t('list.resetSearch')}
-              </button>
-            )}
-          </div>
+          <EmptyState
+            art="spoon"
+            compact
+            title={query ? t('list.emptySearch') : t('list.empty')}
+            action={query ? { onClick: () => runSearch(""), label: t('list.resetSearch') } : null}
+          />
         ) : (
           sorted.map((b) => (
             <BorschListItem key={b.id_borsch} borsch={b} distance={distOf(b)} />

@@ -1,22 +1,20 @@
-import {Link, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import {useRef} from "react";
-import {FotoBorschGallary} from "../../components/FotoBorschGallary";
-import {ButtonVertion} from "../../components/ButtonVersion";
-import {RatingIconsSvg} from "../../components/RatingIconsSvg";
-import { ReactComponent as IconLikeActive } from '../../assets/icons/likeActive.svg';
-import { ReactComponent as IconDitail } from '../../assets/icons/ditail.svg';
-import { ReactComponent as IconLink } from '../../assets/icons/link.svg';
-import { ReactComponent as IconBack } from '../../assets/icons/arrow_back.svg';
+import {BorschTile} from "../../components/BorschTile";
+import {EmptyState} from "../../components/EmptyState";
+import {PageHeader} from "../../components/PageHeader";
+import {IconChevronLeft, IconChevronRight} from "../../components/Icons";
+import {useMediaQuery} from "../../hook/useMediaQuery";
 import {useBorsch} from "../../context/BorschContext";
 import {useFavorites} from "../../context/FavoritesContext";
 import {useRequireAuthAction} from "../../hook/useRequireAuthAction";
 import {useT} from "../../i18n";
 import layout from '../../styles/layout.module.scss';
-import typography from "../../styles/typography.module.css";
 import style from "./AddedBorschesPage.module.scss";
 
 export const AddedBorschesPage = () => {
     const t = useT();
+    const isDesktop = useMediaQuery("(min-width: 1280px)");
     const navigate = useNavigate();
     const sliderRef = useRef(null);
     // Real catalogue from the API (same source as the map and borsch pages).
@@ -29,23 +27,6 @@ export const AddedBorschesPage = () => {
 
     const onClickCard = (borschId) => {
         navigate(`/borsch/${borschId}`);
-    };
-
-    // Same share flow as the favourites page: native share sheet when the
-    // browser has one, clipboard fallback otherwise.
-    const handleShare = (borschId) => {
-        const url = `${window.location.origin}/borsch/${borschId}`;
-        if (navigator.share) {
-            navigator.share({
-                title: t('card.shareTitle'),
-                text: t('card.shareText'),
-                url,
-            }).catch(() => {});
-            return;
-        }
-        if (navigator.clipboard?.writeText) {
-            navigator.clipboard.writeText(url).then(() => alert(t('card.shareCopied')));
-        }
     };
 
     const toggleLike = (borschId) => {
@@ -65,60 +46,30 @@ export const AddedBorschesPage = () => {
 
     return (
         <div className={`${layout.wrapper} ${style.desktopWrapper}`}>
-            <h1 className={typography.mobileTitle}>{t('profile.addedBorsches')}</h1>
-            <Link className={style.back} to={`/profile`}><IconBack/></Link>
+            <PageHeader back={isDesktop ? undefined : '/profile'} kicker={t('profile.kicker')} title={t('profile.addedBorsches')}>
+                {/* only desktop: the section scrolls sideways there */}
+                <div className={style.arrows}>
+                    <button type="button" onClick={scrollLeft} aria-label={t('card.prevBorschList')}><IconChevronLeft /></button>
+                    <button type="button" onClick={scrollRight} aria-label={t('card.nextBorschList')}><IconChevronRight /></button>
+                </div>
+            </PageHeader>
 
-            {/* only desktop */}
-            <div className={style.arrows}>
-                <button onClick={scrollLeft} aria-label={t('card.prevBorschList')}>&lt;</button>
-                <button onClick={scrollRight} aria-label={t('card.nextBorschList')}>&gt;</button>
-            </div>
-
-            {loading && <p className={style.status}>{t('added.loading')}</p>}
+            {loading && <EmptyState loading title={t('added.loading')} compact />}
             {!loading && borsch.length === 0 && (
-                <p className={style.status}>{t('added.empty')}</p>
+                <EmptyState art="spoon" title={t('added.empty')} action={{ to: '/add-borsch', label: t('nav.addBorsch') }} />
             )}
 
             <div className={style.wrapBorsch} ref={sliderRef}>
-                {borsch.map((el) => {
-                    const isLiked = isFavorite(el.id_borsch);
-                    return (
-                        <div key={el.id_borsch} className={style.card}>
-                            <FotoBorschGallary images={el.photo_urls} height={"120px"}/>
-                            <div className={style.box}>
-                                <ButtonVertion
-                                    type="button"
-                                    label={t('card.share')}
-                                    onClick={() => handleShare(el.id_borsch)}
-                                    icon={IconLink}
-                                />
-                                <span className={isLiked ? '' : style.likeInactive}>
-                                    <ButtonVertion
-                                        type="button"
-                                        label={isLiked ? t('card.unlike') : t('card.like')}
-                                        onClick={() => toggleLike(el.id_borsch)}
-                                        icon={IconLikeActive}
-                                    />
-                                </span>
-                            </div>
-                            <div className={style.flex}>
-                                <p className={style.borschName}>{el.name}</p>
-                                <p className={style.borschPrice}>{el.price}</p>
-                            </div>
-                            <RatingIconsSvg overall_rating={el.overall_rating}/>
-                            <div className={style.flex}>
-                                <p>{el.place_name || t('card.unknownPlace')}</p>
-                                <ButtonVertion
-                                    type="button"
-                                    label={t('card.about')}
-                                    onClick={() => onClickCard(el.id_borsch)}
-                                    icon={IconDitail}
-                                />
-                            </div>
-
-                        </div>
-                    )
-                })}
+                {borsch.map((el) => (
+                    <BorschTile
+                        key={el.id_borsch}
+                        borsch={el}
+                        venueName={el.place_name}
+                        liked={isFavorite(el.id_borsch)}
+                        onToggleLike={() => toggleLike(el.id_borsch)}
+                        onOpen={() => onClickCard(el.id_borsch)}
+                    />
+                ))}
             </div>
         </div>
     );

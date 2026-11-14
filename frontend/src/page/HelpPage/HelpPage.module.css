@@ -1,34 +1,89 @@
 .linksContainer {
-    background-color: var(--color-bg-main);
-    border-radius: 12px;
     display: flex;
     flex-direction: column;
-    margin: 24px 0;
-    padding: 0 16px;
+    gap: 12px;
 }
 
 .linkWrap {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
+    min-height: 76px;
+    padding: 16px 18px;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--nb-shadow-sm);
     text-decoration: none;
+    color: var(--color-text-btn);
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
 
-    padding: 16px 0;
-    text-align: left;
-    background-color: inherit;
-    border: none;
-    border-bottom: 1px solid var(--color-header-border);
-    /*transform: rotate(0.19deg);*/
-    width: 100%;
+@media (hover: hover) {
+    .linkWrap:hover {
+        box-shadow: var(--nb-shadow-md);
+        transform: translateY(calc(-2px * var(--nb-move, 1)));
+    }
+    .linkWrap:hover .linkLabel {
+        color: var(--nb-red-text);
+    }
 }
 
 .linkGroup {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.linkLabel {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.1;
+    transition: color var(--transition-fast);
+}
+
+.linkHint {
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--nb-ink-2);
 }
 
 .arrow {
-    width: 24px;
-    height: 24px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--nb-smetana);
+    color: var(--nb-red-text);
+}
+
+html[data-theme='dark'] .arrow {
+    background: var(--color-bg-main);
+}
+
+.write {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.art {
+    width: 180px;
+    height: auto;
+    align-self: center;
+}
+
+.writeTitle {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--nb-red-text);
+    text-align: center;
 }

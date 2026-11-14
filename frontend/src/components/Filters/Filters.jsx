@@ -2,10 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import {Link} from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 // import { useLocation } from "react-router-dom";
-import { ReactComponent as IconSearch } from './search.svg';
-import { ReactComponent as IconSearchGray } from './searchGray.svg';
-import { ReactComponent as IconFilterActive } from './filterActive.svg';
-import { ReactComponent as IconLocation } from './location-red.svg';
+import { IconSearch, IconFilter as IconFilterActive, IconMapPin, IconClose } from '../Icons';
 import { ReactComponent as IconRating } from './Swap.svg';
 import { GeoButton } from "../GeoButton/GeoButton";
 import { Modal } from '../Modal/Modal';
@@ -15,7 +12,7 @@ import { usePlaces } from '../../context/PlacesContext';
 import { useBorsch } from '../../context/BorschContext';
 import {CitySelect} from "../../components/CitySelect";
 import { SearchAutocomplete } from "../Autocomplete";
-import {Logo} from '../Logo';
+import { Brand } from '../Brand';
 import style from "./Filters.module.scss";
 import { useUser } from "../../context/UserContext";
 import { useT } from "../../i18n";
@@ -137,17 +134,16 @@ export const Filters = ({ hideBoxFilter = false }) => {
   return (
     <div className={`${style.filterWrap} nb-topbar`}>
       <div className={`${style.box} nb-topbar-box`}>
-        <div className={style.desctop}><Logo/></div>
+        <div className={style.desctop}><Link to="/" className={style.brandLink} aria-label={t('common.toMap')}><Brand tagline /></Link></div>
         <div className={`${style.flex} nb-searchrow`}>
             <div className={`${style.inputWrap} nb-searchwrap`}>
               <button
                 type="button"
                 className={style.searchButton}
                 onClick={handleSearch}
-                aria-label="search"
+                aria-label={t('map.search')}
               >
-                <IconSearchGray className={`${style.icon} ${style.iconDefault}`} />
-                <IconSearch className={`${style.icon} ${style.iconActive}`} />
+                <IconSearch className={style.icon} />
               </button>
               <SearchAutocomplete
                 className={`${style.input} nb-search`}
@@ -165,7 +161,7 @@ export const Filters = ({ hideBoxFilter = false }) => {
                 onClick={handleClearSearch}
                 aria-label={t('map.clearSearch')}
               >
-                ×
+                <IconClose size={18} />
               </button>
             )}
             </div>  
@@ -176,7 +172,7 @@ export const Filters = ({ hideBoxFilter = false }) => {
               onClick={changeIsCityFilter}
               id="filterCity"          
             >
-              <IconLocation />              
+              <IconMapPin size={18} className={style.cityIcon} />
               <span className={style.btnFilterCityText}>{cityLabel(city)}</span>          
             </button>                               
         </div>
@@ -215,7 +211,7 @@ export const Filters = ({ hideBoxFilter = false }) => {
             aria-label={t('map.filters')}
           >
             <span className={style.btnFilterText}>{t('map.filters')}</span>
-            <IconFilterActive  />
+            <IconFilterActive size={20} />
             {activeFilterCount() > 0 && (
               <span className={style.filterBadge}>{activeFilterCount()}</span>
             )}

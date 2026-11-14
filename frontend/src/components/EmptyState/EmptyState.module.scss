@@ -1,0 +1,83 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.compact {
+  padding: 20px 12px;
+  gap: 8px;
+  .art {
+    width: 120px;
+  }
+  .title {
+    font-size: 22px;
+  }
+}
+
+.art {
+  width: 170px;
+  height: auto;
+  margin-bottom: 4px;
+  // the scene illustrations are not cut out: round their corners like cards
+  border-radius: var(--radius-md);
+}
+
+.title {
+  @include displayM;
+  margin: 0;
+  color: var(--color-text-btn);
+}
+
+.text {
+  @include body;
+  max-width: 34ch;
+  margin: 0;
+  color: var(--nb-ink-2);
+}
+
+.action {
+  @include btnPrimary;
+  margin-top: 10px;
+}
+
+.loader {
+  display: inline-grid;
+  place-items: center;
+  color: var(--nb-borshch);
+  svg {
+    overflow: visible;
+  }
+}
+
+.steam path {
+  opacity: 0;
+  animation: steam 1.8s ease-in-out infinite;
+  &:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+}
+
+@keyframes steam {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(6px * var(--nb-move, 1)));
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(-6px * var(--nb-move, 1)));
+  }
+}

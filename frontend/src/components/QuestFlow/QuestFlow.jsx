@@ -5,6 +5,7 @@ import { GoogleAuth } from '../GoogleAuth';
 import { useT } from '../../i18n';
 import { optionForValue, scaleEnds } from './answers';
 import { tokenStorage } from '../../services/tokenStorage';
+import { IconCamera, IconClose } from '../Icons';
 import style from './QuestFlow.module.scss';
 
 /**
@@ -34,25 +35,28 @@ import style from './QuestFlow.module.scss';
 // by tapping — no hidden scoring the user cannot predict.
 export const XP_PER_STEP = 10;
 
+// One colour per step, so moving forward is felt before the question is read.
+// All from the brand's reds (borshch, deep, beet and the steps between them);
+// the old rainbow of greens and blues belonged to the previous identity.
 const HUES = {
-  meat: '#B3402F',
-  beetroot: '#A3245A',
-  density: '#8A5A2B',
-  salt: '#3F6C7A',
-  aftertaste: '#6B4E8F',
-  serving: '#2F7059',
-  overall: '#5D7E52',
-  meatType: '#8C4A2F',
-  name: '#2F6C7A',
-  price: '#7A5C2F',
-  weight: '#4A5F8F',
-  photo: '#2F7059',
-  comment: '#6B4E8F',
-  signin: '#33526B',
-  done: '#A3245A',
+  meat: '#C0102F',
+  beetroot: '#860130',
+  density: '#A00322',
+  salt: '#B5122E',
+  aftertaste: '#7A0A2A',
+  serving: '#C8213A',
+  overall: '#DC143C',
+  meatType: '#A00322',
+  name: '#B5122E',
+  price: '#860130',
+  weight: '#C0102F',
+  photo: '#A00322',
+  comment: '#860130',
+  signin: '#5E0A22',
+  done: '#DC143C',
 };
 
-const hueFor = (step) => HUES[step?.key] || HUES[step?.type] || '#5D7E52';
+const hueFor = (step) => HUES[step?.key] || HUES[step?.type] || '#DC143C';
 
 const isAuthed = () => {
   try {
@@ -262,7 +266,7 @@ export const QuestFlow = ({
 
       <header className={style.head}>
         <button type="button" className={style.quit} onClick={onExit} aria-label={t('card.close')}>
-          ×
+          <IconClose size={22} />
         </button>
 
         {/* one segment per task, so "how much is left" is countable, not guessed */}
@@ -435,7 +439,7 @@ export const QuestFlow = ({
                       aria-label={t('flow.photoRemove')}
                       title={t('flow.photoRemove')}
                     >
-                      ×
+                      <IconClose size={16} />
                     </button>
                   </div>
                 ))}
@@ -448,9 +452,11 @@ export const QuestFlow = ({
                 className={photos.length ? style.addMore : style.bigGhost}
                 onClick={() => fileRef.current?.click()}
               >
-                📷 {photos.length ? t('flow.photoAddMore') : t('flow.photoPick')}
+                <IconCamera size={22} />
+                {photos.length ? t('flow.photoAddMore') : t('flow.photoPick')}
               </button>
             )}
+            {photos.length === 0 && <p className={style.photoLimit}>{t('photo.limit')}</p>}
             {photos.length > 0 && (
               <p className={style.hint}>{t('flow.photoCount', { n: photos.length, max: MAX_PHOTOS })}</p>
             )}
@@ -481,7 +487,7 @@ export const QuestFlow = ({
         {current?.type === 'signin' && (
           <div className={style.field}>
             {authed ? (
-              <p className={style.signedIn}>✅ {t('flow.signedIn')}</p>
+              <p className={style.signedIn}>{t('flow.signedIn')}</p>
             ) : (
               <div className={style.signinBox}>
                 <GoogleAuth onSuccess={handleSignIn} />

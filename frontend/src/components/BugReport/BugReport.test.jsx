@@ -72,15 +72,19 @@ describe('BugReport', () => {
     expect(screen.getByRole('textbox')).toHaveValue('');
   });
 
-  it('wears the same nav hooks as the tabs, so map1 sizes it like them', () => {
+  // NAV-203 (10.11.2026): the report left the bottom tab bar. It is a row in
+  // the profile, a card in Help and a link on the desktop sidebar, so it no
+  // longer wears the tab hooks and says what it does in full.
+  it('is not a tab any more: no nav hooks, the action named in full', () => {
     render(
       <I18nProvider>
-        <BugReport />
+        <BugReport variant="card" />
       </I18nProvider>
     );
     const trigger = screen.getByRole('button', { name: 'Повідомити про помилку' });
-    expect(trigger).toHaveClass('nb-navlink');
-    expect(trigger.querySelector('svg')).toHaveClass('nb-navicon');
-    expect(screen.getByText('Помилка')).toHaveClass('nb-navtext');
+    expect(trigger).not.toHaveClass('nb-navlink');
+    expect(trigger.querySelector('.nb-navicon')).toBeNull();
+    expect(trigger).toHaveTextContent('Повідомити про помилку');
+    expect(screen.queryByText('Помилка')).not.toBeInTheDocument();
   });
 });

@@ -1,88 +1,97 @@
-@use "../../styles//mixin_font.scss" as *;
+@use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+// The borshch card in the map sheet: photo full-bleed on top, then the dish
+// in MAK, the score in bowls and the two actions. White on the cream sheet,
+// like the landing's community cards.
 .card{
     position: relative;
-	width: min(344px, 100%);
-    background-color: var(--color-text-btn-active);
+    width: 100%;
+    background-color: var(--surface);
     border-radius: var(--radius-lg);
-    padding: 6px;  
-    @include respond(tablet) {
-		width: min(380px, 100%);
-        padding: 24px;
-    } 
+    padding: 8px 8px 16px;
+    box-shadow: var(--nb-shadow-md);
+    animation: cardIn var(--dur-slow) var(--ease-out) both;
+    > :not(:first-child):not(.box) {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
 }
-
 
 .borschName{
-    @include body;
+    @include displayM;
     margin-top: 14px;
     color: var(--color-text-btn);
-}
-.borschPrice{
-    @include caption;
-    color: var(--color-text-main);
+    overflow-wrap: anywhere;
 }
 .namePlace{
-    @include footnote;
-    color: var(--color-btn-text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-text-btn);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .box{
     position: absolute;
-    right: 35px;
-    top: 35px;    
-    display:flex;    
+    right: 18px;
+    top: 18px;
+    display:flex;
     justify-content: center;
     align-items: center;
-    gap:20px;
-    z-index: 998;
+    gap: 8px;
+    z-index: 5;
 }
 .flex {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 10px 0;  
-  gap:10px;
-}
-.btnAbout{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  @include footnote;
-  color: var(--color-btn-link);
-  border: 1px solid  var(--color-btn-link);
-  padding:14px 20px;
-  border-radius: var(--radius-md);
-  background-color: var(--color-text-btn-active);
-}
-.btnAbout:hover{
-  cursor: pointer;
-  color: var(--color-text-btn);
-  border: 1px solid  var(--color-text-btn);
+  margin: 6px 0 4px;
+  gap: 10px;
 }
 .grade{
-    @include caption;
-    color: var(--color-text-main);
-    text-align: left;
-    margin: 10px 0;
+    @include kicker;
+    margin: 12px 0 0;
+}
+.rating{
+    @include numeric(26px, 800);
+    color: var(--nb-red-text);
+    white-space: nowrap;
 }
 .rating_grade{
- @include footnote;
-    color: var(--color-text-main);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--nb-ink-2);
 }
-/* pin + venue name belong together — .flex is space-between, which pushed the
-   icon and the name to opposite edges once they were alone in the row */
 .placeRow {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
-  margin: 10px 0;
-  color: var(--color-text-main);
+  gap: 8px;
+  min-height: 44px;
+  margin: 8px 0 12px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-main);
+  color: var(--nb-red-text);
   min-width: 0;
+  transition: background-color var(--transition-fast);
+  &:hover {
+    background: var(--nb-smetana);
+  }
 }
-
+.placeActive {
+  box-shadow: inset 0 0 0 2px var(--nb-borshch);
+}
 .placeRow > svg {
   flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  path {
+    stroke: currentColor;
+  }
 }
 
 /* secondary action, then the primary one */
@@ -91,91 +100,55 @@
   align-items: center;
   gap: 10px;
 }
-
 .actionRow > * {
   flex: 1 1 0;
   min-width: 0;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  cursor: pointer;
 }
-
+.btnAbout{
+    @include btnGhost;
+    padding: 0 12px;
+}
 .btnRate {
-  background-color: var(--color-text-active);
-  border: 1px solid var(--color-text-active);
-  color: var(--color-text-btn-active);
-  font-weight: 500;
-}
-
-.btnRate:hover {
-  opacity: 0.9;
+    @include btnPrimary;
+    padding: 0 12px;
 }
 
 .noRating {
   margin: 6px 0;
-  color: var(--color-text-main);
-  @include caption;
+  color: var(--nb-ink-2);
+  @include footnote;
 }
 
-// "Розвідка борщу" chips: quest call-out on untasted borsches, a softer
-// "confirm this score" nudge on catalogue-only ones, discoverer credit once
-// the community has been there
+// "Розвідка борщу" notes: the quest on untasted borshch is the loudest (beet,
+// like its pin), the «confirm this score» nudge softer, the discoverer credit
+// quiet.
 .exploreVirgin,
 .exploreUnverified,
 .exploreDone {
-  margin: 6px 0 0;
-  padding: 4px 10px;
-  border-radius: var(--radius-md);
+  margin: 8px 0 0;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
   width: fit-content;
-  @include caption;
+  font-size: 13px;
+  line-height: 1.35;
 }
-
-// The quest state is the loudest chip on the card: solid beet, white type.
 .exploreVirgin {
-  color: #fff;
-  background: #a71e5b;
+  color: #FFFAF5;
+  background: var(--nb-beet);
   font-weight: 700;
 }
-
 .exploreUnverified {
-  color: #a71e5b;
-  background: rgba(167, 30, 91, 0.08);
-  border: 1px dashed rgba(167, 30, 91, 0.45);
+  color: var(--nb-red-text);
+  background: rgba(220, 20, 60, 0.07);
+  border: 1.5px dashed rgba(220, 20, 60, 0.45);
   font-weight: 600;
 }
-
 .exploreDone {
-  color: var(--color-text-main);
-  background: rgba(99, 135, 88, 0.1);
+  color: var(--nb-ink-2);
+  background: var(--color-bg-main);
 }
 
-
-/* The card had no motion at all: it blinked into place over the map and its
-   buttons answered a tap with nothing. Arrival and press feedback are the two
-   moments a surface feels either built or pasted. */
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  from { opacity: 0; transform: translateY(calc(10px * var(--nb-move, 1))); }
   to   { opacity: 1; transform: none; }
-}
-
-.card {
-  animation: cardIn var(--dur-slow) var(--ease-out) both;
-}
-
-.btnAbout,
-.btnRate {
-  transition: background-color var(--transition-fast),
-              border-color var(--transition-fast),
-              color var(--transition-fast),
-              transform var(--dur-fast) var(--ease-out);
-}
-
-.btnAbout:active,
-.btnRate:active {
-  /* a press the finger can feel, not a colour it has to notice */
-  transform: scale(0.97);
 }

@@ -2,7 +2,7 @@ import { useState} from 'react';
 import { useNavigate} from "react-router-dom";
 import { useFilters } from '../../context/FiltersContext';
 import { usePlaces } from '../../context/PlacesContext';
-import { ReactComponent as IconDelete } from './close.svg';
+import { IconClose as IconDelete } from '../Icons';
 import { ReactComponent as IconSearch } from './search.svg';
 import { ReactComponent as IconSearchGray } from './searchGray.svg';
 import { cityCenter, CITY_FOCUS_ZOOM } from '../../utils/cityCenter';
@@ -79,7 +79,7 @@ export const CitySelect = ({onClose}) => {
   return (
     <div className={style.cardFilters}>
       <button type="button" onClick={onClose} className={style.btnClose} aria-label={t('card.close')}>                               
-        <IconDelete   aria-label={'close'} id='close' />
+        <IconDelete />
       </button>  
       <h2 className={style.title}>{t('city.title')}</h2>
       <div className={style.inputWrap}>

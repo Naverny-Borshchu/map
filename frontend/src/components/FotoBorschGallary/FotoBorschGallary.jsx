@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import style from './FotoBorschGallary.module.css';
 import { BorschSkeleton } from '../BorschSkeleton';
 import { useT } from '../../i18n';
+import { IconChevronLeft, IconChevronRight } from '../Icons';
 
 const srcOf = (path) =>
   path?.startsWith('http') ? path : `https://map.navernyborshchu.com${path}`;
@@ -62,7 +63,7 @@ export const FotoBorschGallary = ({ images, height }) => {
         <img
           ref={imgRef}
           src={srcOf(images[currentIndex])}
-          alt={images[currentIndex]?.split('/').pop() || ''}
+          alt={t('photo.alt', { n: currentIndex + 1, total })}
           className={`${style.image} ${isLoaded ? style.imageReady : ''}`}
           loading="lazy"
           decoding="async"
@@ -78,7 +79,7 @@ export const FotoBorschGallary = ({ images, height }) => {
               onClick={step(-1)}
               aria-label={t('card.prevPhoto')}
             >
-              ‹
+              <IconChevronLeft size={18} />
             </button>
             <button
               type="button"
@@ -86,7 +87,7 @@ export const FotoBorschGallary = ({ images, height }) => {
               onClick={step(1)}
               aria-label={t('card.nextPhoto')}
             >
-              ›
+              <IconChevronRight size={18} />
             </button>
 
             <div className={style.dots}>

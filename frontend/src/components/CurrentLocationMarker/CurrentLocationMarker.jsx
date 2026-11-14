@@ -57,10 +57,10 @@ export const CurrentLocationMarker = ({
           center={position}
           radius={80}
           options={{
-            strokeColor: "#638758",
+            strokeColor: "#DC143C",
             strokeOpacity: 0.8,
             strokeWeight: 2,
-            fillColor: "#638758",
+            fillColor: "#DC143C",
             fillOpacity: 0.15,
             clickable: false,
             zIndex,
@@ -75,7 +75,7 @@ export const CurrentLocationMarker = ({
         clickable={clickable}
         title={
           state === 'virgin'
-            ? 'Ніхто ще не куштував — стань Першоваром!'
+            ? 'Ніхто ще не куштував. Стань Першоваром!'
             : state === 'unverified'
               ? `Оцінка ${label} · спільнота ще не підтвердила`
               : label

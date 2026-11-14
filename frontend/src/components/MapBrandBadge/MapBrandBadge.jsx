@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { ReactComponent as IconLogo } from '../Logo/logo.svg';
+import { Brand } from '../Brand';
 import { useBorsch } from '../../context/BorschContext';
 import { usePlaces } from '../../context/PlacesContext';
 import { useFilters } from '../../context/FiltersContext';
@@ -53,9 +53,9 @@ export const MapBrandBadge = () => {
   return (
     <div ref={boxRef} className={`${style.badge} nb-brandbadge`}>
       <div className={style.brand}>
-        <IconLogo className={style.logo} aria-label="Наверни Борщу" />
+        <Brand size="sm" className={style.logo} />
         <span className={style.count}>
-          {loading ? t('map.loadingShort') : t('map.borschesOnMap', { count })}
+          {loading ? t('map.loadingShort') : t('map.borschesShort', { count })}
         </span>
       </div>
       {!loading && <QuestChip inline />}

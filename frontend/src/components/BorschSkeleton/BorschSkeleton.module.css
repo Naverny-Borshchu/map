@@ -54,11 +54,9 @@
   100% { bottom: 104%; transform: scale(1.15); opacity: 0; }
 }
 
+/* Reduced motion: the broth keeps its slow colour shift and the fade; only
+   the rising bubbles (movement) go. */
 @media (prefers-reduced-motion: reduce) {
-  .pot {
-    animation: none;
-    transition: none;
-  }
   .bubble {
     display: none;
   }

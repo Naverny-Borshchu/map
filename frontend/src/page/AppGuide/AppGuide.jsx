@@ -1,18 +1,19 @@
-import typography from "../../styles/typography.module.css";
 import layout from "../../styles/layout.module.scss";
-import { Mascot } from "../../components/Mascot";
 import { useT } from "../../i18n";
+import { PageHeader } from "../../components/PageHeader";
+import findArt from "../../assets/illustrations/find.webp";
+import rateArt from "../../assets/illustrations/rate.webp";
+import addArt from "../../assets/illustrations/add.webp";
 import style from "./AppGuide.module.scss";
 
 /**
- * The guide used to be a heading over an empty page — a link from Help that
- * led nowhere. It now explains the three things the app is for, in the same
- * order a new user meets them, and can replay the intro.
+ * The three things the app is for, in the order a new user meets them, with
+ * the landing's «How it works» illustrations, and a way to replay the intro.
  */
 const SECTIONS = [
-  { key: 'find', emoji: '🗺️' },
-  { key: 'rate', emoji: '⭐' },
-  { key: 'add', emoji: '➕' },
+  { key: 'find', art: findArt },
+  { key: 'rate', art: rateArt },
+  { key: 'add', art: addArt },
 ];
 
 export const AppGuide = () => {
@@ -25,22 +26,22 @@ export const AppGuide = () => {
 
   return (
     <div className={layout.wrapper}>
-      <div className={style.head}>
-        <Mascot mood="happy" size={72} />
-        <h1 className={typography.mobileTitle}>{t('guide.title')}</h1>
-      </div>
+      <PageHeader back kicker={t('guide.kicker')} title={t('guide.title')} lead={t('guide.lead')} />
 
-      <div className={style.sections}>
-        {SECTIONS.map(({ key, emoji }) => (
-          <section className={style.card} key={key}>
-            <h2 className={style.cardTitle}>
-              <span aria-hidden="true">{emoji}</span>
-              {t(`guide.${key}Title`)}
-            </h2>
-            <p className={style.cardText}>{t(`guide.${key}Text`)}</p>
-          </section>
+      <ol className={style.sections}>
+        {SECTIONS.map(({ key, art }, i) => (
+          <li className={style.card} key={key}>
+            <div className={style.art}>
+              <img src={art} alt="" width="720" height="537" loading="lazy" />
+            </div>
+            <div className={style.body}>
+              <span className={style.num} aria-hidden="true">{i + 1}</span>
+              <h2 className={style.cardTitle}>{t(`guide.${key}Title`)}</h2>
+              <p className={style.cardText}>{t(`guide.${key}Text`)}</p>
+            </div>
+          </li>
         ))}
-      </div>
+      </ol>
 
       <button type="button" className={style.replay} onClick={replayIntro}>
         {t('guide.replay')}

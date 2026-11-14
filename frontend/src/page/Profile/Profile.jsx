@@ -2,26 +2,20 @@ import {useRef, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {ButtonProfile} from '../../components/ButtonProfile';
 import {ModalPleaseRegister} from "../../components/ModalPleaseRegister/ModalPleaseRegister";
-import {ReactComponent as IconBack} from '../../assets/icons/arrow_back.svg';
+import plateUrl from '../../assets/images/plate.svg';
+import heroArt from '../../assets/illustrations/hero.webp';
+import {
+    IconHeart, IconBowl, IconPerson, IconSpoonPlus, IconLock, IconLogout,
+    IconInfo, IconHelp, IconDoc, IconChevronRight,
+} from '../../components/Icons';
 import {useMediaQuery} from "../../hook/useMediaQuery";
-import Logo from '../../assets/images/logo.svg';
-import advertIcon from '../../assets/images/profile-advert-img.png';
-import personalInfoIcon from '../../assets/images/profile-personal-icon.png';
-import reviewsIcon from '../../components/Layout/comment.svg';
-import favouritesIcon from '../../components/Layout/like.svg';
-import addedBorshchIcon from '../../assets/images/profile-added-borshch-icon.png';
-import passwordIcon from '../../assets/images/profile-password-icon.png';
-import logoutIcon from '../../assets/images/profile-logout-icon.png';
-import aboutIcon from '../../assets/images/profile-info-icon.png';
-import helpIcon from '../../assets/images/profile-help-icon.png';
-import policyIcon from '../../assets/images/profile-policy-icon.png';
-import arrowIcon from '../../assets/images/profile-arrow-icon.png';
 import layout from '../../styles/layout.module.scss';
-import typography from '../../styles/typography.module.css';
 import style from './Profile.module.scss';
 import {ModalLogout} from "../../components/ModalLogout";
 import {ThemeToggle} from "../../components/ThemeToggle";
 import {LanguageToggle} from "../../components/LanguageToggle";
+import {BugReport} from "../../components/BugReport";
+import {PageHeader} from "../../components/PageHeader";
 import {PersonalInfo} from "../PersonalInfo";
 import {AddedBorschesPage} from "../AddedBorschesPage";
 import {PasswordChangePage} from "../PasswordChangePage";
@@ -56,19 +50,19 @@ export const Profile = () => {
 
     const linksForProfileBtn = [
         // Обране and Відгуки are no longer bottom-nav tabs; Ви is where they live.
-        {path: '/favorite', label: t('nav.favourites'), icon: favouritesIcon},
-        {path: '/reviews', label: t('profile.myReviews'), icon: reviewsIcon},
-        {path: '/profile/personal-information', label: t('profile.personalInfo'), icon: personalInfoIcon},
-        {path: '/profile/added-borsches', label: t('profile.addedBorsches'), icon: addedBorshchIcon},
-        {path: '/profile/change-password', label: t('profile.password'), icon: passwordIcon},
-        {label: t('profile.logout'), icon: logoutIcon, type: 'button'},
+        {path: '/favorite', label: t('nav.favourites'), icon: IconHeart},
+        {path: '/reviews', label: t('profile.myReviews'), icon: IconBowl},
+        {path: '/profile/personal-information', label: t('profile.personalInfo'), icon: IconPerson},
+        {path: '/profile/added-borsches', label: t('profile.addedBorsches'), icon: IconSpoonPlus},
+        {path: '/profile/change-password', label: t('profile.password'), icon: IconLock},
+        {label: t('profile.logout'), icon: IconLogout, type: 'button'},
     ];
 
     const linksForSettingsBtn = [
-        {path: 'https://navernyborshchu.com/', label: t('profile.about'), icon: aboutIcon},
-        {path: '/help', label: t('profile.help'), icon: helpIcon},
-        // BUG-15r: реальна політика живе на лендінгу; /faq — це FAQ, не політика
-        {path: 'https://navernyborshchu.com/privacy-policy.html', label: t('profile.privacy'), icon: policyIcon},
+        {path: 'https://navernyborshchu.com/', label: t('profile.about'), icon: IconInfo},
+        {path: '/help', label: t('profile.help'), icon: IconHelp},
+        // BUG-15r: реальна політика живе на лендінгу; /faq це FAQ, не політика
+        {path: 'https://navernyborshchu.com/privacy-policy.html', label: t('profile.privacy'), icon: IconDoc},
     ]
 
     const activeLinks = selectProfileLinks({
@@ -123,114 +117,90 @@ export const Profile = () => {
     };
 
 
+    const row = ({path, label, icon: Icon, type}) => {
+        const inner = (
+            <>
+                <span className={style.linkGroup}>
+                    <span className={style.linkIcon} aria-hidden="true"><Icon size={22} /></span>
+                    <span className={style.linkLabel}>{label}</span>
+                </span>
+                {type !== 'button' && <span className={style.arrow} aria-hidden="true"><IconChevronRight /></span>}
+            </>
+        );
+        if (type === 'button') {
+            return (
+                <button key={label} type="button" onClick={handleOpenModal} className={`${style.linkWrap} ${style.danger}`}>
+                    {inner}
+                </button>
+            );
+        }
+        if (isDesktop) {
+            return (
+                <button key={label} type="button" onClick={() => handleLinkNavigation(path, label)} className={style.linkWrap}>
+                    {inner}
+                </button>
+            );
+        }
+        if (path?.startsWith('https://')) {
+            return (
+                <a key={path} href={path} target="_blank" rel="noopener noreferrer" className={style.linkWrap}>
+                    {inner}
+                </a>
+            );
+        }
+        return (
+            <Link key={path} to={path} className={style.linkWrap}>
+                {inner}
+            </Link>
+        );
+    };
+
+    const userCard = (
+        <div className={style.userHeader}>
+            <img
+                className={style.avatar}
+                src={user.picture || plateUrl}
+                alt=""
+                onError={(e) => { e.target.src = plateUrl; }}
+            />
+            <div className={style.userWords}>
+                <h2 className={style.userName}>{user.given_name || user.name}</h2>
+                <p className={style.userEmail}>{user.email}</p>
+            </div>
+        </div>
+    );
+
+    const advert = (
+        <div className={style.advertBanner}>
+            <div className={style.advertText}>
+                <h3 className={style.advertHeader}>{t('profile.advertTitle')}</h3>
+                <p className={style.advertSub}>{t('profile.advertText')}</p>
+            </div>
+            <img className={style.advertArt} src={heroArt} alt="" width="560" height="560" />
+        </div>
+    );
+
     return (
-        <div className={layout.wrapper}>
+        <div className={`${layout.wrapper} ${style.page}`}>
             {isDesktop ? (
-                // 🔹 Десктопна версія
                 <div className={style.desktopContainer}>
                     <aside className={style.sidebar}>
-                        <h1 className={typography.mobileTitle}>{t('profile.title')}</h1>
-                        <div className={style.linksContainer}>
-                            {desktopLinks.map(({path, label, icon, type}) =>
-                                type === 'button' ? (
-                                    <button
-                                        key={label}
-                                        onClick={handleOpenModal}
-                                        className={style.linkWrap}
-                                    >
-                                        <div className={style.linkGroup}>
-                                            <img src={icon} alt="Logout"/>
-                                            <span className={typography.mobileBody}>{label}</span>
-                                        </div>
-                                    </button>
-                                ) : (
-                                    <button
-                                        key={label}
-                                        onClick={() => handleLinkNavigation(path, label)}
-                                        className={style.linkWrap}
-                                    >
-                                        <div className={style.linkGroup}>
-                                            <img src={icon} alt={label}/>
-                                            <span className={typography.mobileBody}>{label}</span>
-                                        </div>
-                                    </button>
-                                )
-                            )}
-                        </div>
-
-
-                        {/*<div className={style.linksContainer}>*/}
-                        {/*    {otherLinks.map(({label, icon, type}) =>*/}
-                        {/*        type === 'button' ? (*/}
-                        {/*            <button*/}
-                        {/*                key={label}*/}
-                        {/*                onClick={handleOpenModal}*/}
-                        {/*                className={style.linkWrap}*/}
-                        {/*            >*/}
-                        {/*                <div className={style.linkGroup}>*/}
-                        {/*                    <img src={logoutLink.icon} alt="Logout"/>*/}
-                        {/*                    <span className={typography.mobileBody}>{logoutLink.label}</span>*/}
-                        {/*                </div>*/}
-                        {/*            </button>*/}
-                        {/*        ) : (*/}
-                        {/*            <button*/}
-                        {/*                key={label}*/}
-                        {/*                onClick={() => {*/}
-                        {/*                    // change the active block depending on the label*/}
-                        {/*                    if (label === 'Особиста інформація') setActiveBlock('personal');*/}
-                        {/*                    if (label === 'Додані борщі') setActiveBlock('borsches');*/}
-                        {/*                    if (label === 'Пароль') setActiveBlock('password');*/}
-                        {/*                }}*/}
-                        {/*                className={`${style.linkWrap} ${activeBlock === label.toLowerCase() ? style.active : ''}`}*/}
-                        {/*            >*/}
-                        {/*                <div className={style.linkGroup}>*/}
-                        {/*                    <img src={icon} alt={label}/>*/}
-                        {/*                    <span className={typography.mobileBody}>{label}</span>*/}
-                        {/*                </div>*/}
-                        {/*            </button>*/}
-                        {/*        )*/}
-                        {/*    )}*/}
-                        {/*</div>*/}
-
-                        {/*<div className={style.linksContainer}>*/}
-                        {/*    {otherLinks.map(({path, label, icon}) =>*/}
-                        {/*            <Link key={path} to={path} className={style.linkWrap}>*/}
-                        {/*                <div className={style.linkGroup}>*/}
-                        {/*                    <img src={icon} alt={label}/>*/}
-                        {/*                    <span className={typography.mobileBody}>{label}</span>*/}
-                        {/*                </div>*/}
-                        {/*            </Link>*/}
-                        {/*    )}*/}
-                        {/*    {logoutLink && (*/}
-                        {/*        <button*/}
-                        {/*            key={logoutLink.label}*/}
-                        {/*            onClick={handleOpenModal}*/}
-                        {/*            className={style.linkWrap}*/}
-                        {/*        >*/}
-                        {/*            <div className={style.linkGroup}>*/}
-                        {/*                <img src={logoutLink.icon} alt="Logout" />*/}
-                        {/*                <span className={typography.mobileBody}>{logoutLink.label}</span>*/}
-                        {/*            </div>*/}
-                        {/*        </button>*/}
-                        {/*    )}*/}
-                        {/*</div>*/}
+                        <PageHeader kicker={t('profile.kicker')} title={t('profile.title')} />
+                        {userCard}
+                        <nav className={style.linksContainer}>
+                            {desktopLinks.map(row)}
+                            <BugReport variant="row" className={style.bugRow} />
+                        </nav>
                     </aside>
 
                     <section className={style.content}>
-                        <div className={style.advertBanner}>
-                            <div className={style.advertText}>
-                                <h4 className={`${typography.mobileTitleSmall} ${style.advertHeader}`}>
-                                    {t('profile.advertTitle')}
-                                </h4>
-                                <p className={typography.mobileFootnote}>
-                                    {t('profile.advertText')}
-                                </p>
-                            </div>
-                            <img src={advertIcon} alt="Invite your friends"/>
-                        </div>
+                        {advert}
 
-                        <div className={style.themeRow}><ThemeToggle/></div>
-                        <div className={style.themeRow}><LanguageToggle/></div>
+                        <div className={style.settingsCard}>
+                            <h2 className={style.sectionTitle}>{t('profile.settingsTitle')}</h2>
+                            <div className={style.themeRow}><ThemeToggle/></div>
+                            <div className={style.themeRow}><LanguageToggle/></div>
+                        </div>
 
                         <div ref={personalRef}>
                             <PersonalInfo/>
@@ -243,39 +213,15 @@ export const Profile = () => {
                         <div ref={passwordRef}>
                             <PasswordChangePage/>
                         </div>
-
-                        {/*{activeBlock === 'personal' && <PersonalInfo/>}*/}
-                        {/*{activeBlock === 'borsches' && <AddedBorschesPage/>}*/}
-                        {/*{activeBlock === 'password' && <PasswordChangePage />}*/}
                     </section>
                 </div>
             ) : (
-                // 🔹 Мобільна версія
                 <>
-                    <h1 className={typography.mobileTitle}>{t('profile.title')}</h1>
-                    <Link className={style.back} to={`/`} aria-label={t('nav.map')}><IconBack/></Link>
-                    <div className={style.userHeader}>
-                        <img
-                            src={user.picture || Logo}
-                            alt='User avatar'
-                            onError={(e) => { e.target.src = Logo; }}
-                            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }}
-                        />
-                        <div>
-                            <h2 className={typography.mobileTitleSmall}>{user.given_name || user.name}</h2>
-                            <p style={{ fontSize: 13, color: 'var(--color-text-main)', margin: 0 }}>{user.email}</p>
-                        </div>
-                    </div>
+                    <PageHeader back="/" kicker={t('profile.kicker')} title={t('profile.title')} />
+                    {userCard}
+                    {advert}
 
-                    <div className={style.advertBanner}>
-                        <div className={style.advertText}>
-                            <h4 className={`${typography.mobileTitleSmall} ${style.advertHeader}`}>{t('profile.advertTitle')}</h4>
-                            <p className={typography.mobileFootnote}>{t('profile.advertText')}</p>
-                        </div>
-                        <img src={advertIcon} alt="Invite your friends"/>
-                    </div>
-
-                    <div className={style.userButtons}>
+                    <div className={style.userButtons} role="tablist">
                         <ButtonProfile
                             name={t('profile.tabProfile')}
                             active={activeButton === 'profile'}
@@ -289,46 +235,17 @@ export const Profile = () => {
                     </div>
 
                     {activeButton === 'settings' && (
-                        <>
+                        <div className={style.settingsCard}>
                             <div className={style.themeRow}><ThemeToggle/></div>
                             <div className={style.themeRow}><LanguageToggle/></div>
-                        </>
+                        </div>
                     )}
 
-                    <div className={style.linksContainer}>
-                        {activeLinks.map(({path, label, icon, type}) =>
-                            type === 'button' ? (
-                                <button key={label} onClick={handleOpenModal} className={style.linkWrap}>
-                                    <div className={style.linkGroup}>
-                                        <img src={logoutIcon} alt="Logout"/>
-                                        <span className={typography.mobileBody}>{t('profile.logout')}</span>
-                                    </div>
-                                </button>
-                            ) : path?.startsWith('https://') ? (
-                                <a
-                                    key={path}
-                                    href={path}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={style.linkWrap}
-                                >
-                                    <div className={style.linkGroup}>
-                                        <img src={icon} alt={label}/>
-                                        <span className={typography.mobileBody}>{label}</span>
-                                    </div>
-                                    <img src={arrowIcon} alt="Arrow" className={style.arrow}/>
-                                </a>
-                            ) : (
-                                <Link key={path} to={path} className={style.linkWrap}>
-                                    <div className={style.linkGroup}>
-                                        <img src={icon} alt={label}/>
-                                        <span className={typography.mobileBody}>{label}</span>
-                                    </div>
-                                    <img src={arrowIcon} alt="Arrow" className={style.arrow}/>
-                                </Link>
-                            )
-                        )}
-                    </div>
+                    <nav className={style.linksContainer}>
+                        {activeLinks.map(row)}
+                        {/* NAV-203: the bug report left the tab bar for here and Help. */}
+                        {activeButton === 'settings' && <BugReport variant="row" className={style.bugRow} />}
+                    </nav>
                 </>)}
 
             {showModal && <ModalLogout

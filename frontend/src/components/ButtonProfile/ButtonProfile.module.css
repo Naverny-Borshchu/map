@@ -1,22 +1,25 @@
+/* One half of the Профіль / Налаштування switch: a pill that fills red. */
 .btn {
-    background-color: var(--color-bg-main);
-    height: 34px;
+    min-height: 44px;
     border: none;
-    border-radius: 14px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-btn);
+    font-family: var(--font-family-main);
+    font-size: 15px;
+    font-weight: 700;
     cursor: pointer;
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 172px;
+    flex: 1 1 0;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.active {
-    background-color: var(--color-text-active);
-    color: var(--color-text-btn-active);
+.btn:hover {
+    color: var(--nb-red-text);
 }
 
+.active,
 .active:hover {
-    background-color: var(--color-btn-hover);
+    background-color: var(--nb-borshch);
+    color: #FFFAF5;
+    box-shadow: 0 3px 0 var(--nb-borshch-dark);
 }
-
-
-

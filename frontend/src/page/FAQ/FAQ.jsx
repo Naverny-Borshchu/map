@@ -1,7 +1,7 @@
-import typography from "../../styles/typography.module.css";
 import layout from "../../styles/layout.module.scss";
 import style from "./FAQ.module.scss";
 import { useT } from "../../i18n";
+import { PageHeader } from "../../components/PageHeader";
 
 // Eight questions, kept in the dictionary so the page speaks whichever
 // language the rest of the app is speaking.
@@ -11,12 +11,13 @@ export const FAQ = () => {
     const t = useT();
     return (
         <div className={layout.wrapper}>
-            <h1 className={typography.mobileTitle}>{t('faq.title')}</h1>
+            <PageHeader back kicker={t('faq.kicker')} title={t('faq.title')} />
             <div className={style.list}>
                 {IDS.map((i) => (
                     <details key={i} className={style.item}>
-                        <summary className={`${typography.mobileBody} ${style.question}`}>
-                            {t(`faq.q${i}`)}
+                        <summary className={style.question}>
+                            <span>{t(`faq.q${i}`)}</span>
+                            <span className={style.sign} aria-hidden="true" />
                         </summary>
                         <p className={style.answer}>{t(`faq.a${i}`)}</p>
                     </details>

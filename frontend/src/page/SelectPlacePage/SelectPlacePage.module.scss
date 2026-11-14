@@ -1,61 +1,62 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
+
 .containerPage{
-  padding: 16px;  
-  background-color: var(--color-bg-main);
-  /* min-height, not height: with a fixed 100vh the map and the button below it
-     overflowed a box that could not grow, so the page had nothing to scroll to.
-     The bottom padding keeps the last control clear of the floating nav. */
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 0;
+  background-color: var(--color-bg-grey);
+  /* min-height, not height: the map and the button below must be reachable by
+     scrolling. The bottom padding keeps the last control clear of the nav. */
   min-height: 100vh;
   padding-bottom: calc(var(--nb-nav-h, 78px) + 24px + env(safe-area-inset-bottom, 0px));
   @include respond(desktop) {
-    // full-height panel with the top bar reserved inside it, so the step does
-    // not push the page 110px past the viewport
     height: 100%;
     overflow-y: auto;
-    background-color:var(--color-text-btn-active);
-    padding: var(--nb-topbar-h) 18px 18px;
+    padding: calc(var(--nb-topbar-h) + 28px) 32px 32px;
+    max-width: 720px;
     margin: 0 auto;
-  }   
+  }
 }
+
 .container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  margin-top: 15px; 
-  margin-bottom: 34px; 
-  @include respond(desktop) {  
-    width: 50%;
-    margin: 0 auto;   
-  }  
+  gap: 12px;
 }
 
 .card {
   position: relative;
-  border: 1px solid var(--color-border-mid);
-  border-radius: 24px;
-  padding: 13px 24px;
-  margin-bottom: 20px;
-  background:var(--color-bg-main);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 18px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  &:focus-within {
+    border-color: var(--nb-borshch);
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.12);
+  }
 }
 
 .label {
-  position: absolute;
-  @include footnote;
-  top: -8px;
-  left: 15px; 
-  color:var( --color-text-btn);
-  background:var(--color-bg-main);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nb-ink-2);
 }
 
 .input {
-  @include button;
   width: 100%;
-  min-height: 44px;
+  min-height: 36px;
   padding: 0;
   border: none;
   background: transparent;
   color: var(--color-text-btn);
+  font-size: 18px;
+  font-weight: 700;
 
   &:focus {
     outline: none;
@@ -63,24 +64,44 @@
 }
 
 .value {
-  @include button;
-  color:var( --color-text-btn);
-  text-transform: capitalize;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-text-btn);
+}
+
+.mapBlock {
+  margin-top: 16px;
+}
+
+.mapBox {
+  height: min(44vh, 380px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--nb-shadow-md);
+  background: var(--nb-smetana);
+}
+
+.mapLoading {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-weight: 600;
+  color: var(--nb-ink-2);
 }
 
 /* The step's only way forward: it stays on screen instead of living at the end
    of a scroll the person has to discover. */
 .btn{
   position: sticky;
-  bottom: calc(var(--nb-nav-h, 78px) + 12px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--nb-nav-h, 78px) + 12px);
   z-index: 5;
-  margin-top: 24px;
+  margin-top: 12px;
   padding: 8px 0;
-  background: var(--color-bg-main);
-
+  background: var(--color-bg-grey);
   @include respond(desktop) {
     position: static;
-    margin-top: 32px;
+    margin-top: 20px;
     padding: 0;
   }
 }

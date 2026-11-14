@@ -7,6 +7,8 @@ import { formatDistance } from "../../utils/distance";
 import { useCityLabel } from "../../i18n";
 import { useVenueLabel } from "../../i18n";
 import { useDishLabel } from "../../i18n";
+import { IconBowl } from "../Icons";
+import { priceLabel } from "../../utils/price";
 
 const srcOf = (path) =>
   path?.startsWith("http") ? path : `https://map.navernyborshchu.com${path}`;
@@ -35,7 +37,7 @@ export const BorschListItem = ({ borsch, distance = null }) => {
         {photo ? (
           <img src={srcOf(photo)} alt="" loading="lazy" />
         ) : (
-          <div className={style.thumbEmpty} aria-hidden="true">🍲</div>
+          <div className={style.thumbEmpty} aria-hidden="true"><IconBowl size={30} /></div>
         )}
       </div>
 
@@ -49,7 +51,7 @@ export const BorschListItem = ({ borsch, distance = null }) => {
         )}
         <p className={style.meta}>
           {distance !== null && <span className={style.distance}>{formatDistance(distance)}</span>}
-          {borsch.price ? <span>{borsch.price}</span> : null}
+          {borsch.price ? <span>{priceLabel(borsch.price, t)}</span> : null}
         </p>
       </div>
 
@@ -57,7 +59,7 @@ export const BorschListItem = ({ borsch, distance = null }) => {
         {rated ? (
           <span className={style.score}>{formatGrade(borsch.overall_rating)}</span>
         ) : (
-          <span className={style.scoreEmpty}>—</span>
+          <span className={style.scoreEmpty} aria-label={t('card.noRatings')}>?</span>
         )}
         {borsch.rating_count > 0 && (
           <span className={style.count}>{t('list.ratingsShort', { count: borsch.rating_count })}</span>

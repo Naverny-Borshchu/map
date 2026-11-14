@@ -1,24 +1,17 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
 
 .page {
   min-height: 100%;
   background-color: var(--color-bg-grey);
-  padding: 12px 12px 24px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 24px;
 
   @include respond(desktop) {
     max-width: 720px;
     margin: 0 auto;
-
-    /* Reserve room for the chrome that floats above this column, because this
-       column's scroller starts at scrollTop 0 — anything underneath was not
-       merely hidden, it was unreachable.
-         /list : Filters .filterWrap is absolute at 0 and 108px tall, and this
-                 page sits straight inside Layout .main, which reserves nothing.
-         /     : Layout .sidebarPanel already reserves the top bar, but then
-                 Filters .boxFilter is absolute at top 100 and 120px tall and
-                 covers the first ~110px of the column.
-       Both cases clear at the top bar height plus a gap. */
+    /* Reserve room for the chrome that floats above this column (the top bar
+       on /list, the filter row on /): anything underneath was unreachable. */
     padding: calc(var(--nb-topbar-h) + 20px) 20px 20px;
   }
 }
@@ -27,8 +20,8 @@
 .header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 12px;
+  gap: 12px;
+  padding-bottom: 14px;
 }
 
 .searchRow {
@@ -47,22 +40,31 @@
 
 .searchIcon {
   position: absolute;
-  left: 12px;
-  font-size: 15px;
-  opacity: 0.55;
+  left: 16px;
+  display: inline-flex;
+  color: var(--nb-ink-2);
   pointer-events: none;
 }
 
 .search {
   width: 100%;
-  height: 44px;
-  padding: 8px 36px 8px 38px;
-  border: 1px solid var(--color-header-border);
+  height: 48px;
+  padding: 8px 44px 8px 46px;
+  border: 1.5px solid transparent;
   border-radius: var(--radius-pill);
   background-color: var(--surface);
+  box-shadow: var(--nb-shadow-sm);
   color: var(--color-text-btn);
-  @include body;
-  outline: none;
+  font-size: 16px;
+  outline: 0;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  &:focus {
+    border-color: var(--nb-borshch);
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.12);
+  }
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .search::placeholder {
@@ -71,38 +73,46 @@
 
 .clear {
   position: absolute;
-  right: 10px;
-  width: 22px;
-  height: 22px;
+  right: 4px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: none;
   border-radius: 50%;
-  background-color: var(--color-grey-400);
-  color: var(--color-text-main);
-  font-size: 16px;
-  line-height: 1;
+  background: transparent;
+  color: var(--nb-ink-2);
   cursor: pointer;
+  &:hover {
+    color: var(--nb-red-text);
+  }
 }
 
 .cityBtn {
   flex: 0 0 auto;
-  height: 44px;
-  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--color-header-border);
+  height: 48px;
+  max-width: 44vw;
+  padding: 0 16px 0 12px;
+  border: none;
   border-radius: var(--radius-pill);
   background-color: var(--surface);
+  box-shadow: var(--nb-shadow-sm);
   color: var(--color-text-btn);
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-
-  svg { width: 16px; height: 16px; flex: 0 0 auto; }
+  svg {
+    flex: none;
+    color: var(--nb-red-text);
+  }
   span {
-    @include footnote;
-    white-space: nowrap;
-    max-width: 26vw;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -110,78 +120,56 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  /* the sort label and its select do not fit 320–390px in one row */
   flex-wrap: wrap;
+  gap: 8px 12px;
 }
 
+.count {
+  @include display(22px);
+  margin: 0;
+  color: var(--color-text-btn);
+  white-space: nowrap;
+}
 
 .sortControl {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  margin-left: auto;
 }
 
 .sortLabel {
-  @include footnote;
-  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nb-ink-2);
+  white-space: nowrap;
 }
 
+// a native <select> dressed as a pill (keeps the platform picker on phones)
 .sortSelect {
-  min-height: 40px;
-  max-width: 100%;
-  padding: 8px 34px 8px 14px;
-  border: 1px solid var(--color-text-active);
+  appearance: none;
+  -webkit-appearance: none;
+  height: 40px;
+  min-width: 0;
+  padding: 0 36px 0 16px;
+  border: 1.5px solid var(--color-border-input);
   border-radius: var(--radius-pill);
   background-color: var(--surface);
-  color: var(--color-text-active);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='m6 9 6 6 6-6' stroke='%23DC143C' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  color: var(--color-text-btn);
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-  @include footnote;
+  &:focus {
+    border-color: var(--nb-borshch);
+  }
 }
 
-.count {
-  @include footnote;
-  color: var(--color-text-main);
-  padding: 0 2px;
-}
-
-// --- list -----------------------------------------------------------------
 .list {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 40px 20px;
-  border-radius: var(--radius-lg);
-  background-color: var(--surface);
-  color: var(--color-text-main);
-  @include footnote;
-  text-align: center;
-}
-
-.emptyReset {
-  padding: 8px 16px;
-  border: 1px solid var(--color-text-active);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text-active);
-  cursor: pointer;
-  @include button;
-}
-
-@media (max-width: 390px) {
-  .sortControl {
-    width: 100%;
-  }
-
-  .sortSelect {
-    flex: 1 1 auto;
-  }
 }

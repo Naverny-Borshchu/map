@@ -2,7 +2,7 @@
 @use "./styles/mixin_adaptiv.scss" as *;
 // Design-experiment variants. Every rule inside is scoped to
 // html[data-variant="<name>"], which only ever gets set by builds that pass
-// REACT_APP_VARIANT — so this is inert in the production map. build.
+// REACT_APP_VARIANT, so this is inert in a build without it.
 @use "./styles/variants/map1.scss";
 *,
 *::before,
@@ -10,223 +10,301 @@
   box-sizing: border-box;
 }
 
+/* ---------------------------------------------------------------------------
+   Fonts of the Naverny Borshchu identity (the same files as the landing,
+   navernyborshchu.com/v2 and /crypto), self-hosted instead of Google Fonts.
+
+   MAK Bold is for WORDS only. It does have digits, but its «1» reads as «4»,
+   so the brand kit forbids them. The unicode-range below simply leaves digits
+   (and №, ₴, dashes) out of MAK: wherever a heading, a venue name or a borshch
+   name contains a number, the browser draws those characters in Roboto, the
+   next family in the stack. A rule that holds by itself beats a rule every
+   component has to remember (user data does contain digits: «Кафе 24»).
+
+   Roboto is the landing's variable subset (100..900, latin / cyrillic /
+   cyrillic-ext); a page only downloads the subsets it actually renders.
+   Roboto has no ₴, which is why prices read «грн» / «UAH».
+
+   Soup is the brand's bowl icon (U+E900): ratings are bowls, never stars.
+   --------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Mak";
+  src: url("./assets/fonts/mak-bold.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-002F, U+003A-005F, U+0061-007E, U+00A0, U+00AB, U+00B7, U+00BB, U+00C0-00FF,
+    U+0110-0111, U+0141-0142, U+0152-0153, U+0160-0161, U+0178, U+017D-017E, U+0401, U+0404-0408,
+    U+040E, U+0410-044F, U+0451, U+0454-0458, U+045E, U+0490-0491, U+2018-201A, U+201C-201E,
+    U+2022, U+2026, U+2039-203A;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("./assets/fonts/roboto-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("./assets/fonts/roboto-cyrillic.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("./assets/fonts/roboto-cyrillic-ext.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: "Soup";
+  src: url("./assets/fonts/ds-soupicon.ttf") format("truetype");
+  font-display: block;
+}
+
 :root {
-  --color-text-btn: #1A1A1A; 
-  --color-text-btn-active: #FFFFFF;
-  --color-bg-main: #F8F8F8; 
-  --color-bg-grey: #F2F2F2; /* Grey/300 */
-  --color-header-border: #DDDDDD; /*Grey/500 */
-  --color-grey-400: #E9E9E9; /*Grey/400 */
-  /* Text greys darkened to clear WCAG AA (4.5:1) on the app's light surfaces.
-     The previous values failed badly — the bottom-nav labels sat at 2.3:1 and
-     the review counts at 2.2:1. Borders keep the old, lighter values through
-     their own tokens so nothing got visually heavier. */
-  --color-text-grade: #6E6E6E;   /* was #A6A6A6 → 2.17:1 */
-  --color-input-search: #6E6E6E; /* was #BEB9B2 → 1.74:1 (placeholders) */
-  --color-text-layout: #6B6B6B;  /* was #A0A0A0 → 2.34:1 (bottom nav) */
-  --color-text-main: #6B6B6B;    /* was #878787 → 3.21:1 */
+  /* --- Brand palette (SMM brand kit «Наверни Борщу»; the kit wins if they
+     ever differ). Dill and carrot are accents only: a dot, a tag, a focus
+     ring on dark, never a surface. */
+  --nb-borshch: #DC143C;
+  --nb-borshch-dark: #A00322;
+  --nb-beet: #860130;
+  --nb-cream: #FFFAF5;
+  --nb-smetana: #FDE5CE;
+  --nb-ink: #1A1A1A;
+  --nb-ink-2: #5C4744;   /* warm secondary text: 8.6:1 on cream */
+  --nb-line: rgba(26, 26, 26, 0.1);
+  --nb-dill: #40D05F;
+  --nb-carrot: #FC7536;
+  --nb-night: #170B0B;
+  --nb-gold: #F7D774;
 
-  /* border-only tokens, holding the original light values */
-  --color-border-mid: #878787;
-  --color-border-input: #BEB9B2;
-  --color-btn-text:#4D4D4D;// GreyD
-  --color-activ-page:#E9FDE2;/*Green/100 */
-  --color-add-btn: #BAE9AC; /*Green/400 */
-  --color-add-btn-active: #ABDD9C; /*Green/500 */
-  --color-btn-disabled: #76A069;
-  --color-input-active: #89B87B; /*Green/700 */
-  --color-btn-hover: #76A069; /*Green/800 */
-  --color-text-active: #5D7E52; /* Green/900, 6% darker: white-on-green was 4.09:1, AA needs 4.5 */
-  --color-btn-link: #4F7942;
+  /* Text colour of the brand red: on dark it is lifted (#DC143C on #170B0B
+     is 3.9:1), the button fill stays the brand red in both themes. */
+  --nb-red-text: #C8102E;
+  --nb-focus: #A00322;
 
+  /* Warm shadows: the landing's cards cast beet-tinted shadow, not grey. */
+  --nb-shadow-sm: 0 1px 0 var(--nb-line), 0 6px 16px rgba(134, 1, 48, 0.08);
+  --nb-shadow-md: 0 1px 0 var(--nb-line), 0 14px 32px rgba(134, 1, 48, 0.12);
+  --nb-shadow-float: 0 6px 18px rgba(134, 1, 48, 0.16), 0 1px 2px rgba(26, 26, 26, 0.08);
 
-  --color-bg-ad: #F9CFA8;
-  --color-filter-btn: #DD9755;
-  --color-akcent-btn: #B8092C; /*Red/700 */
-  --color-akcent-hover: #A00322; /*Red/800*/
-  --color-red-900: #87001B; /*Red/900 */
-  --color-brown-900: #875323;
-  --color-modal-black: #000000;
+  --font-family-main: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Mak", "Roboto", Georgia, serif;
 
-  --font-family-main: 'Roboto', sans-serif;
+  /* --- Semantic tokens the components already use. The NAMES are history
+     (the app was green until 11.2026: «add-btn», «text-active» and friends were
+     Green/400..900); the VALUES are the new identity, so every component that
+     reached for a token changed with it. */
+  --color-text-btn: var(--nb-ink);          /* primary text */
+  --color-text-btn-active: #FFFFFF;         /* card / control surface, and text on a filled button */
+  --color-bg-main: #FFF5EC;                 /* quiet fill: chips, inputs, rows */
+  --color-bg-grey: var(--nb-cream);         /* page background */
+  --color-header-border: #F0DFD3;           /* hairlines */
+  --color-grey-400: #F4E4D8;                /* tracks, dividers */
+  --color-text-grade: var(--nb-ink-2);
+  --color-input-search: #7A6460;            /* placeholders: 5.3:1 on white */
+  --color-text-layout: var(--nb-ink-2);
+  --color-text-main: var(--nb-ink-2);
+  --color-text-grey: var(--nb-ink-2);
+  --color-text: var(--nb-ink);
 
-  /* Corner radius scale. The app had grown 20 different values (2, 4, 6, 8,
-     12, 14, 16, 17, 18, 20, 24, 26px …), which is why images, modals and
-     buttons all looked rounded to a different degree. Use these. */
-  --radius-xs: 8px;   /* chips, small controls */
-  --radius-sm: 12px;  /* inputs, list rows */
-  --radius-md: 16px;  /* buttons, photos */
-  --radius-lg: 24px;  /* cards, modals, sheets */
-  --radius-pill: 999px; /* pills and circular buttons */
+  --color-border-mid: #C9AEA6;
+  --color-border-input: #E8CFC6;
+  --color-btn-text: #3A2826;
+  --color-activ-page: var(--nb-smetana);    /* selected row / active tab */
+  --color-add-btn: var(--nb-borshch);       /* the primary action fill */
+  --color-add-btn-active: var(--nb-borshch-dark);
+  --color-btn-disabled: #E9B8C2;
+  --color-input-active: var(--nb-borshch);  /* focus border, filled track */
+  --color-btn-hover: var(--nb-borshch-dark);
+  --color-text-active: var(--nb-borshch);   /* primary button fill, active text */
+  --color-btn-link: var(--nb-borshch-dark);
+  --color-beet: var(--nb-beet);
 
-  /* Floating surfaces (map chrome, dialogs). Separate from the palette above
-     so the dark theme can flip them without touching every component. */
-  --surface: #ffffff;
-  --surface-soft: rgba(255, 255, 255, 0.94);
-  --surface-strong: rgba(255, 255, 255, 0.96);
+  --color-bg-ad: var(--nb-smetana);
+  --color-filter-btn: var(--nb-carrot);
+  --color-akcent-btn: var(--nb-borshch);
+  --color-akcent-hover: var(--nb-borshch-dark);
+  --color-red-900: var(--nb-beet);
+  --color-brown-900: #7A4A1E;
+  --color-modal-black: var(--nb-ink);
 
-  /* Height the desktop top bar (logo + search + account) floats over. Pages
-     reserve it as PADDING inside their full-height box; six of them used to
-     hard-code `margin-top: 110px` on top of `height: 100vh`, which made every
-     one of them 110px taller than the viewport — the whole page scrolled, and
-     vertically centred content drifted to the middle of nowhere. */
+  /* Corner radius scale. Cards follow the landing (20-24px), controls are
+     pills, as on the landing. */
+  --radius-xs: 10px;   /* chips, small controls */
+  --radius-sm: 14px;   /* inputs, list rows */
+  --radius-md: 18px;   /* photos, small cards */
+  --radius-lg: 24px;   /* cards, modals, sheets */
+  --radius-pill: 999px;
+
+  /* Floating surfaces (map chrome, dialogs). */
+  --surface: #FFFFFF;
+  --surface-soft: rgba(255, 250, 245, 0.94);
+  --surface-strong: rgba(255, 250, 245, 0.97);
+
+  /* Height the desktop top bar floats over (see Layout). */
   --nb-topbar-h: 0px;
 
-  /* Motion. The app had grown 14 different transition durations (0.1, 0.12,
-     0.14, 0.15, 0.16, 0.18, 0.2, 0.25, 0.3, 0.35, 0.45, 0.5s …) and reached for
-     the bare `ease` keyword 77 times — the browser default, which is why most
-     interactions feel generic. This is the same three-step scale the Generect
-     design system uses, on the same curve.
-
-       fast  — a state answering a finger: hover, press, colour, opacity
-       base  — something entering or leaving in place: dropdown, chip, tooltip
-       slow  — a whole surface arriving: modal, sheet, a step in a flow
-
-     Two curves, and only two. `standard` is symmetric and belongs on states
-     that go both ways. `out` starts fast and settles — it makes an arrival
-     look decided rather than floaty, which is why the rating flow already
-     reached for it by hand. */
+  /* Motion: three durations, two curves. fast = a state answering a finger,
+     base = something entering in place, slow = a surface arriving. */
   --dur-fast: 120ms;
   --dur-base: 200ms;
   --dur-slow: 300ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-
-  /* Ready-made shorthands, so a rule can say `transition: background
-     var(--transition-fast)` instead of restating the curve every time. */
   --transition-fast: var(--dur-fast) var(--ease-standard);
   --transition-base: var(--dur-base) var(--ease-standard);
   --transition-slow: var(--dur-slow) var(--ease-standard);
+
+  /* Large movement (a sheet rising, a hover lift). Gentle mode sets it to 0
+     and keeps every fade. */
+  --nb-move: 1;
 }
 
 @media (min-width: 1280px) {
   :root {
-    --nb-topbar-h: 110px;
+    --nb-topbar-h: 84px;
   }
 }
 
 /* ---------------------------------------------------------------------------
-   Reduced motion, once, for everything.
-   Six files remembered to honour this preference by naming every animated
-   class by hand; the other nineteen with animations did not — which is the
-   predictable outcome of a rule you have to remember per file. Durations are
-   collapsed rather than set to `none` so animations that hold their end state
-   (`forwards`) still land on it, and JS that waits out a transition still
-   fires.
+   Reduced motion = gentle mode, not a dead page (rule of 13.11.2026, as on
+   /crypto and /v2: «reduce motion» is on by default on Andrii's desktop, and
+   switching everything off left it with no feedback at all). Fades, colour
+   changes and small state transitions stay; large movement goes: slides,
+   lifts, bounces, smooth scrolling. Components read --nb-move for distances,
+   and the keyframes that only move are neutralised here.
    --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --nb-move: 0;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
-
-
 /* ---------------------------------------------------------------------------
-   Dark theme — switched on by src/theme.js between 20:00 and 06:00 in the
-   visitor's own timezone. Only the neutrals flip; the brand greens and reds
-   stay recognisable, lifted slightly so they hold contrast on dark surfaces.
+   Dark theme (src/theme.js: 20:00-06:00 local time, or pinned in Settings).
+   The brand's dark is borshch-night #170B0B, as in the landing's Borshch
+   Index section: warm, never grey. Surfaces step up in the same hue.
    --------------------------------------------------------------------------- */
 html[data-theme='dark'] {
-  --color-text-btn: #ECECEC;        /* primary text */
-  --color-text-btn-active: #1F1F1F; /* card / control surface (was white) */
-  --color-bg-main: #171717;
-  --color-bg-grey: #101010;
-  --color-header-border: #363636;
-  --color-grey-400: #2A2A2A;
-  --color-text-grade: #9A9A9A;
-  --color-input-search: #9A9A9A;
-  --color-text-layout: #A8A8A8;
-  --color-text-main: #A8A8A8;
-  --color-border-mid: #4A4A4A;
-  --color-border-input: #4A4A4A;
-  --color-btn-text: #D6D6D6;
+  --nb-ink: #FFFAF5;
+  --nb-ink-2: #E9C9BE;
+  --nb-line: rgba(255, 250, 245, 0.12);
+  --nb-red-text: #FF6B81;
+  --nb-focus: #FC7536;
+  --nb-shadow-sm: 0 1px 0 rgba(255, 250, 245, 0.06), 0 6px 16px rgba(0, 0, 0, 0.35);
+  --nb-shadow-md: 0 1px 0 rgba(255, 250, 245, 0.06), 0 14px 32px rgba(0, 0, 0, 0.45);
+  --nb-shadow-float: 0 6px 18px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
 
-  --color-activ-page: #23331F;
-  --color-add-btn: #3E5A34;
-  --color-add-btn-active: #47663B;
-  --color-btn-disabled: #6E8A63;
-  --color-input-active: #7FAE71;
-  --color-btn-hover: #8CBB7D;
-  --color-text-active: #8CBB7D;     /* brand green, lifted for dark */
-  --color-btn-link: #9CC98D;
+  --color-text-btn: #FFFAF5;
+  --color-text-btn-active: #2A1617;   /* card / control surface */
+  --color-bg-main: #331C1D;
+  --color-bg-grey: #170B0B;
+  --color-header-border: #45292A;
+  --color-grey-400: #45292A;
+  --color-text-grade: #E9C9BE;
+  --color-input-search: #C9A79D;
+  --color-text-layout: #E9C9BE;
+  --color-text-main: #E9C9BE;
+  --color-text-grey: #E9C9BE;
+  --color-text: #FFFAF5;
+  --color-border-mid: #6E4A47;
+  --color-border-input: #5A3A38;
+  --color-btn-text: #F6DDD3;
 
-  --color-bg-ad: #4A3524;
-  --color-filter-btn: #C98A4E;
-  --color-akcent-btn: #E0567A;
-  --color-akcent-hover: #EC6C8C;
-  /* Чорнило заголовка й тексту модалок. Тут стояв #000 на тлі #171717, тож у
-     темній темі «Без профілю?», «Вийти з акаунту» і «Реєстрація пройшла
-     успішно» були майже невидимі. */
-  --color-modal-black: #ECECEC;
+  --color-activ-page: #4A1F25;
+  --color-add-btn: #DC143C;
+  --color-add-btn-active: #A00322;
+  --color-btn-disabled: #6B3640;
+  --color-input-active: #FF6B81;
+  --color-btn-hover: #EF2D53;
+  --color-text-active: #DC143C;
+  --color-btn-link: #FF8A9B;
 
-  --surface: #1F1F1F;
-  --surface-soft: rgba(31, 31, 31, 0.94);
-  --surface-strong: rgba(31, 31, 31, 0.96);
+  --color-bg-ad: #4A2A1E;
+  --color-filter-btn: #FC7536;
+  --color-akcent-btn: #DC143C;
+  --color-akcent-hover: #EF2D53;
+  --color-modal-black: #FFFAF5;
+
+  --surface: #2A1617;
+  --surface-soft: rgba(42, 22, 23, 0.94);
+  --surface-strong: rgba(42, 22, 23, 0.97);
 
   color-scheme: dark;
 }
 
 /* ---------------------------------------------------------------------------
-   Dark theme: brand INK.
+   Dark theme: icon INK.
    The logo and most icons ship with baked-in dark ink, which disappears on
-   dark surfaces. Two inks are in play and they are NOT the same element:
-     #1A1A1A — the plate's outline rings (and several icon glyphs, e.g. share)
-     #262923 — the "Naverny Borshchu" wordmark
-   Lifting both here fixes the logo, the share icon and every close/pin glyph
-   in one place, wherever they are inlined.
+   dark surfaces. Two inks are in play:
+     #1A1A1A, the plate's outline rings and most icon glyphs
+     #262923, the old wordmark
+   Lifting both here fixes every inlined icon in one place.
    --------------------------------------------------------------------------- */
 html[data-theme='dark'] {
   svg [fill='#1A1A1A'],
   svg [fill='#1a1a1a'],
   svg [fill='#262923'] {
-    fill: #ECECEC;
+    fill: #FFFAF5;
   }
 
   svg [stroke='#1A1A1A'],
   svg [stroke='#1a1a1a'] {
-    stroke: #ECECEC;
+    stroke: #FFFAF5;
   }
 
-  /* mid-grey glyph ink (map pin) — lift just enough to stay legible */
   svg [stroke='#4D4D4D'] {
-    stroke: #A8A8A8;
+    stroke: #E9C9BE;
   }
 }
 
-/* The map brand badge is deliberately a LIGHT chip on the dark map, so its
-   logo must keep the dark ink the rest of the app is lifting. */
-html[data-theme='dark'] .nb-brandbadge svg [fill='#1A1A1A'],
-html[data-theme='dark'] .nb-brandbadge svg [fill='#1a1a1a'] {
+/* The brand plate keeps its own ink on every theme: it always sits on a
+   cream disc, like the landing's logo. */
+html[data-theme='dark'] .nb-plate svg [fill='#1A1A1A'],
+html[data-theme='dark'] .nb-plate svg [fill='#1a1a1a'] {
   fill: #1A1A1A;
-}
-html[data-theme='dark'] .nb-brandbadge svg [fill='#262923'] {
-  fill: #262923;
 }
 
 main,html {
-  overflow-x: hidden;  
+  overflow-x: hidden;
   height: 100%;
   width: 100%;
   @include respond(desktop) {
-    overflow-y: hidden;    
+    overflow-y: hidden;
   }
 }
 
 body {
   @include body;
   background-color: var(--color-bg-grey);
+  color: var(--color-text-btn);
   text-decoration: none;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;  
+  overflow-x: hidden;
   height: 100%;
   width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 ul {
@@ -247,25 +325,34 @@ a {
 a {
   outline: 0;
   text-decoration: none;
+  color: inherit;
 }
 
-/* Keyboard focus was invisible on links (the Мапа/Список toggle, the consent
-   links). :focus-visible keeps it off for mouse/touch users. */
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Keyboard focus: a solid ring in the brand's deep red (carrot on dark, as on
+   the landing). :focus-visible keeps it off for mouse/touch users. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--color-text-active);
+  outline: 3px solid var(--nb-focus);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
-/* iOS Safari zooms the entire page when you focus a field whose text is smaller
-   than 16px — which is what happened to the venue search (13.33px, the UA
-   default: nobody had set a size). Sixteen is the smallest size that does not
-   trigger it, so it is the floor for every field on touch-sized screens. */
+::selection {
+  background: rgba(220, 20, 60, 0.18);
+}
+
+/* iOS Safari zooms the entire page when you focus a field whose text is
+   smaller than 16px. Sixteen is the floor for every field on touch screens. */
 @media (max-width: 1023.98px) {
   input,
   textarea,
@@ -276,4 +363,28 @@ select:focus-visible,
 
 button {
   padding: 0;
+}
+
+/* Ratings are bowls (brand kit), drawn with the Soup icon font. */
+.nb-bowl {
+  font-family: "Soup";
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  &::before {
+    content: "\e900";
+  }
+}
+
+/* Visually hidden, still read by screen readers. */
+.nb-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

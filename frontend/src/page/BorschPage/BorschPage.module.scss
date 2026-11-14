@@ -1,195 +1,342 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
 
 .BorschPage {
   position: relative;
+  background: var(--color-bg-grey);
+  min-height: 100%;
   @include respond(desktop) {
     height: 100%;
-    /* No top offset of its own, deliberately. Layout .sidebarPanel already
-       reserves --nb-topbar-h for whatever panel it holds, so reserving it
-       here too stacked 220px of nothing above the venue name: the close
-       button sat alone at the top of the column and the title began a fifth
-       of the way down a 1140px screen. The filters row that also floats over
-       this column on "/" is hidden on a borsch page, so the top bar is the
-       only thing to clear — and it is cleared once, by the panel. */
+    /* Layout .sidebarPanel already reserves --nb-topbar-h. */
     padding: 0 18px 0;
     overflow-y: auto;
-    
-    -ms-overflow-style: none;  
+    -ms-overflow-style: none;
     scrollbar-width: none;
     &::-webkit-scrollbar {
-        display: none;         
+        display: none;
     }
   }
 }
 
-
-.wrap{
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    padding: 16px;    
-    @include respond(desktop) {       
-        width: 100%;          
-    }       
+// --- photo, full bleed, actions on top of it --------------------------------
+.hero {
+  position: relative;
+  height: min(46vh, 340px);
+  background: var(--nb-smetana);
+  @include respond(desktop) {
+    height: 300px;
+    margin-top: 12px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  // the gallery fills the hero; its corners belong to the hero
+  :global([class*="FotoBorschGallary_gallery"]),
+  :global([class*="FotoBorschGallary_frame"]) {
+    height: 100%;
+    max-width: none;
+  }
+  :global([class*="FotoBorschGallary_image"]),
+  :global([class*="FotoBorschGallary_skeleton"]) {
+    border-radius: 0;
+  }
+  // the cream sheet overlaps the photo's last 22px on phones
+  :global([class*="FotoBorschGallary_dots"]) {
+    bottom: 36px;
+    @include respond(desktop) {
+      bottom: 14px;
+    }
+  }
 }
 
-.btnClose{
-    position: absolute;   
-    right: 10px;
-    top: 10px; 
-    @include respond(desktop) {       
-        width: 100%; 
-        right: -90%;          
-    }    
+.heroEmpty {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 60%, var(--nb-smetana) 0, #F9D3B6 100%);
 }
 
-.title{
-    @include mobileH2;
-    color: var(--color-text-btn);
-    text-align: center;
-    margin: 40px 0 25px 0;
-}
-.card{
-    position: relative;   
-       
-}
-.box{
-    position: absolute;
-    top:10px;
-    right: 10%;
-    display: flex;
-    gap:8px;
-    z-index: 3;
+.heroBar {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  right: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  > * {
+    pointer-events: auto;
+  }
 }
 
-.nameBorsch{
-    @include mobileH4;
-    margin-top: 16px;
-    color: var(--color-text-btn);
-}
-.adress{
-    @include caption;
-    color: var(--color-text-main);
-    margin-bottom: 16px;
-}
-.flex{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--color-text-main); 
-    @include caption;   
+.heroActions {
+  display: flex;
+  gap: 8px;
 }
 
-.grade{
-    font-family: var(--font-family-main);
-    font-style: normal;
-    font-weight: 500;
-    font-size: 32px;
-    line-height: 38px;
-    color:var(--color-text-btn)
+.roundBtn {
+  @include iconBtn(44px);
+  background: rgba(255, 250, 245, 0.94);
+  color: #1A1A1A;
+  box-shadow: 0 4px 14px rgba(23, 11, 11, 0.22);
+  svg {
+    width: 22px;
+    height: 22px;
+  }
 }
 
-.gradesFlex{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 16px;
+.like {
+  color: #DC143C;
 }
 
-.boxBtn{
-    margin-top: 30px;
-    margin-bottom: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
+.liked {
+  background: #DC143C;
+  color: #FFFAF5;
+  @media (hover: hover) {
+    &:hover {
+      color: #FFFAF5;
+    }
+  }
 }
 
-.btn{
-    display: block;
-    list-style: none;    
-    text-align:center;
-    text-decoration: none; 
-    width: 100%; 
-    padding: 14px 20px;
-    margin: 10px 0;
-    @include button;  
-    background-color: var(--color-btn-disabled);
-    color:var( --color-text-btn-active);    
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;      
+// --- body: a cream sheet pulled up over the photo ---------------------------
+.wrap {
+  position: relative;
+  z-index: 2;
+  margin-top: -22px;
+  padding: 24px 18px 28px;
+  border-radius: 26px 26px 0 0;
+  background: var(--color-bg-grey);
+  display: flex;
+  flex-direction: column;
+  @include respond(desktop) {
+    margin-top: 0;
+    padding: 20px 4px 32px;
+    border-radius: 0;
+  }
 }
 
-.comentsBox{
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    margin-top: 10px;
+.kicker {
+  @include kicker;
+  margin: 0 0 6px;
 }
-.avatarBox{
-    display: flex; 
-    gap: 16px;  
-    width: 100%;    
-    margin-bottom: 16px;
+
+.title {
+  @include displayXL;
+  margin: 0;
+  color: var(--color-text-btn);
+  overflow-wrap: anywhere;
 }
-.photoBox{
-    height: 44px;
-    width: 44px;
-   
+
+.dish {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-text-btn);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--nb-smetana);
+  color: var(--nb-beet);
+  @include numeric(16px, 800);
+  small {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--nb-ink-2);
+  }
+}
+html[data-theme='dark'] .fact {
+  background: var(--color-bg-main);
+  color: var(--nb-ink);
+}
+
+.adress {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 14px 0 2px;
+  @include footnote;
+  color: var(--nb-ink-2);
+  svg {
+    flex: none;
+    margin-top: 1px;
+    color: var(--nb-red-text);
+  }
+}
+
+// --- the score card (landing .score) ----------------------------------------
+.scoreCard {
+  @include card(18px);
+  margin-top: 18px;
+}
+
+.scoreLabel {
+  @include kicker;
+  margin: 0;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.grade {
+  @include numeric(44px, 800);
+  color: var(--nb-red-text);
+  margin: 0;
+}
+
+.gradeEmpty {
+  @include display(22px);
+  margin: 0;
+  color: var(--nb-ink-2);
+}
+
+.reviewCount {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--nb-ink-2);
+}
+
+.boxBtn {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.btn {
+  @include btnPrimary(lg);
+  width: 100%;
+}
+
+.routeBtn {
+  width: 100%;
+}
+
+// --- criteria ----------------------------------------------------------------
+.criteria {
+  margin-top: 26px;
+}
+
+.sectionTitle {
+  @include displayM;
+  margin: 0 0 6px;
+  color: var(--color-text-btn);
+}
+
+.gradesFlex {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// --- reviews -----------------------------------------------------------------
+.comentsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.review {
+  @include card(16px);
+  p {
+    margin: 0;
+  }
+}
+
+.reviewText {
+  @include body;
+  font-size: 15px;
+  color: var(--color-text-btn);
+  overflow-wrap: anywhere;
+}
+
+.avatarBox {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.photoBox {
+  height: 44px;
+  width: 44px;
+  flex: none;
 }
 .photoStyle {
-    width: 100%; 
-    height: 100%; 
-    border-radius: 50%;    
-    object-fit: cover
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--nb-smetana);
 }
-.textWrapp{
-    display: flex;
-    flex-direction: column;    
-    gap: 4px;
-    width: 100%;
+.textWrapp {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
 }
-.textBox{
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
+.textBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
 }
-.textAvatar{
-   @include mobileH4; 
-   color: var(--color-text-btn);
-   margin: 0;
+.textAvatar {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text-btn);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.textDate{
-    @include caption;
-    color: var(--color-text-main);
+.textDate {
+  flex: none;
+  font-size: 13px;
+  color: var(--nb-ink-2);
+  font-variant-numeric: tabular-nums;
 }
 
 .paginationControls {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 14px;
+  margin-top: 4px;
+  button {
+    @include iconBtn(44px);
+    color: var(--nb-red-text);
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
 }
 
-.paginationControls button {
-    width: 164px;
-    padding: 18px 55px;
-    background-color:var(--color-input-active);
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-}
-
-.paginationControls button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.routeBtn {
-  /* match the height of the neighbouring «Оцінити» link */
-  padding: 12px 18px;
+.pageNum {
+  @include numeric(14px, 600);
+  color: var(--nb-ink-2);
 }

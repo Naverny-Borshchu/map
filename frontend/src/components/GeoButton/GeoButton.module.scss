@@ -1,55 +1,50 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
 
 
 
 
- .btnGeo{
-  width: 40px;
-  height: 40px;
-  background-color: var(--color-text-btn-active); 
-  border: 1px solid var(--color-header-border); 
-  border-radius: 14px;
-  padding: 8px;  
+.btnGeo{
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface);
+  color: var(--nb-red-text);
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
   @include respond(desktop) {
-    width: 100px; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center;
-    border: none;
-    border-left: 2px solid var(--color-header-border);
-    border-radius: 0;
-    gap: 5px; 
-  }   
-}
-
-.btnGeo:hover{
-  border: 1px solid var(--color-text-btn); 
-   @include respond(desktop) {
-    border: none;
-    border-left: 2px solid var(--color-header-border);
-   }
+    width: auto;
+    height: 40px;
+    gap: 6px;
+    padding: 0 14px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    &:hover {
+      background: var(--color-bg-main);
+    }
+  }
 }
 
 .iconGeo {
-  width: 24px;
-  height: 24px;
-  transition: opacity .15s ease, transform .15s ease;
+  width: 20px;
+  height: 20px;
+  flex: none;
 }
 
-
-.btnGeoText{  
-  display: none;  
+.btnGeoText{
+  display: none;
   @include respond(desktop) {
     display: block;
-    @include button; 
-    color: var(--color-btn-text);  
+    @include button;
+    font-size: 15px;
+    color: var(--color-btn-text);
   }
-  
-}
-.btnGeoText:hover{
-  color:var(--color-text-btn);
-  transition: opacity .15s ease, transform .15s ease;
 }
 
 .modalContent{
@@ -89,43 +84,48 @@
   border-top: 1px solid var(--color-border-input);
 }
 .geoMessage {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  @include sheet;
   position: relative;
   text-align: center;
-  background-color: var(--color-bg-grey);
   color: var(--color-text-btn);
-  padding: 20px;
-  /* was width:140%; margin-left:-70% — another compensation for the old
-     uncentred overlay, which now drags the dialog off the left edge */
+  padding: 28px 22px 22px;
   width: min(92vw, 380px);
   max-height: 85dvh;
   overflow-y: auto;
-  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 .btnClose{
   position: absolute;
-  top: 10px; 
-  right: 10px; 
+  top: 12px;
+  right: 12px;
+}
+
+.geoArt {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--nb-smetana);
+  color: var(--nb-red-text);
+}
+html[data-theme='dark'] .geoArt {
+  background: var(--color-bg-main);
 }
 
 .error_title{
-  @include mobileH4;
+  @include displayS;
+  margin: 0;
 }
 .error_sub_title{
-  @include caption;
+  @include footnote;
+  color: var(--nb-ink-2);
 }
 .manualBtn{
-  display: block;
-  margin: 16px auto 0;
-  padding: 10px 20px;
-  border: 1px solid var(--color-text-btn);
-  border-radius: 14px;
-  background-color: var(--color-text-btn-active);
-  color: var(--color-btn-text);
-  @include button;
-  cursor: pointer;
-  transition: opacity .15s ease;
-}
-.manualBtn:hover{
-  opacity: 0.85;
+  @include btnPrimary;
+  margin-top: 12px;
 }

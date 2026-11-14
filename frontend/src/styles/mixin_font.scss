@@ -1,33 +1,65 @@
 // Type scale.
 //
-// These mixins used to set a line-height SMALLER than the font-size
-// (22px text on a 12px line, 16px on 14px, …), which squashes and overlaps
-// wrapped text. They now match src/styles/typography.module.css exactly, so a
-// component reaching for either system gets the same result — the two systems
-// disagreeing was the real source of the "too many different fonts" feel.
+// Two families, as in the Naverny Borshchu identity (landing /v2, /crypto):
+//   * MAK Bold (--font-display) for headings and names: words only. Digits
+//     fall back to Roboto by themselves (see the unicode-range in index.scss).
+//   * Roboto (--font-family-main) for UI text and every number.
+// The Roboto mixins keep a line-height above the font size so wrapped text
+// never overlaps.
 
-@mixin mobileH2 {
+// --- MAK headings -----------------------------------------------------------
+// MAK has a tall x-height and wide Latin: a MAK size reads about one step
+// larger than the same Roboto size, so the scale starts lower.
+@mixin display($size: 28px, $lh: 1.1) {
+    font-family: var(--font-display);
+    font-style: normal;
+    font-weight: 700;
+    font-size: $size;
+    line-height: $lh;
+    letter-spacing: 0;
+}
+
+@mixin displayXL { @include display(34px, 1.06); }
+@mixin displayL  { @include display(28px, 1.08); }
+@mixin displayM  { @include display(24px, 1.1); }
+@mixin displayS  { @include display(21px, 1.15); } // MAK below 21px reads «M/N» as «H» (brand kit)
+
+// Small uppercase label above a heading (the landing's .kicker).
+@mixin kicker {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 500;
-    font-size: 22px;
-    line-height: 26px;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--nb-red-text);
+}
+
+// Numbers: Roboto, tabular so scores and prices line up.
+@mixin numeric($size: 16px, $weight: 700) {
+    font-family: var(--font-family-main);
+    font-weight: $weight;
+    font-size: $size;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+// --- Roboto text ------------------------------------------------------------
+@mixin mobileH2 {
+    @include display(26px, 1.1);
 }
 
 @mixin mobileH3 {
-    font-family: var(--font-family-main);
-    font-style: normal;
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 24px;
+    @include display(22px, 1.12);
 }
 
 @mixin mobileH4 {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 500;
+    font-weight: 700;
     font-size: 18px;
-    line-height: 25px;
+    line-height: 24px;
 }
 
 @mixin body {
@@ -41,7 +73,7 @@
 @mixin button {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 500;
+    font-weight: 700;
     font-size: 16px;
     line-height: 20px;
 }
@@ -51,13 +83,13 @@
     font-style: normal;
     font-weight: 400;
     font-size: 14px;
-    line-height: 17px;
+    line-height: 19px;
 }
 
 @mixin caption {
     font-family: var(--font-family-main);
     font-style: normal;
-    font-weight: 300;
-    font-size: 12px;
-    line-height: 16px;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 17px;
 }

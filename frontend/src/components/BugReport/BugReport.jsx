@@ -3,6 +3,7 @@ import { LuBug } from 'react-icons/lu';
 import { Modal } from '../Modal/Modal';
 import { useT } from '../../i18n';
 import { reportBug } from '../../analytics';
+import letterArt from '../../assets/illustrations/letter.webp';
 import style from './BugReport.module.scss';
 
 const MIN_LEN = 5;
@@ -13,7 +14,8 @@ const MAX_LEN = 1000;
 const INSTAGRAM = 'https://www.instagram.com/naverny_borshchu/';
 
 /**
- * «Щось зламалось» — один вхід для скарги, жучок поруч із навігацією.
+ * «Щось зламалось»: один вхід для скарги (з NAV-203 у профілі, «Допомозі» і
+ * на боковій панелі великого екрана, а не серед табів).
  *
  * Зроблено за зразком того самого віджета в Generect, з двома свідомими
  * відмінностями.
@@ -36,7 +38,7 @@ const INSTAGRAM = 'https://www.instagram.com/naverny_borshchu/';
  * «дякуємо» за повідомлення, якого ніхто не отримав, значить змусити людину
  * думати, що про ваду вже знають.
  */
-export const BugReport = ({ className = '' }) => {
+export const BugReport = ({ className = '', variant = 'row' }) => {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -59,19 +61,22 @@ export const BugReport = ({ className = '' }) => {
 
   return (
     <>
-      {/* nb-navlink / nb-navicon / nb-navtext: ті самі гачки, що й у NavLink у
-          Layout. Через них варіант map1 стискає таби на телефоні (іконка 26px,
-          підпис 12px); без них жучок лишався зі своїми 32px і 16px і стирчав
-          нижче за сусідів. */}
+      {/* Out of the tab bar since NAV-203: a report is a form, not a place.
+          It is a row in the profile, a card in Help and a link in the desktop
+          sidebar; the accessible name stays «Повідомити про помилку». */}
       <button
         type="button"
-        className={`${style.trigger} nb-navlink ${className}`.trim()}
+        className={`${style.trigger} ${style[variant] || ''} ${className}`.trim()}
         onClick={() => setOpen(true)}
         aria-label={t('bug.aria')}
-        title={t('bug.aria')}
       >
-        <LuBug className={`${style.icon} nb-navicon`} aria-hidden="true" />
-        <span className={`${style.label} nb-navtext`}>{t('bug.trigger')}</span>
+        <span className={style.iconWrap} aria-hidden="true">
+          <LuBug className={style.icon} />
+        </span>
+        <span className={style.words}>
+          <span className={style.label}>{t('bug.aria')}</span>
+          {variant === 'card' && <span className={style.sub}>{t('bug.cardHint')}</span>}
+        </span>
       </button>
 
       {open && (
@@ -79,6 +84,7 @@ export const BugReport = ({ className = '' }) => {
           <div className={style.sheet}>
             {sent ? (
               <>
+                <img className={style.art} src={letterArt} alt="" width="260" height="194" />
                 <h2 className={style.title}>
                   {sent.delivered ? t('bug.thanksTitle') : t('bug.failTitle')}
                 </h2>

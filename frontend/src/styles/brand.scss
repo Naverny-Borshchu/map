@@ -1,0 +1,215 @@
+// Component shapes of the Naverny Borshchu identity, as on the landing
+// (navernyborshchu.com/v2): pill buttons standing on a dark-red underside,
+// white cards on cream with a warm shadow, smetana chips, round icon buttons.
+// Use these instead of restating colours per file.
+@use "./mixin_font.scss" as *;
+
+// Primary action. The 4px underside is the brand's «button on a plate»: it
+// sinks when pressed. Reduced motion keeps the colour change, drops the lift.
+@mixin btnPrimary($size: md) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--nb-borshch);
+    color: #FFFAF5;
+    @include button;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--nb-borshch-dark);
+    transform: translateY(0);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast);
+    @if $size == sm {
+        min-height: 40px;
+        padding: 0 18px;
+        font-size: 15px;
+        box-shadow: 0 3px 0 var(--nb-borshch-dark);
+    }
+    @if $size == lg {
+        min-height: 54px;
+        padding: 0 28px;
+        font-size: 17px;
+        box-shadow: 0 5px 0 var(--nb-borshch-dark);
+    }
+
+    @media (hover: hover) {
+        &:hover:not(:disabled) {
+            background: #E5244A;
+            transform: translateY(calc(-1px * var(--nb-move, 1)));
+        }
+    }
+    &:active:not(:disabled) {
+        transform: translateY(calc(3px * var(--nb-move, 1)));
+        box-shadow: 0 1px 0 var(--nb-borshch-dark);
+    }
+    &:disabled,
+    &[aria-disabled='true'] {
+        cursor: default;
+        background: var(--color-btn-disabled);
+        color: #FFFAF5;
+        box-shadow: 0 4px 0 rgba(160, 3, 34, 0.25);
+    }
+}
+
+// Secondary: outlined in red on whatever is behind it.
+@mixin btnGhost($size: md) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--nb-red-text);
+    @include button;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 2px currentColor;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    @if $size == sm {
+        min-height: 40px;
+        padding: 0 16px;
+        font-size: 15px;
+    }
+    @media (hover: hover) {
+        &:hover:not(:disabled) {
+            background: rgba(220, 20, 60, 0.07);
+        }
+    }
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+}
+
+// Quiet text button (Later / Skip / Cancel).
+@mixin btnText {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--nb-ink-2);
+    font-family: var(--font-family-main);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    @media (hover: hover) {
+        &:hover {
+            color: var(--nb-red-text);
+            background: rgba(220, 20, 60, 0.06);
+        }
+    }
+}
+
+// Round icon button: 44px tap target, white disc, warm shadow.
+@mixin iconBtn($d: 44px) {
+    width: $d;
+    height: $d;
+    min-width: $d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--nb-ink);
+    box-shadow: var(--nb-shadow-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    @media (hover: hover) {
+        &:hover {
+            color: var(--nb-red-text);
+        }
+    }
+    &:active {
+        transform: scale(calc(1 - 0.04 * var(--nb-move, 1)));
+    }
+}
+
+// White card on cream (landing .st / .step / .tcard).
+@mixin card($pad: 18px) {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: $pad;
+    box-shadow: var(--nb-shadow-sm);
+}
+
+// Selectable chip: smetana fill, red when chosen.
+@mixin chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1.5px solid var(--color-border-input);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--nb-ink);
+    font-family: var(--font-family-main);
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    @media (hover: hover) {
+        &:hover {
+            border-color: var(--nb-borshch);
+        }
+    }
+}
+@mixin chipOn {
+    background: var(--nb-borshch);
+    border-color: var(--nb-borshch);
+    color: #FFFAF5;
+    font-weight: 700;
+}
+
+// Text field (landing .form input).
+@mixin field {
+    width: 100%;
+    min-height: 50px;
+    padding: 13px 16px;
+    border: 1.5px solid var(--color-border-input);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--nb-ink);
+    font-family: var(--font-family-main);
+    font-size: 16px;
+    line-height: 1.4;
+    outline: 0;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    &::placeholder {
+        color: var(--color-input-search);
+    }
+    &:focus {
+        border-color: var(--nb-borshch);
+        box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.12);
+    }
+    // the red border and ring are the focus indicator; no second outline
+    &:focus-visible {
+        outline: none;
+    }
+}
+
+// A sheet or dialog panel.
+@mixin sheet {
+    background: var(--color-bg-grey);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 60px rgba(23, 11, 11, 0.28);
+}

@@ -1,35 +1,9 @@
-import { ButtonVertion } from "../ButtonVersion";
-import { ReactComponent as IconLike } from '../CardBorsch/like.svg';
-import { ReactComponent as IconLink } from '../CardBorsch/link.svg';
 import style from './CardActions.module.scss';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useRequireAuthAction } from '../../hook/useRequireAuthAction';
 import { useT } from "../../i18n";
-
-const fallbackCopy = (text) => {
-  const tempInput = document.createElement("input");
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  document.execCommand("copy");
-  document.body.removeChild(tempInput);
-};
-
-const copyToClipboardWithAlert = (text) => {
-  const done = () => alert("Посилання скопійоване в буфер. Поділитись можна вручну.");
-
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).then(done).catch((err) => {
-      console.error("Помилка копіювання:", err);
-      fallbackCopy(text);
-      done();
-    });
-    return;
-  }
-
-  fallbackCopy(text);
-  done();
-};
+import { shareBorsch } from '../../utils/share';
+import { IconHeart, IconShare } from '../Icons';
 
 /**
  * Share + like for a borsch. Extracted from CardBorsch so the popup can lay
@@ -53,34 +27,24 @@ export const CardActions = ({ borschId, className = '' }) => {
     });
   };
 
-  const handleShare = () => {
-    const url = `${window.location.origin}/borsch/${borschId}`;
-
-    if (navigator.share) {
-      navigator
-        .share({
-          title: t('card.shareTitle'),
-          text: t('card.shareText'),
-          url,
-        })
-        .catch(() => copyToClipboardWithAlert(url));
-      return;
-    }
-
-    copyToClipboardWithAlert(url);
-  };
-
   return (
     <div className={`${style.actions} ${className}`.trim()}>
-      <ButtonVertion type="button" onClick={handleShare} icon={IconLink} label={t('card.share')} />
       <button
         type="button"
-        className={`${style.like} ${liked ? style.liked : ''}`}
+        className={style.btn}
+        onClick={() => shareBorsch(borschId, t)}
+        aria-label={t('card.share')}
+      >
+        <IconShare />
+      </button>
+      <button
+        type="button"
+        className={`${style.btn} ${style.like} ${liked ? style.liked : ''}`}
         onClick={toggleLike}
         aria-pressed={liked}
         aria-label={liked ? t('card.unlike') : t('card.like')}
       >
-        <IconLike />
+        <IconHeart filled={liked} />
       </button>
     </div>
   );

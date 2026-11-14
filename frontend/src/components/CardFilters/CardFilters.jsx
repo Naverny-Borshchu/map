@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ReactComponent as IconDelete } from './close.svg';
+import { IconClose as IconDelete } from '../Icons';
 import { useFilters } from '../../context/FiltersContext';
 import { usePlaces } from '../../context/PlacesContext';
 import { useBorsch } from '../../context/BorschContext';
@@ -230,7 +230,11 @@ export const CardFilters = ({ onClose }) => {
                   setDraft((d) => ({ ...d, price: d.price === b.key ? null : b.key }))
                 }
               >
-                {b.max === null ? `${b.min}+ ₴` : `${b.min ? `${b.min}–` : '< '}${b.max} ₴`}
+                {b.max === null
+                  ? `${b.min}+ ${t('unit.uah')}`
+                  : b.min
+                    ? `${b.min}-${b.max} ${t('unit.uah')}`
+                    : t('filter.priceUnder', { max: b.max, unit: t('unit.uah') })}
               </button>
             ))}
           </div>

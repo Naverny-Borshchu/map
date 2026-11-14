@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Mascot } from '../Mascot';
+import { IconMapPin, IconBowl, IconSpoonPlus } from '../Icons';
+import heroArt from '../../assets/illustrations/hero.webp';
 import { useT } from '../../i18n';
 import style from './Onboarding.module.scss';
 
@@ -49,15 +50,17 @@ export const Onboarding = () => {
   return (
     <div className={style.overlay} role="dialog" aria-modal="true" aria-labelledby="nb-intro-title">
       <div className={style.card}>
-        <Mascot mood="happy" size={104} />
+        <img className={style.art} src={heroArt} alt="" width="560" height="560" />
 
+        <p className={style.kicker}>{t('intro.kicker')}</p>
         <h1 className={style.title} id="nb-intro-title">{t('intro.title')}</h1>
         <p className={style.lead}>{t('intro.lead')}</p>
 
+        {/* Drawn icons, not emoji (brand kit); ratings are bowls, never stars. */}
         <ul className={style.points}>
-          <li><span aria-hidden="true">🗺️</span>{t('intro.point1')}</li>
-          <li><span aria-hidden="true">⭐</span>{t('intro.point2')}</li>
-          <li><span aria-hidden="true">🥄</span>{t('intro.point3')}</li>
+          <li><span className={style.ic}><IconMapPin /></span>{t('intro.point1')}</li>
+          <li><span className={style.ic}><IconBowl /></span>{t('intro.point2')}</li>
+          <li><span className={style.ic}><IconSpoonPlus /></span>{t('intro.point3')}</li>
         </ul>
 
         <button type="button" className={style.cta} onClick={() => dismiss(true)}>

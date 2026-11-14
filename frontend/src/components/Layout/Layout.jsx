@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useLocation, useMatch } from "react-router-dom";
-import { ReactComponent as IconAddMob } from './addActiveMob.svg';
-import { ReactComponent as IconAddDesctop } from './addActiveDesctop.svg';
-import { ReactComponent as IconAcount } from './acount.svg';
-import { ReactComponent as IconAcountActive } from './acountActive.svg';
 import { ReactComponent as IconLinkedIn} from './linked.svg';
 import { ReactComponent as IconInstagram} from './akar-icons_instagram-fill.svg';
 import { MODES } from '../../components/Map/Map';
@@ -18,12 +14,14 @@ import { hasFullscreenMap } from "../../variant";
 import { Onboarding } from "../Onboarding";
 import { useUser } from "../../context/UserContext";
 import { ViewSwapIcon } from "./ViewSwapIcon";
+import { IconPlus, IconUser } from "./NavIcons";
+import { Toaster } from "../Toast";
 import { BugReport } from "../BugReport";
 
 import style from "./Layout.module.scss";
 import { useT } from "../../i18n";
 
-// Three tabs: [map/list] | + | [Ви].
+// Three slots: [map/list] | Додати борщ | [Ви].
 //
 // The A/B between a wide pair (Мапа, Обране | + | Відгуки, Ви) and a narrow one
 // is over — Andrii picked three. The first tab is no longer a destination but a
@@ -107,10 +105,10 @@ export const Layout = ({ children }) => {
           type="button"
           className={style.sidebarToggle}
           onClick={toggleSidebar}
-          aria-label={isSidebarCollapsed ? 'Розгорнути панель' : 'Згорнути панель'}
-          title={isSidebarCollapsed ? 'Розгорнути панель' : 'Згорнути панель'}
+          aria-label={isSidebarCollapsed ? t('layout.expandPanel') : t('layout.collapsePanel')}
+          title={isSidebarCollapsed ? t('layout.expandPanel') : t('layout.collapsePanel')}
         >
-          {isSidebarCollapsed ? '›' : '‹'}
+          <span aria-hidden="true">{isSidebarCollapsed ? '›' : '‹'}</span>
         </button>
         <MapPage />
       </div>
@@ -120,6 +118,7 @@ export const Layout = ({ children }) => {
   return (
     <div className={`${style.container} nb-shell`}>
       <Onboarding />
+      <Toaster />
       <main className={`${style.main} nb-main`}>
         {isDesktop ? (
           <>
@@ -133,7 +132,7 @@ export const Layout = ({ children }) => {
                 <EvaluationsPage borschId={matchBorschEvaluations.params.borschId} />
               )}
 
-            {/* 🔹 За замовчуванням показуємо children, щоб працювали всі інші маршрути */}
+            {/* За замовчуванням показуємо children, щоб працювали всі інші маршрути */}
             {!(
               location.pathname === "/" ||
               matchBorsch ||
@@ -152,19 +151,27 @@ export const Layout = ({ children }) => {
               hideBoxFilter={location.pathname !== "/" || isSidebarCollapsed}
             />
           )}
-        <nav>
+        <nav aria-label={t('nav.aria')}>
+          {/* NAV-203 (Andrii, 10.11.2026: «дуже погано виглядає»). The bar is a
+              three-column grid, 1fr | auto | 1fr, so the add action sits on
+              the exact centre of the screen whatever the side labels say, and
+              inside the bar rather than hanging above it. It is the brand's
+              primary pill, red with the dark-red underside, with its words on
+              it: a bare «+» was the one control nobody could name. The bug
+              report left the bar: it is a form, not a place, and it now lives
+              in Help, in the profile and in the desktop sidebar. */}
           <ul className={style.navContainer}>
             {/* One tap swaps map ⇄ list. The label and glyph name the view you
                 are about to get, and the arrows say you can tap back. */}
-            <li>
+            <li className={style.slot}>
               <NavLink
                 to={onList ? '/' : { pathname: '/list', search: location.search }}
-                className={`${style.link} nb-navlink ${style.active}`}
+                className={`${style.link} nb-navlink`}
                 aria-label={onList ? t('nav.showMap') : t('nav.showList')}
                 onClick={() => localStorage.setItem('mode', MODES.MOVE)}
               >
                 <span className={`${style.icon} nb-navicon`}>
-                  <ViewSwapIcon to={onList ? 'map' : 'list'} />
+                  <ViewSwapIcon to={onList ? 'map' : 'list'} size={24} />
                 </span>
                 <span className={`${style.text} nb-navtext`}>
                   {onList ? t('nav.map') : t('map.list')}
@@ -172,73 +179,55 @@ export const Layout = ({ children }) => {
               </NavLink>
             </li>
 
-            <li>
-              {!isDesktop && <NavLink
-                to="/add-borsch"
-                className={`${style.addBorsch} nb-addbtn`}
-                aria-label={t('nav.addBorsch')}
-                onClick={() => localStorage.setItem('mode', MODES.SET_MARKER)}
-              >
-                <IconAddMob/>                
-              </NavLink>}
-              {isDesktop && <NavLink
+            <li className={style.slotCenter}>
+              <NavLink
                 to="/add-borsch"
                 className={({ isActive }) =>
-                  `${style.link} nb-navlink ${isActive ? style.active : ""}`
+                  `${style.addBorsch} nb-addbtn ${isActive ? style.addActive : ''}`
                 }
                 onClick={() => localStorage.setItem('mode', MODES.SET_MARKER)}
-              >              
-                <IconAddDesctop className={`${style.icon} nb-navicon ${style.iconDefault}`}/>
-                <IconAddMob className={`${style.icon} nb-navicon ${style.iconHover}`} />               
-                <span className={`${style.text} nb-navtext`}>{t('nav.addBorsch')}</span>
-                </NavLink>}
+              >
+                <IconPlus className={style.addIcon} aria-hidden="true" />
+                <span className={style.addText}>{t('nav.addBorsch')}</span>
+              </NavLink>
             </li>
             {/* Ви carries the reviews and favourites the tabs no longer show.
                 On desktop a signed-in visitor already has a clickable avatar in
                 the header that goes to the same place, so the tab is a
                 duplicate there (Yuliia, 2026-08-18). Guests keep it, because
                 the header shows them a register button instead, and phones keep
-                it always — they have no header avatar at all. */}
+                it always: they have no header avatar at all. */}
             {!(isDesktop && isAuthenticated) && (
-            <li>
+            <li className={style.slot}>
               <NavLink
                 to="/profile"
                 className={({ isActive }) =>
                   `${style.link} nb-navlink ${isActive ? style.active : ""}`
                 }
               >
-                <IconAcount className={`${style.icon} nb-navicon ${style.iconDefault}`} />
-                <IconAcountActive
-                  className={`${style.icon} nb-navicon ${style.iconHover}`}
-                />
+                <span className={`${style.icon} nb-navicon`}>
+                  <IconUser />
+                </span>
                 <span className={`${style.text} nb-navtext`}>{t('nav.you')}</span>
               </NavLink>
             </li>
             )}
-
-            {/* Жучок стоїть останнім і навмисно в тій самій смузі, що й
-                навігація: це єдина частина екрана, яка не зникає ні на мапі,
-                ні всередині оцінювання, а скарга потрібна саме там, де щось
-                зламалось. Ховати її в профіль означало б просити людину
-                спершу знайти шлях у застосунку, який щойно не спрацював. */}
-            <li>
-              <BugReport />
-            </li>
           </ul>
         </nav>
+        {isDesktop && (
         <div className={style.boxContact}>
           <h3 className={style.title}>{t('layout.socialTitle')}</h3>
-          <div className={style.boxText}>
-            <p>{t('layout.socialLine1')}</p>
-            <p>{t('layout.socialLine2')}</p>
-          </div>
-          
-          <div  className={style.boxSocio}>
+          <p className={style.boxText}>
+            {t('layout.socialLine1')} {t('layout.socialLine2')}
+          </p>
+
+          <div className={style.boxSocio}>
             <a
               href="https://www.instagram.com/naverny_borshchu/"
               target="_blank"
               rel="noopener noreferrer"
               className={style.socialLink}
+              aria-label="Instagram"
             >
               <IconInstagram className={style.social} />
             </a>
@@ -246,13 +235,15 @@ export const Layout = ({ children }) => {
               href="https://www.linkedin.com/company/naverny-borshchu/"
               target="_blank"
               rel="noopener noreferrer"
-              className={style.socialLink}              
+              className={style.socialLink}
+              aria-label="LinkedIn"
             >
-              <IconLinkedIn  className={style.social} />                            
-            </a> 
-                  
+              <IconLinkedIn className={style.social} />
+            </a>
           </div>
-        </div>        
+          <BugReport variant="link" />
+        </div>
+        )}
       </header>
     </div>
   );

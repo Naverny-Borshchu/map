@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { ButtonVertion } from "../../components/ButtonVersion";
-import { ReactComponent as IconClose } from "./close.svg";
+import { IconClose } from "../Icons";
+import { BowlLoader } from '../EmptyState';
 import style from './AddBorsch.module.scss';
 import { useT } from '../../i18n';
 import { useFilters } from '../../context/FiltersContext';
@@ -111,23 +112,25 @@ export const AddBorsch = ({ onClose, placeData, place, candidates = [], onPickCa
     <div className={style.container}>
       <div className={style.card}>
         <div className={style.boxClose}>
-          <ButtonVertion type="button" onClick={handleClose} icon={IconClose} />
+          <ButtonVertion type="button" onClick={handleClose} icon={IconClose} label={t('card.close')} />
         </div>
 
         <div className={style.boxContext}>
           {loading ? (
-            <p>{t('rate.loading')}</p>
+            <div className={style.loading}><BowlLoader size={44} label={t('rate.loading')} /></div>
           ) : (
             <div className={style.boxAddress}>
+              <p className={style.kicker}>{t('add.kicker')}</p>
               <p className={style.name}>{place?.name}</p>
-              <p className={style.street}>{place?.type}</p>
-              <p className={style.street}>{street}</p>
-              <p className={style.street}>{city}</p>
+              {place?.type && <p className={style.type}>{String(place.type).replace(/_/g, ' ')}</p>}
+              <p className={style.street}>{[street, city].filter(Boolean).join(', ')}</p>
 
-              <div className={style.box_time}>
-                <p className={style.time}>{close}</p>
-                {closeTime && <span className={style.close}>{open} о {closeTime}</span>}
-              </div>
+              {close && (
+                <div className={style.box_time}>
+                  <p className={`${style.time} ${place?.hours?.openNow ? style.open : style.shut}`}>{close}</p>
+                  {closeTime && <span className={style.close}>{open} {closeTime}</span>}
+                </div>
+              )}
 
 
               {photos.length > 0 && (

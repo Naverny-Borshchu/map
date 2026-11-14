@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { RatingIconsSvg } from "../../components/RatingIconsSvg";
-import { ReactComponent as IconMap } from './map-pin.svg';
+import { IconMapPin as IconMap } from '../Icons';
 import { FotoBorschGallary } from "../../components/FotoBorschGallary";
 import { CardActions } from "../../components/CardActions";
 import { usePlaces } from '../../context/PlacesContext';
@@ -48,7 +48,7 @@ export const CardBosch=({el,index,isActive,hideActions=false})=>{
                 <p className={style.grade}>{t('card.rating')}</p>
                 {hasRating(el.overall_rating) ? (
                   <div className={style.flex}>
-                        <RatingIconsSvg overall_rating={el.overall_rating} />
+                        <RatingIconsSvg overall_rating={el.overall_rating} size={20} />
                         <p className={style.rating}>{formatGrade(el.overall_rating)}{el.rating_count ? <span className={style.rating_grade}> ({el.rating_count})</span> : null}</p>
                   </div>
                 ) : (

@@ -1,143 +1,213 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
 
-.userPage {
-}
-
-.back{
-    position: absolute;
-    top:20px;
-    left: 17px;
+.page {
     @include respond(desktop) {
-    display: none;
+        max-width: 1080px;
     }
 }
 
-.userButtons {
-    background-color: var(--color-bg-main);
-    border-radius: 14px;
+// --- who you are -----------------------------------------------------------
+.userHeader {
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding: 3px;
+    gap: 14px;
+    margin: 0 0 18px;
 }
 
-.linksContainer {
+.avatar {
+    width: 64px;
+    height: 64px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FFFAF5;
+    box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--nb-borshch);
+}
+
+.userWords {
+    min-width: 0;
+}
+
+.userName {
+    @include displayM;
+    margin: 0;
+    color: var(--color-text-btn);
+    overflow-wrap: anywhere;
+}
+
+.userEmail {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--nb-ink-2);
+    overflow-wrap: anywhere;
+}
+
+// --- invite banner: the landing's mission card, small -------------------------
+.advertBanner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 0 18px;
+    padding: 16px 8px 16px 18px;
+    border-radius: var(--radius-lg);
+    background: var(--nb-borshch);
+    color: #FFFAF5;
+    overflow: hidden;
+    box-shadow: 0 5px 0 var(--nb-borshch-dark);
+}
+
+.advertText {
+    text-align: left;
+    min-width: 0;
+}
+
+.advertHeader {
+    @include display(22px, 1.1);
+    margin: 0 0 6px;
+    color: #FFFAF5;
+}
+
+.advertSub {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #FFE3E8;
+}
+
+.advertArt {
+    flex: none;
+    width: 104px;
+    height: 104px;
+    margin: -10px -6px -14px 0;
+}
+
+// --- tabs -----------------------------------------------------------------
+.userButtons {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
     background-color: var(--color-bg-main);
-    border-radius: 12px;
+    margin-bottom: 14px;
+}
+
+// --- settings -------------------------------------------------------------
+.settingsCard {
+    @include card(16px);
+    margin-bottom: 14px;
+}
+
+.sectionTitle {
+    @include displayM;
+    margin: 0 0 6px;
+    color: var(--color-text-btn);
+}
+
+.themeRow {
+    margin: 8px 0;
+}
+
+// --- rows -----------------------------------------------------------------
+.linksContainer {
+    @include card(0 16px);
     display: flex;
     flex-direction: column;
-    margin: 24px 0;
-    padding: 0 16px;
+    margin: 0 0 24px;
 }
 
 .linkWrap {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     cursor: pointer;
     text-decoration: none;
-
-    padding: 16px 0;
-    background-color: inherit;
+    min-height: 56px;
+    padding: 8px 0;
+    background-color: transparent;
     border: none;
     border-bottom: 1px solid var(--color-header-border);
-    /*transform: rotate(0.19deg);*/
     text-align: left;
     width: 100%;
+    color: var(--color-text-btn);
+    @media (hover: hover) {
+        &:hover .linkLabel {
+            color: var(--nb-red-text);
+        }
+    }
 }
 
 .linkGroup {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    min-width: 0;
+}
+
+.linkIcon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--nb-smetana);
+    color: var(--nb-red-text);
+}
+html[data-theme='dark'] .linkIcon {
+    background: var(--color-bg-main);
+}
+
+.linkLabel {
+    font-size: 16px;
+    font-weight: 500;
+    transition: color var(--transition-fast);
 }
 
 .arrow {
-    width: 24px;
-    height: 24px;
+    flex: none;
+    display: inline-flex;
+    color: var(--nb-ink-2);
 }
 
-
-.userHeader {
-    margin-top: 40px;
-    margin-bottom: 24px;
+.danger .linkLabel {
+    color: var(--nb-red-text);
+    font-weight: 700;
 }
 
-.advertBanner {
-    margin: 24px 0;
-    padding: 10px 16px 0;
-    gap: 10px;
-    /*height: 172px;*/
-    background-color: var(--color-bg-ad);
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-
-    @include respond(desktop) {
-        width: 100%;
-        max-width: none;
+.bugRow {
+    border-bottom: 0;
+    span[aria-hidden="true"] {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--nb-smetana);
     }
 }
-
-.advertText {
-    text-align: left;
-    /*width: 165px;*/
-    /*height: 50px;*/
+html[data-theme='dark'] .bugRow span[aria-hidden="true"] {
+    background: var(--color-bg-main);
 }
 
-.advertHeader {
-    margin-bottom: 8px;
-}
-
-// Desktop
+// --- desktop: the sections side by side ---------------------------------
 .desktopContainer {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
-    gap: 20px;
-    //max-width: 100%;
-    //overflow-x: hidden;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
 }
 
 .sidebar {
-    background: #fafafa;
-    padding: 20px;
-    border-radius: 12px;
-
-    @include respond(desktop) {
-        position: fixed;
-        top: 166px;
-        left: calc(20vw + 16px);
-        width: 250px;
-        max-height: calc(100vh - 190px);
-        overflow-y: auto;
-    }
-}
-
-.menu {
-    list-style: none;
-    padding: 0;
-}
-
-.menu li {
-    margin-bottom: 12px;
+    position: sticky;
+    top: calc(var(--nb-topbar-h) + 16px);
 }
 
 .content {
     display: flex;
     flex-direction: column;
     gap: 20px;
-
-    @include respond(desktop) {
-        grid-column: 2;
-        min-width: 0;
-    }
-}
-
-
-
-
-
-.themeRow {
-  margin: 12px 0;
+    min-width: 0;
 }
