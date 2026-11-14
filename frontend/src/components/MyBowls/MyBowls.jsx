@@ -9,6 +9,7 @@ import { MAX_PHOTOS } from '../QuestFlow';
 import { IconBowl } from '../Icons';
 import { useI18n, useVenueLabel, useDishLabel } from '../../i18n';
 import style from './MyBowls.module.scss';
+import { dayMonth, joinMeta } from '../../utils/dates';
 
 /** "щойно", "25 хв тому", "3 год тому", or the date for older bowls. */
 export const bowlAge = (createdAt, now, t, lang = 'uk') => {
@@ -17,7 +18,7 @@ export const bowlAge = (createdAt, now, t, lang = 'uk') => {
   if (minutes < 60) return t('bowl.agoMinutes', { n: minutes });
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return t('bowl.agoHours', { n: hours });
-  return new Date(createdAt).toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'long' });
+  return dayMonth(new Date(createdAt), lang);
 };
 
 const BowlRow = ({ bowl }) => {
@@ -83,11 +84,11 @@ const BowlRow = ({ bowl }) => {
   };
 
   const venue = bowl.place?.name ? venueLabel(bowl.place.name) : t('card.unknownPlace');
-  const meta = [
+  const meta = joinMeta([
     bowl.borsch?.name ? dishLabel(bowl.borsch.name) : null,
     bowlAge(bowl.createdAt, Date.now(), t, lang),
     bowl.photoCount ? t('bowl.photos', { count: bowl.photoCount }) : t('bowl.noPhoto'),
-  ].filter(Boolean).join(' · ');
+  ]);
 
   return (
     <li className={style.row}>

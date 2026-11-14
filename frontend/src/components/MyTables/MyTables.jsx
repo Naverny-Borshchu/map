@@ -4,6 +4,7 @@ import { tablesAPI } from '../../api/tables';
 import { tableDate } from '../../utils/tableView';
 import { useI18n, useVenueLabel, useCityLabel } from '../../i18n';
 import style from './MyTables.module.scss';
+import { joinMeta } from '../../utils/dates';
 
 /**
  * «Мої Столи» in the profile: the tables this person hosts (GET /api/tables/),
@@ -35,12 +36,12 @@ export const MyTables = ({ className = '' }) => {
         {tables.map((tb) => {
           const venue = venueLabel(tb.place?.name || '');
           const open = tb.status === 'open';
-          const meta = [
+          const meta = joinMeta([
             tb.title ? venue : (tb.place?.city ? cityLabel(tb.place.city) : null),
             tableDate(tb.created_at, lang),
             t('table.borschCount', { count: tb.borsch_count || 0 }),
             t('table.reviewCount', { count: tb.review_count || 0 }),
-          ].filter(Boolean).join(' · ');
+          ]);
           return (
             <li key={tb.code}>
               <Link to={`/t/${tb.code}`} className={style.row}>

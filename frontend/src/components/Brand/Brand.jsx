@@ -9,8 +9,11 @@ import style from './Brand.module.scss';
  * on a cream disc there.
  *
  * size: 'sm' (map badge), 'md' (headers), 'lg' (sign-in, dialogs)
+ * sub:  a line of your own under the name instead of the tagline (the map
+ *       badge puts its counter there, so the plaque is one lock-up, not a
+ *       lock-up with a caption under it)
  */
-export const Brand = ({ size = 'md', tagline = false, className = '', as: Tag = 'span' }) => {
+export const Brand = ({ size = 'md', tagline = false, sub = null, subClassName = '', className = '', as: Tag = 'span' }) => {
   const t = useT();
   return (
     <Tag className={`${style.brand} ${style[size] || ''} ${className}`.trim()}>
@@ -19,7 +22,9 @@ export const Brand = ({ size = 'md', tagline = false, className = '', as: Tag = 
       </span>
       <span className={style.words}>
         <span className={style.name}>{t('brand.name')}</span>
-        {tagline && <small className={style.tagline}>{t('brand.tagline')}</small>}
+        {sub !== null && sub !== undefined
+          ? <small className={`${style.tagline} ${subClassName}`.trim()}>{sub}</small>
+          : tagline && <small className={style.tagline}>{t('brand.tagline')}</small>}
       </span>
     </Tag>
   );

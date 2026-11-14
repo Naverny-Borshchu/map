@@ -67,7 +67,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   const [candidates, setCandidates] = useState([]);
 
   const { getAveragePlaceRating, getPlaceExploration, getBorschByPlaceId } = useBorsch();
-  const { t, lang } = useI18n();
+  const { t, lang, cityLabel } = useI18n();
   // «Кажуть, тут є Борщ»: the tip a grey bowl opened
   const [openTip, setOpenTip] = useState(null);
   const { selectedPlaceId, cities } = usePlaces();
@@ -303,7 +303,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
               key={c.city}
               position={{ lat: Number(c.lat), lng: Number(c.lng) }}
               icon={countCircleIcon(c.borsch_count ?? 0, 44, theme === 'dark')}
-              title={`${c.city}: ${c.borsch_count ?? ""} борщ(ів)`}
+              title={`${cityLabel(c.city)}: ${t('list.count', { count: c.borsch_count ?? 0 })}`}
               onClick={() => onClickCityMarker(c)}
             />
           ))}

@@ -56,8 +56,8 @@ describe('dates', () => {
   });
 
   it('prints the camera time in both languages', () => {
-    expect(formatTakenAt('2026-11-14T13:20:05', 'uk')).toBe('14 листопада, 13:20');
-    expect(formatTakenAt('2026-11-14T09:05:00', 'en')).toBe('14 November, 09:05');
+    expect(formatTakenAt('2026-11-14T13:20:05', 'uk')).toBe('14\u00a0листопада, 13:20');
+    expect(formatTakenAt('2026-11-14T09:05:00', 'en')).toBe('14\u00a0November, 09:05');
     expect(formatTakenAt(null, 'uk')).toBe('');
   });
 });
