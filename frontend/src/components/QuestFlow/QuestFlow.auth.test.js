@@ -67,6 +67,6 @@ test('restores the persisted current step instead of starting over', () => {
     </I18nProvider>
   );
 
-  expect(screen.getByText('Збережемо твій борщ?')).toBeInTheDocument();
+  expect(screen.getByText('Збережемо твій Борщ?')).toBeInTheDocument();
   expect(screen.getByText(/Крок 2 \/ 2/i)).toBeInTheDocument();
 });

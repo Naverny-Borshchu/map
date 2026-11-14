@@ -92,6 +92,24 @@
   font-size: 14px;
 }
 
+.ask {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--nb-line);
+}
+
+.askTitle {
+  margin: 0;
+  @include displayS;
+  color: var(--nb-ink);
+}
+
+.askText {
+  margin: 2px 0 0;
+  @include footnote;
+  color: var(--nb-ink-2);
+}
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(calc(16px * var(--nb-move, 1))); }
   to { opacity: 1; transform: none; }

@@ -238,6 +238,10 @@ export const BorschPage=({ borschId: propId })=>{
                     <Link to={`/bowl/new?borsch=${encodeURIComponent(id)}&from=card`} className={style.broughtBtn}>
                         {t('card.broughtLater')}
                     </Link>
+                    {/* stage 2: a company at this venue rates it together */}
+                    <Link to={`/table/new?borsch=${encodeURIComponent(id)}&from=card`} className={style.broughtBtn}>
+                        {t('card.tableHere')}
+                    </Link>
                     <RouteButton place={place} label={t('card.routeLong')} className={style.routeBtn}/>
                 </div>
             </section>

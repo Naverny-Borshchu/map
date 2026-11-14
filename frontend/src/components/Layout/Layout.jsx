@@ -20,6 +20,7 @@ import { BugReport } from "../BugReport";
 import { BowlChooser } from "../BowlChooser";
 import { BowlReminder } from "../BowlReminder";
 import { cleanupDrafts } from "../../services/bowlDrafts";
+import { cleanupTableGuests } from "../../services/tableGuest";
 
 import style from "./Layout.module.scss";
 import { useT } from "../../i18n";
@@ -46,7 +47,9 @@ export const Layout = ({ children }) => {
   );
   const [chooserOpen, setChooserOpen] = useState(false);
   const closeChooser = useCallback(() => setChooserOpen(false), []);
-  const onAddRoute = location.pathname.startsWith('/add-borsch') || location.pathname.startsWith('/bowl');
+  const onAddRoute = location.pathname.startsWith('/add-borsch')
+    || location.pathname.startsWith('/bowl')
+    || location.pathname.startsWith('/table');
   // the bowl reminder belongs where people land, never over a flow
   const showReminder = ['/', '/list', '/profile'].includes(location.pathname);
 
@@ -54,6 +57,7 @@ export const Layout = ({ children }) => {
   // app load (services/bowlDrafts).
   useEffect(() => {
     cleanupDrafts();
+    cleanupTableGuests();
   }, []);
 
   // Full-screen variants float their controls above the bottom nav. Publish the

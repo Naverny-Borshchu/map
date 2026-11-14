@@ -150,3 +150,12 @@ export const IconCheck = ({ size = 20, ...rest }) => (
     <path d="m5.5 12.5 4.2 4.2 8.8-9.4" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+
+// a table with two bowls on it: «Стіл», rating together
+export const IconTable = ({ size = 24, ...rest }) => (
+  <svg {...base(size)} {...rest}>
+    <path d="M4.6 8.6h5.8a2.9 2.9 0 0 1-5.8 0ZM13.6 8.6h5.8a2.9 2.9 0 0 1-5.8 0Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+    <path d="M7.5 3.6c-.5.6-.5 1.3 0 1.9M16.5 3.6c-.5.6-.5 1.3 0 1.9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <path d="M2.8 13.4h18.4M6 13.4v6.6M18 13.4v6.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);

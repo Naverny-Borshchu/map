@@ -3,22 +3,24 @@ import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '../../i18n';
 import { track } from '../../analytics';
-import { IconCamera, IconBowl, IconSpoonPlus, IconClose, IconChevronRight } from '../Icons';
+import { IconCamera, IconBowl, IconSpoonPlus, IconTable, IconClose, IconChevronRight } from '../Icons';
 import style from './BowlChooser.module.scss';
 
 /** Where each choice goes. Exported for the routing test. */
 export const CHOOSER_ROUTES = {
   brought: '/bowl/new?from=chooser',
   rate: '/bowl/new?mode=rate&from=chooser',
+  table: '/table/new?from=chooser',
   add: '/add-borsch',
 };
 
 /**
- * What «Додати борщ» opens: three ways to put a borshch on the map, the one
+ * What «Додати борщ» opens: four ways to put a borshch on the map, the one
  * people need most often first. «Мені принесли Борщ» starts a bowl (photo
  * now, rating after the meal), «Оцінити Борщ, який уже скуштував» picks the
- * venue and borshch and goes into the ordinary rating, «Додати новий Борщ» is
- * the add flow as it was. A sheet from the bottom on a phone, a dialog on a
+ * venue and borshch and goes into the ordinary rating, «Ми зібрались
+ * компанією» sets up a table with a QR for everyone at it (stage 2),
+ * «Додати новий Борщ» is the add flow as it was. A sheet from the bottom on a phone, a dialog on a
  * desktop.
  */
 export const BowlChooser = ({ open, onClose }) => {
@@ -73,6 +75,7 @@ export const BowlChooser = ({ open, onClose }) => {
         <div className={style.options}>
           {option('brought', IconCamera, t('bowl.optBrought'), t('bowl.optBroughtHint'), true, firstRef)}
           {option('rate', IconBowl, t('bowl.optRate'), t('bowl.optRateHint'))}
+          {option('table', IconTable, t('bowl.optTable'), t('bowl.optTableHint'))}
           {option('add', IconSpoonPlus, t('bowl.optAdd'), t('bowl.optAddHint'))}
         </div>
       </div>
