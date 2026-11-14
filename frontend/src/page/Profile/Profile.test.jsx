@@ -18,6 +18,11 @@ jest.mock('../../hook/useMediaQuery', () => ({
 jest.mock('../PersonalInfo', () => ({ PersonalInfo: () => null }));
 jest.mock('../AddedBorschesPage', () => ({ AddedBorschesPage: () => null }));
 jest.mock('../PasswordChangePage', () => ({ PasswordChangePage: () => null }));
+// «Мої миски» is a section of its own with its own test (MyBowls.test.jsx).
+// It uses the router, and the partial virtual router mock above does not reach
+// it on CI («Cannot find module 'react-router/dom'»), so it is stubbed like the
+// other sections.
+jest.mock('../../components/MyBowls', () => ({ MyBowls: () => null }));
 jest.mock('../../components/ModalLogout', () => {
   const React = require('react');
   return {
