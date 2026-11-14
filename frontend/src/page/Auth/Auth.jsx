@@ -5,7 +5,8 @@ import { Brand } from "../../components/Brand";
 import heroArt from "../../assets/illustrations/hero.webp";
 import { GoogleAuth } from "../../components/GoogleAuth";
 import { ModalRegistrationSuccess } from "../../components/ModalRegistrationSuccess";
-import { googleAuth, persistGoogleAuthSession } from "../../services/googleAuth";
+import { googleAuth } from "../../services/googleAuth";
+import { useUser } from "../../context/UserContext";
 
 import layout from "../../styles/layout.module.scss";
 import style from "./Auth.module.scss";
@@ -26,12 +27,13 @@ export const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const t = useT();
+  const { completeGoogleSignIn } = useUser();
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       setAuthError("");
       const data = await googleAuth(credentialResponse.credential);
-      persistGoogleAuthSession(data);
+      completeGoogleSignIn(data);
       setShowModal(true);
     } catch (error) {
       console.error("Google auth error:", error);

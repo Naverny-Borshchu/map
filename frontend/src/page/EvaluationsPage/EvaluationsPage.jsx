@@ -11,7 +11,7 @@ import { useComments } from '../../context/CommentsContext';
 import { useUser } from '../../context/UserContext';
 import { commentsAPI, borschAPI } from '../../api';
 import { uploadPhotos } from '../../utils/uploadPhotos';
-import { googleAuth, persistGoogleAuthSession } from '../../services/googleAuth';
+import { googleAuth } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
 import { EmptyState } from '../../components/EmptyState';
 import style from './EvaluationsPage.module.scss';
@@ -61,7 +61,7 @@ export const EvaluationsPage = ({ borschId: propId }) => {
     const [draftStep, setDraftStep] = useState(() => restoredDraft?.step || 0);
     const { getBorschById, getBorschExploration, loadBorschData} = useBorsch();
     const { syncWithServer } = useComments();
-    const { login } = useUser();
+    const { completeGoogleSignIn } = useUser();
     // Deep links (and slow list loads) used to hang forever on "Завантаження
     // даних…", because the page waited for the whole borsch list to arrive and
     // gave up silently if this borsch was not in it. Fetch the one we need.
@@ -112,9 +112,8 @@ export const EvaluationsPage = ({ borschId: propId }) => {
       // The backend contract is { access, refresh, user, profile }. Persist all
       // four fields before unblocking the final step so the pending review is
       // submitted with the new Bearer token, without leaving this page.
-      persistGoogleAuthSession(data);
-      login(data.user || data.profile || data);
-    }, [login]);
+      completeGoogleSignIn(data);
+    }, [completeGoogleSignIn]);
 
       const handleSubmitForm = async (e) => {
       if (e?.preventDefault) e.preventDefault();

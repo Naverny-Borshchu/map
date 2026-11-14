@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { tokenStorage } from '../services/tokenStorage';
 import { AUTH_SESSION_EXPIRED_EVENT, clearAuthSession } from '../services/authSession';
 import { identifyUser, resetAnalytics, track } from '../analytics';
+import { persistGoogleAuthSession } from '../services/googleAuth';
 
 const UserContext = createContext();
 
@@ -77,6 +78,14 @@ export const UserProvider = ({ children }) => {
     // await api.auth.login(userData);
   };
 
+  // The one way a Google sign-in becomes a session: the JWTs go to storage AND this context learns about it.
+  // The /login page used to do only the first half, so after a successful sign-in the header kept
+  // offering «Увійти» and protected pages sent people back to /login until a reload (map1, 14.11.2026).
+  const completeGoogleSignIn = (data) => {
+    persistGoogleAuthSession(data);
+    login(data?.user || data?.profile || {});
+  };
+
   // Вихід користувача
   const logout = () => {
     setUser(null);
@@ -135,6 +144,7 @@ export const UserProvider = ({ children }) => {
     isAuthenticated,
     loading,
     login,
+    completeGoogleSignIn,
     logout,
     updateUser,
     updateLastActivity,

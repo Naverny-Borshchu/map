@@ -5,7 +5,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { hasTenPointScale } from '../../variant';
 import { tasteSteps } from '../../components/QuestFlow/answers';
 import { placesAPI, borschAPI, commentsAPI } from '../../api';
-import { googleAuth, persistGoogleAuthSession } from '../../services/googleAuth';
+import { googleAuth } from '../../services/googleAuth';
 import { tokenStorage } from '../../services/tokenStorage';
 import { useUser } from '../../context/UserContext';
 import {
@@ -57,7 +57,7 @@ export const AddBorschFlow = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const t = useT();
-  const { login } = useUser();
+  const { completeGoogleSignIn } = useUser();
   const [restoredDraft] = useState(() => readSessionDraft(DRAFT_KEY));
   const flowContext = state?.place ? state : restoredDraft?.context;
 
@@ -130,10 +130,9 @@ export const AddBorschFlow = () => {
   const onSignIn = useCallback(
     async (credentialResponse) => {
       const data = await googleAuth(credentialResponse.credential);
-      persistGoogleAuthSession(data);
-      login(data.user || data.profile || {});
+      completeGoogleSignIn(data);
     },
-    [login]
+    [completeGoogleSignIn]
   );
 
   const runSubmit = useCallback(async () => {
