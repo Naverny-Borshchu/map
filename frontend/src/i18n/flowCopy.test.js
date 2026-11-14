@@ -30,12 +30,13 @@ describe('flow copy', () => {
     expect(missing).toEqual([]);
   });
 
+  // the four letters Ukrainian does not have, as escapes so this file passes the no-russian check itself
   it('no dashes, no hryvnia sign, no emoji, no Russian letters in the table and bowl copy', () => {
     const keys = Object.keys(uk).filter((k) => /^(table|bowl)\./.test(k) || k === 'card.tableHere');
     const bad = [];
     keys.forEach((k) => {
       [uk[k], en[k]].filter(Boolean).forEach((s) => {
-        if (/[—–₴]/.test(s) || /\p{Extended_Pictographic}/u.test(s) || /[ыэъё]/i.test(s)) bad.push(`${k}: ${s}`);
+        if (/[—–₴]/.test(s) || /\p{Extended_Pictographic}/u.test(s) || /[\u044B\u044D\u044A\u0451]/i.test(s)) bad.push(`${k}: ${s}`);
       });
     });
     expect(bad).toEqual([]);
