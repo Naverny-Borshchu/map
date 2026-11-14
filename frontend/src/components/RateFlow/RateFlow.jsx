@@ -4,7 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { QuestFlow, XP_PER_STEP } from '../QuestFlow';
 import { hasTenPointScale } from '../../variant';
 import { SCALE_ANSWERS } from '../QuestFlow/answers';
-import { googleAuth, persistGoogleAuthSession } from '../../services/googleAuth';
+import { googleAuth } from '../../services/googleAuth';
 
 /**
  * Rating a borsch that is already on the map.
@@ -41,7 +41,7 @@ export const RateFlow = ({
   onStepChange,
 }) => {
   const t = useT();
-  const { isAuthenticated, login } = useUser();
+  const { isAuthenticated, completeGoogleSignIn } = useUser();
   const needsSignIn = !isAuthenticated;
 
   const steps = useMemo(
@@ -99,9 +99,8 @@ export const RateFlow = ({
     const data = await googleAuth(credentialResponse.credential);
     // /auth/google/ returns {access, refresh, user, profile}. Persist the JWTs
     // before updating context so the final review POST is authenticated.
-    persistGoogleAuthSession(data);
-    login(data.user || data.profile || {});
-  }, [login]);
+    completeGoogleSignIn(data);
+  }, [completeGoogleSignIn]);
 
   return (
     <QuestFlow
