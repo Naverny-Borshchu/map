@@ -74,7 +74,7 @@ describe('the story picture says', () => {
   it('the title, the venue, the table average and how many rated', () => {
     expect(content.title).toBe('День Борщу у Львові');
     expect(content.place).toBe('Ватра, Львів');
-    expect(content.kicker).toMatch(/^Стіл · 21 листопада$/);
+    expect(content.kicker).toMatch(/^Дегустація · 21 листопада$/);
     expect(content.average).toBe('7.4');
     expect(content.raters).toBe('14');
     expect(content.ratersLabel).toBe('людей оцінили');
