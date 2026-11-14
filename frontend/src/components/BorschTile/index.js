@@ -1,0 +1,1 @@
+export { BorschTile } from './BorschTile';

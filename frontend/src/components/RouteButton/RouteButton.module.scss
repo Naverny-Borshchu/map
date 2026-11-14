@@ -1,40 +1,20 @@
 @use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
 
+// «Прокласти маршрут»: the secondary pill next to «Оцінити».
 .route {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  padding: 9px 14px;
-  border: 1px solid var(--color-text-active);
-  border-radius: var(--radius-md);
-  background-color: var(--color-text-active);
-  color: var(--color-text-btn-active);
-
-  @include caption;
-  font-weight: 500;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.route:hover {
-  opacity: 0.9;
+  @include btnGhost;
 }
 
 .icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
-  fill: currentColor;
 }
 
 /* secondary placement: sits with share/like/close over the photo */
 .iconOnly {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  @include iconBtn(44px);
   text-decoration: none;
-  color: var(--color-text-btn);
+  color: var(--nb-red-text);
 }

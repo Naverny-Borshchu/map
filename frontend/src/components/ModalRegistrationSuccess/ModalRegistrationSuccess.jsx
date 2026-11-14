@@ -1,41 +1,32 @@
-import {useEffect, useState} from "react";
 import {Modal} from "../../components/Modal";
 import {Button} from "../../components/Button";
-import {ReactComponent as Logo} from '../../assets/images/logo.svg';
-import typography from '../../styles/typography.module.css';
-import style from './ModalRegistrationSuccess.module.css';
+import heroArt from '../../assets/illustrations/hero.webp';
+import dialog from '../../styles/dialog.module.scss';
+import { useT } from "../../i18n";
 
 export const ModalRegistrationSuccess = ({onClose, onGoToMap, onContinue}) => {
-    const [spin, setSpin] = useState(false);
-
-    useEffect(() => {
-        setSpin(true);
-        const t = setTimeout(() => setSpin(false), 1000);
-        return () => clearTimeout(t);
-    }, []);
-
+    const t = useT();
     return (
         <Modal onClose={onClose}>
-            <div className={style.modalContent}>
-                <Logo className={`${style.modalLogo} ${spin ? style["spin-once"] : ""}`}/>
-                <h2 className={`${typography.modalTitle} ${style.modalTitle}`}>Реєстрація пройшла успішно!</h2>
-                <p className={`${typography.modalParagraph} ${style.modalParagraph}`}>
-                    Ви доєднались до спільноти пооцінювачів Борщу
-                </p>
+            <div className={dialog.panel} role="dialog" aria-modal="true" aria-labelledby="nb-reg-title">
+                <img className={dialog.art} src={heroArt} alt="" width="560" height="560" />
+                <h2 className={dialog.title} id="nb-reg-title">{t('regSuccess.title')}</h2>
+                <p className={dialog.text}>{t('regSuccess.text')}</p>
                 <Button type="submit"
-                        name="Перейти на мапу Борщів"
+                        name={t('regSuccess.toMap')}
                         onClick={() => {
                             onGoToMap();
                             onClose();
                         }}/>
                 <button
-                    className={`${typography.fontBtn} ${style.modalCloseBtn}`}
+                    type="button"
+                    className={dialog.ghost}
                     onClick={() => {
                         onContinue();
                         onClose();
                     }}
                 >
-                    Продовжити
+                    {t('regSuccess.continue')}
                 </button>
             </div>
         </Modal>

@@ -1,5 +1,6 @@
 import { directionsUrl } from '../../utils/directions';
 import style from './RouteButton.module.scss';
+import { IconRoute } from '../Icons';
 import { useT } from '../../i18n';
 
 /**
@@ -24,10 +25,7 @@ export const RouteButton = ({ place, label, className = '', iconOnly = false }) 
       // the card and the popup behind it have their own click handlers
       onClick={(e) => e.stopPropagation()}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={style.icon}>
-        <path d="M21.7 11.3 12.7 2.3a1 1 0 0 0-1.4 0l-9 9a1 1 0 0 0 0 1.4l9 9a1 1 0 0 0 1.4 0l9-9a1 1 0 0 0 0-1.4Zm-9.7 8.3L4.4 12 12 4.4 19.6 12 12 19.6Z"/>
-        <path d="M13 8v3H9.5a1.5 1.5 0 0 0-1.5 1.5V16h2v-3h3v3l3.5-3.5L13 9v-1Z"/>
-      </svg>
+      <IconRoute className={style.icon} />
       {!iconOnly && <span>{text}</span>}
     </a>
   );

@@ -17,10 +17,9 @@ export const LanguageToggle = () => {
             aria-pressed={lang === l.key}
             onClick={() => setLang(l.key)}
           >
-            {/* the flag is decoration — the label already names the language,
-                and a screen reader announcing "flag: Ukraine Українська" adds
-                nothing */}
-            <span aria-hidden="true">{l.flag}</span> {l.label}
+            {/* each language named in itself; no flag emoji (brand kit: no
+                emoji anywhere in the UI) */}
+            <span lang={l.key}>{l.label}</span>
           </button>
         ))}
       </div>

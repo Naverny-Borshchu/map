@@ -1,0 +1,41 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  min-height: 70vh;
+}
+
+.art {
+  width: 180px;
+  height: auto;
+}
+
+.code {
+  @include numeric(15px, 800);
+  letter-spacing: 0.2em;
+  color: var(--nb-red-text);
+  margin: 0;
+}
+
+.title {
+  @include displayXL;
+  margin: 0;
+  color: var(--color-text-btn);
+}
+
+.text {
+  @include body;
+  max-width: 34ch;
+  margin: 0 0 10px;
+  color: var(--nb-ink-2);
+}
+
+.cta {
+  @include btnPrimary(lg);
+}

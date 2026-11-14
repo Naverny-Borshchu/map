@@ -1,28 +1,28 @@
 @use "../styles/mixin_adaptiv.scss" as *;
+
+// Inner pages (help, FAQ, guide, profile and its sections): a cream page with
+// a readable column, as on the landing. The desktop top bar floats over the
+// page, so the page reserves its height once, here.
 .wrapper {
     background-color: var(--color-bg-grey);
-    min-height: 100vh;
-    padding: 16px 16px 24px;
-    text-align: center;
-     @include respond(desktop) {
-       margin-top: 100px;
+    min-height: 100%;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 18px 32px;
+    text-align: left;
+    @include respond(desktop) {
+        padding: calc(var(--nb-topbar-h) + 28px) 32px 48px;
     }
 }
 
 .authContainer {
-    max-width: 400px;
+    max-width: 440px;
     margin-left: auto;
     margin-right: auto;
-    padding: 40px 28px 28px;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 20px 32px;
     text-align: center;
     @include respond(desktop) {
-       margin-top: 110px;
-    }
-
-    // the wordmark SVG is a fixed 320px wide — cap it so it never overflows /
-    // gets clipped on narrow phones (id is global, so scope it to this page)
-    :global(#logo) {
-        max-width: 100%;
-        height: auto;
+       padding-top: calc(var(--nb-topbar-h) + 40px);
     }
 }

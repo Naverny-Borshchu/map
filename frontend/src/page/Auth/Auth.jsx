@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { Logo } from "../../components/Logo";
+import { Brand } from "../../components/Brand";
+import heroArt from "../../assets/illustrations/hero.webp";
 import { GoogleAuth } from "../../components/GoogleAuth";
 import { ModalRegistrationSuccess } from "../../components/ModalRegistrationSuccess";
 import { googleAuth, persistGoogleAuthSession } from "../../services/googleAuth";
 
 import layout from "../../styles/layout.module.scss";
-import typography from "../../styles/typography.module.css";
-import style from "./Auth.module.css";
+import style from "./Auth.module.scss";
 import { useT } from "../../i18n";
 
 /**
@@ -52,11 +52,14 @@ export const Auth = () => {
 
   return (
     <div className={layout.authContainer}>
-      <Logo />
+      <Brand size="lg" className={style.brand} />
 
-      <h2 className={`${typography.mobileTitle} ${style.title}`}>
+      <div className={style.card}>
+      <img className={style.art} src={heroArt} alt="" width="560" height="560" />
+      <p className={style.kicker}>{t('auth.kicker')}</p>
+      <h1 className={style.title}>
         {t('auth.title')}
-      </h2>
+      </h1>
 
       <p className={style.subtitle}>
         {t('auth.subtitle')}
@@ -69,7 +72,7 @@ export const Auth = () => {
           onChange={() => setAccepted((prev) => !prev)}
           className={style.hiddenCheckbox}
         />
-        <span className={style.customCheckbox}>
+        <span className={`${style.customCheckbox} ${accepted ? style.checked : ''}`.trim()}>
           {accepted && <span className={style.checkboxSign} />}
         </span>
         <span>
@@ -100,10 +103,11 @@ export const Auth = () => {
       </div>
 
       {authError && (
-        <p className={typography.mobileFootnote} style={{ color: "#d32f2f", marginTop: 12 }}>
+        <p className={style.error} role="alert">
           {authError}
         </p>
       )}
+      </div>
 
       {showModal && (
         <ModalRegistrationSuccess

@@ -20,7 +20,7 @@ export const ProgressLine = ({ title, icon: Icon, value }) => {
             <div className={styles.track}>
               <div className={styles.fill} style={{ width: `${percent}%` }} />
             </div>
-            <span className={styles.value}>({formatGrade(value)})</span>
+            <span className={styles.value}>{formatGrade(value)}</span>
           </div>
         ) : (
           <span className={styles.noRatings}>{t('rate.noRatingsYet')}</span>

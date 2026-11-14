@@ -3,9 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#F2F2F2" />
-    <!-- The brand beet sits on its own light-green disc, so it reads on both
-         light and dark browser chrome — one icon covers both schemes. -->
+    <meta name="theme-color" content="#FFFAF5" />
+    <!-- The brand plate on a cream disc reads on light and dark browser chrome. -->
     <link rel="icon" href="./favicon.png" />
     <link rel="apple-touch-icon" href="./favicon.png" />
     <script>
@@ -24,7 +23,7 @@
           document.documentElement.setAttribute('data-theme', t);
           document.documentElement.style.colorScheme = t;
           var m = document.querySelector('meta[name="theme-color"]');
-          if (m) m.setAttribute('content', t === 'dark' ? '#101010' : '#F2F2F2');
+          if (m) m.setAttribute('content', t === 'dark' ? '#170B0B' : '#FFFAF5');
         } catch (e) {}
       })();
     </script>
@@ -59,9 +58,8 @@
     <meta name="twitter:description" content="Find and rate Ukraine's best borshch on one map. Every bowl is scored on seven criteria by people who actually ate it. Free, no ads." />
     <meta name="twitter:image" content="https://map.navernyborshchu.com/og-map.jpg" />
     <meta name="twitter:image:alt" content="A bowl of Ukrainian borshch with a swirl of sour cream and a wooden spoon, captioned “Find and rate Ukraine’s best borshch on one map”" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">  
+    <!-- Fonts are self-hosted (src/assets/fonts, declared in src/index.scss):
+         MAK for headings and Roboto for text, the same files as the landing. -->
     <title>Наверни Борщу</title>
   </head>
   <body>

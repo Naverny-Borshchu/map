@@ -13,6 +13,7 @@ import { commentsAPI, borschAPI } from '../../api';
 import { uploadPhotos } from '../../utils/uploadPhotos';
 import { googleAuth, persistGoogleAuthSession } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
+import { EmptyState } from '../../components/EmptyState';
 import style from './EvaluationsPage.module.scss';
 import { useT, useDishLabel } from "../../i18n";
 import {
@@ -195,12 +196,12 @@ export const EvaluationsPage = ({ borschId: propId }) => {
     if (!borschOne) {
       return (
         <div className={style.wrapp}>
-          <p>{notFound ? t('rate.notFound') : t('rate.loading')}</p>
-          {notFound && (
-            <button type="button" className={style.backLink} onClick={() => navigate('/')}>
-              {t('rate.backHome')}
-            </button>
-          )}
+          <EmptyState
+            art="spoon"
+            loading={!notFound}
+            title={notFound ? t('rate.notFound') : t('rate.loading')}
+            action={notFound ? { onClick: () => navigate('/'), label: t('rate.backHome') } : null}
+          />
         </div>
       );
     }

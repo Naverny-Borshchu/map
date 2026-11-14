@@ -1,5 +1,6 @@
 @use "../../styles/mixin_adaptiv.scss" as *;
 @use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
 
 /* Рядок під адресою, а не кнопка: він має бути помітним тому, хто саме зараз
    дивиться на адресу й розуміє, що вона застаріла, і невидимим для решти. */
@@ -10,20 +11,20 @@
     background: none;
     cursor: pointer;
     text-align: left;
+    min-height: 44px;
     text-decoration: underline;
     text-underline-offset: 3px;
-    color: var(--color-text-grade);
+    color: var(--nb-ink-2);
     transition: color var(--transition-fast);
     @include footnote;
+    font-size: 13px;
 }
 .trigger:hover {
     color: var(--color-text-active);
 }
 
 .sheet {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    background-color: var(--color-text-btn-active);
-    border-radius: var(--radius-lg);
+    @include sheet;
     width: min(92vw, 420px);
     max-height: 90dvh;
     overflow-y: auto;
@@ -36,7 +37,7 @@
 .title {
     margin: 0;
     color: var(--color-text-btn);
-    @include mobileH4;
+    @include displayM;
 }
 
 .hint {
@@ -55,8 +56,9 @@
    не складатиме повідомлення. Один тап — і сигнал у нас. */
 .chip {
     flex: 1 1 auto;
+    min-height: 48px;
     padding: 12px 16px;
-    border: 1px solid var(--color-border-input);
+    border: 1.5px solid var(--color-border-input);
     border-radius: var(--radius-pill);
     background-color: var(--color-text-btn-active);
     color: var(--color-text-btn);
@@ -68,68 +70,35 @@
     border-color: var(--color-input-active);
 }
 .chipActive {
-    background-color: var(--color-add-btn);
-    border-color: var(--color-add-btn-active);
+    background-color: var(--nb-borshch);
+    border-color: var(--nb-borshch);
+    color: #FFFAF5;
 }
 
 .input {
-    width: 100%;
-    box-sizing: border-box;
+    @include field;
+    min-height: 96px;
     resize: vertical;
-    padding: 12px;
-    border: 1px solid var(--color-border-input);
-    border-radius: var(--radius-sm);
-    background-color: var(--color-text-btn-active);
-    color: var(--color-text-btn);
-    @include body;
-}
-.input:focus {
-    outline: none;
-    border-color: var(--color-input-active);
-}
-.input::placeholder {
-    color: var(--color-input-search);
 }
 
 .fallbackLink {
-    color: var(--color-text-active);
+    color: var(--nb-red-text);
+    font-weight: 700;
     @include footnote;
 }
 
 .actions {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin-top: 4px;
-}
-
-.primary,
-.ghost {
-    border: none;
-    cursor: pointer;
-    padding: 12px 20px;
-    border-radius: var(--radius-pill);
-    transition: background-color var(--transition-fast), color var(--transition-fast);
-    @include button;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
 }
 
 .primary {
-    background-color: var(--color-add-btn);
-    color: var(--color-text-btn);
-}
-.primary:hover:not(:disabled) {
-    background-color: var(--color-add-btn-active);
-}
-.primary:disabled {
-    background-color: var(--color-grey-400);
-    color: var(--color-text-grade);
-    cursor: not-allowed;
+    @include btnPrimary(sm);
 }
 
 .ghost {
-    background-color: transparent;
-    color: var(--color-text-main);
-}
-.ghost:hover {
-    color: var(--color-text-btn);
+    @include btnText;
 }

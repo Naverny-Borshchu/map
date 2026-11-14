@@ -47,7 +47,7 @@ const apply = () => {
   // keep the browser UI (address bar, form controls, scrollbars) in step
   document.documentElement.style.colorScheme = next;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', next === 'dark' ? '#101010' : '#F2F2F2');
+  if (meta) meta.setAttribute('content', next === 'dark' ? '#170B0B' : '#FFFAF5');
   listeners.forEach((fn) => fn(next));
 };
 

@@ -1,48 +1,65 @@
+/* Venue search on the add-borshch screen (Google Places), the same pill as
+   the map's own search. */
 .container{
-  border-radius: 14px;
-  width: 80%;
-  height: 40px;
-  z-index: 999;   
+  position: relative;
+  border-radius: var(--radius-pill);
+  width: 100%;
+  height: 48px;
+  z-index: 999;
 }
 .input{
-  border: 1px solid var(--color-header-border);
-  background-color: var(--color-bg-main);
-  border-radius: 14px;
-  padding: 8px 16px; 
+  border: 1.5px solid transparent;
+  background-color: var(--surface);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--nb-shadow-float);
+  padding: 8px 18px;
   width: 100%;
-  height: 40px;
+  height: 48px;
   outline: none;
-  transition: border-color 0.2s ease;
+  color: var(--color-text-btn);
+  transition: border-color var(--transition-fast);
 }
 
-.inputWrap:focus-within .input {
-  border-color: var(--color-text-active);
-}
-.inputWrap:hover .input {
-  border-color: var(--color-text-active);
+.input:focus {
+  border-color: var(--nb-borshch);
 }
 
 .input::placeholder {
   color: var(--color-input-search);
-  font-size: 12px;
-  font-weight: 300;
-  line-height: 120%;
+  font-size: 15px;
+  font-weight: 400;
 }
 .select{
   position: absolute;
-  top: 40px;   
-  width: 75%;
-  background-color: var( --color-bg-main);
+  top: 56px;
+  left: 0;
+  right: 0;
+  background-color: var(--surface);
   z-index: 99;
-  border-radius: 24px;
-  padding: 10px 20px;
+  border-radius: 20px;
+  box-shadow: var(--nb-shadow-float);
+  padding: 6px 0;
+  margin: 0;
   text-align: left;
-  margin-bottom: 5px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  max-height: 50vh;
+  overflow-y: auto;
 }
 .select li{
-  border-bottom: 1px solid var(--color-border-input);
-  padding-bottom: 3px;
+  padding: 10px 16px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--color-text-btn);
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-header-border);
+}
+.select li:last-child{
+  border-bottom: 0;
+}
+.select li:hover{
+  background: var(--color-bg-main);
+}
+.select li strong {
+  font-weight: 700;
 }

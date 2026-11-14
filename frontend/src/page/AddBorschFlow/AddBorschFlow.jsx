@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QuestFlow, XP_PER_STEP } from '../../components/QuestFlow';
+import { EmptyState } from '../../components/EmptyState';
 import { hasTenPointScale } from '../../variant';
 import { tasteSteps } from '../../components/QuestFlow/answers';
 import { placesAPI, borschAPI, commentsAPI } from '../../api';
@@ -101,7 +102,7 @@ export const AddBorschFlow = () => {
         chips: ['chip.borsch', 'chip.borschRed', 'chip.borschGreen', 'chip.borschPampushky'],
       },
       { type: 'number', key: 'price', i18n: 'flow.qPrice', hint: 'flow.qPriceHint', unit: priceChips.unit, chips: priceChips.chips, min: 0 },
-      { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: [250, 300, 350, 400, 500], min: 0 },
+      { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: [250, 280, 350, 400, 500], min: 0 },
       { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
       ...(needsSignIn
         ? [{ type: 'signin', key: 'signin', i18n: 'flow.signinTitle', hint: 'flow.signinHint' }]
@@ -211,10 +212,11 @@ export const AddBorschFlow = () => {
   if (!flowContext?.place) {
     return (
       <div className={style.fallback}>
-        <p>{t('flow.noPlace')}</p>
-        <button type="button" className={style.fallbackBtn} onClick={() => navigate('/add-borsch')}>
-          {t('flow.pickPlace')}
-        </button>
+        <EmptyState
+          art="find"
+          title={t('flow.noPlace')}
+          action={{ onClick: () => navigate('/add-borsch'), label: t('flow.pickPlace') }}
+        />
       </div>
     );
   }

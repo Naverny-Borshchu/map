@@ -1,3 +1,6 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -5,40 +8,73 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  padding: 16px;
+  background: rgba(23, 11, 11, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fade var(--dur-slow) var(--ease-standard);
 }
 
 .card {
+  position: relative;
   width: min(420px, 100%);
-  max-height: calc(100dvh - 40px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 26px 22px calc(22px + env(safe-area-inset-bottom, 0px));
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  padding: 18px 22px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: 28px;
+  background: var(--color-bg-grey);
+  box-shadow: 0 24px 60px rgba(23, 11, 11, 0.35);
   text-align: center;
+  animation: rise var(--dur-slow) var(--ease-out);
+  // the landing hero's sour-cream halo behind the plate
+  &::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -40px;
+    width: 360px;
+    height: 300px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--nb-smetana) 0, rgba(253, 229, 206, 0.5) 45%, rgba(253, 229, 206, 0) 70%);
+    pointer-events: none;
+  }
+  > * {
+    position: relative;
+  }
+}
+
+html[data-theme='dark'] .card::before {
+  opacity: 0.12;
+}
+
+.art {
+  width: 190px;
+  height: auto;
+  margin: -6px 0 -8px;
+  animation: float 7s ease-in-out infinite;
+}
+
+.kicker {
+  @include kicker;
+  margin: 4px 0 0;
 }
 
 .title {
-  margin: 4px 0 0;
-  font-size: 22px;
-  line-height: 1.25;
-  font-weight: 700;
-  color: var(--color-text-btn);
+  @include displayXL;
+  margin: 0;
+  color: var(--nb-red-text);
 }
 
 .lead {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.45;
-  color: var(--color-text-main);
+  color: var(--nb-ink-2);
 }
 
 .points {
@@ -48,49 +84,78 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 
   li {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     text-align: left;
+    padding: 8px 12px 8px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: var(--nb-shadow-sm);
     font-size: 15px;
+    font-weight: 500;
     line-height: 1.35;
     color: var(--color-text-btn);
-
-    span { font-size: 20px; flex: 0 0 auto; }
   }
 }
 
+.ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--nb-smetana);
+  color: var(--nb-red-text);
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+html[data-theme='dark'] .ic {
+  background: var(--color-bg-main);
+}
+
 .cta {
+  @include btnPrimary(lg);
   width: 100%;
-  min-height: 52px;
-  margin-top: 6px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--color-text-active);
-  color: var(--color-text-btn-active);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
+  margin-top: 8px;
 }
 
 .later {
+  @include btnText;
   width: 100%;
-  min-height: 44px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text-main);
-  font-size: 15px;
-  cursor: pointer;
 }
 
 .note {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--color-text-main);
-  opacity: 0.75;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--nb-ink-2);
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(calc(18px * var(--nb-move, 1)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(-6px * var(--nb-move, 1))); }
 }

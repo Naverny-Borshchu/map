@@ -1,24 +1,17 @@
 @use "../../styles/mixin_font.scss" as *;
 @use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
 
+// A page on phones; a section card inside the desktop profile.
 .desktopWrapper {
     @include respond(desktop) {
-        margin-top: 0;
-        width: calc(100vw - 550px);
-        max-width: 100%;
+        @include card(24px);
+        width: 100%;
+        max-width: none;
         min-width: 0;
-        box-sizing: border-box;
         min-height: auto;
         height: auto;
-    }
-}
-
-.back{
-    position: absolute;
-    top:20px;
-    left: 17px;
-    @include respond(desktop) {
-        display: none;
+        margin: 0;
     }
 }
 
@@ -26,10 +19,19 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 1rem;
-    border: 1px solid var(--color-input-active);
-    border-radius: 14px;
-    margin: 24px 0;
+    gap: 16px;
+    margin: 0 0 24px;
     padding: 16px;
+    border-radius: var(--radius-lg);
+    background: var(--nb-smetana);
+}
+html[data-theme='dark'] .infoContainer {
+    background: var(--color-bg-main);
 }
 
+.name {
+    @include displayM;
+    margin: 0;
+    color: var(--color-text-btn);
+    overflow-wrap: anywhere;
+}

@@ -8,32 +8,33 @@
 //   Baking the number straight into the vector fixes both: it is part of the
 //   shape, perfectly centered, and stays sharp at any zoom or DPI.
 //
-// Brand colours are taken from the live app design system (src/index.scss):
-//   green primary  #638758  (--color-text-active, Green/900)
-//   green 400      #BAE9AC  (--color-add-btn)
-//   beet accent    #A71E5B  (existing beet/city-marker colour)
-//   text           #1A1A1A  (--color-text-btn)
+// Colours of the Naverny Borshchu identity (src/index.scss):
+//   borshch #DC143C (the pins' red), deep #A00322, beet #860130,
+//   cream #FFFAF5, sour cream #FDE5CE, ink #1A1A1A.
+// The pin's disc carries a bowl, the brand's rating sign (ratings are bowls,
+// never stars), instead of the old beet bulb on a light-green disc.
 
-const GREEN = '#638758';
-const GREEN_400 = '#BAE9AC';
-const BEET = '#A71E5B';
+const RED = '#DC143C';
+const RED_DEEP = '#A00322';
+const BEET = '#860130';
+const CREAM = '#FFFAF5';
+const SMETANA_LINE = '#F0D2C3';
 const INK = '#1A1A1A';
-const SURFACE_DARK = '#242424';
-const INK_DARK = '#ECECEC';
+const SURFACE_DARK = '#2A1617';
+const INK_DARK = '#FFFAF5';
 
 const encode = (svg) =>
   `data:image/svg+xml,${encodeURIComponent(svg.replace(/\s+/g, ' ').trim())}`;
 
-// A compact beet bulb (body + stem/leaves), drawn in a 0..24 box.
-const beetGlyph = (tx, ty) => `
+// A bowl with two wisps of steam, drawn in a 0..24 box.
+const bowlGlyph = (tx, ty, color) => `
   <g transform="translate(${tx},${ty})">
-    <path d="M12 8 C8.7 8 6.5 10.4 6.5 13.2 C6.5 16.4 9.4 19.2 12 21
-             C14.6 19.2 17.5 16.4 17.5 13.2 C17.5 10.4 15.3 8 12 8 Z" fill="${BEET}"/>
-    <path d="M12 8 L12 4 M12 5.4 L14.7 3.7 M12 5.4 L9.3 3.7"
-          stroke="${GREEN}" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <path d="M4 11.4h16c0 3.7-2.8 6.6-6 7.4v1.2h-4v-1.2c-3.2-.8-6-3.7-6-7.4Z" fill="${color}"/>
+    <path d="M9.6 4.2c-.7.9-.7 1.8 0 2.7s.7 1.8 0 2.7M14.4 4.2c-.7.9-.7 1.8 0 2.7s.7 1.8 0 2.7"
+          stroke="${color}" stroke-width="1.7" stroke-linecap="round" fill="none"/>
   </g>`;
 
-// ---- Rating pin: white pill + tail, beet on the left, grade baked in ----
+// ---- Rating pin: pill + tail, a bowl disc on the left, grade baked in ----
 // Geometry (viewBox 0 0 72 46): pill body is 34 tall, tail drops to y=42.
 const PIN_BODY_H = 34;
 const PIN_TAIL_Y = 42; // tail tip → the marker's anchor point
@@ -77,23 +78,23 @@ export const ratingPinSvg = (grade, selected = false, dark = false, state = 'con
   const { w: PIN_W, textCx } = pinGeometry(grade);
   const rx = PIN_BODY_H / 2;
   const cx = PIN_W / 2; // tail centre
-  // A virgin pin inverts: solid beet body, white glyph. That contrast is what
-  // makes it the thing your eye lands on and your thumb goes for.
-  const surface = virgin ? BEET : dark ? SURFACE_DARK : '#ffffff';
+  // Selected: the brand red, cream type. Virgin (nobody has tasted it yet):
+  // deep beet, so the eye lands on it as the quest it is. Otherwise a white
+  // pill with a red bowl disc and ink numbers.
+  const filled = selected || virgin;
+  const surface = selected ? RED : virgin ? BEET : dark ? SURFACE_DARK : '#ffffff';
   const stroke = selected
-    ? GREEN
+    ? RED_DEEP
     : virgin
       ? BEET
       : unverified
-        ? BEET
-        : (dark ? '#3A3A3A' : '#D8D8D8');
-  const strokeWidth = virgin || unverified ? 1.8 : 1.2;
+        ? RED
+        : (dark ? '#4A2E2E' : SMETANA_LINE);
+  const strokeWidth = virgin || unverified || selected ? 1.8 : 1.4;
   const dash = unverified && !selected ? ' stroke-dasharray="5 4"' : '';
-  const numberColor = virgin
-    ? '#ffffff'
-    : selected
-      ? GREEN
-      : (dark ? INK_DARK : INK);
+  const numberColor = filled ? CREAM : (dark ? INK_DARK : INK);
+  const discFill = filled ? CREAM : RED;
+  const bowlColor = filled ? RED : CREAM;
   const number = grade
     ? `<text x="${textCx.toFixed(1)}" y="18.5" text-anchor="middle" dominant-baseline="central"
              font-family="Roboto, Arial, sans-serif" font-size="${virgin ? 19 : 16}" font-weight="${virgin ? 800 : 700}"
@@ -104,7 +105,7 @@ export const ratingPinSvg = (grade, selected = false, dark = false, state = 'con
 <svg xmlns="http://www.w3.org/2000/svg" width="${PIN_W}" height="${PIN_VB_H}" viewBox="0 0 ${PIN_W} ${PIN_VB_H}">
   <defs>
     <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-color="#000000" flood-opacity="0.28"/>
+      <feDropShadow dx="0" dy="1.2" stdDeviation="1.4" flood-color="#5a0a1e" flood-opacity="0.32"/>
     </filter>
   </defs>
   <path filter="url(#s)"
@@ -118,8 +119,8 @@ export const ratingPinSvg = (grade, selected = false, dark = false, state = 'con
            V${rx + 1}
            A${rx} ${rx} 0 0 1 ${rx + 1} 1 Z"
         fill="${surface}" stroke="${stroke}" stroke-width="${strokeWidth}"${dash}/>
-  <circle cx="${DISC_CX}" cy="17" r="${DISC_R}" fill="${virgin ? '#ffffff' : GREEN_400}"/>
-  ${beetGlyph(DISC_CX - 12, 3)}
+  <circle cx="${DISC_CX}" cy="17" r="${DISC_R}" fill="${discFill}"/>
+  ${bowlGlyph(DISC_CX - 12, 5.4, bowlColor)}
   ${number}
 </svg>`);
 };
@@ -145,7 +146,7 @@ export const ratingPinIcon = (grade, { height, selected = false, dark = false, s
   };
 };
 
-// ---- Grouping bubble: solid brand-green circle with the count inside ----
+// ---- Grouping bubble: solid brand-red circle with the count inside ----
 // Used in two places, so grouped borsches look the same at every zoom:
 //   * the marker clusterer (count supplied by the clusterer as centred text —
 //     it cannot be baked in, since the style list is static)
@@ -156,10 +157,10 @@ const circleBody = (diameter, inner = '', dark = false) => {
 <svg xmlns="http://www.w3.org/2000/svg" width="${diameter}" height="${diameter}" viewBox="0 0 ${diameter} ${diameter}">
   <defs>
     <filter id="s" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="1.2" stdDeviation="1.6" flood-color="#5a0a1e" flood-opacity="0.35"/>
     </filter>
   </defs>
-  <circle cx="${c}" cy="${c}" r="${c - 3}" fill="${GREEN}" stroke="${dark ? SURFACE_DARK : '#ffffff'}" stroke-width="3" filter="url(#s)"/>
+  <circle cx="${c}" cy="${c}" r="${c - 3}" fill="${RED}" stroke="${dark ? SURFACE_DARK : CREAM}" stroke-width="3" filter="url(#s)"/>
   ${inner}
 </svg>`);
 };
@@ -167,7 +168,7 @@ const circleBody = (diameter, inner = '', dark = false) => {
 export const clusterCircleSvg = (diameter, dark = false) => circleBody(diameter, '', dark);
 
 /**
- * City aggregate marker: same green circle, count baked into the vector so it
+ * City aggregate marker: same red circle, count baked into the vector so it
  * is centred exactly and stays sharp (the old city-marker.svg positioned its
  * label by hand at labelOrigin, which drifted as the count grew from 1 to 3
  * digits).

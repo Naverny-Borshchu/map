@@ -1,15 +1,15 @@
 import { useT } from '../../i18n';
 import {useState} from "react";
-import {Link} from "react-router-dom";
-import { ReactComponent as IconBack } from '../../assets/icons/arrow_back.svg';
+import {PageHeader} from "../../components/PageHeader";
+import {useMediaQuery} from "../../hook/useMediaQuery";
 import {InputField} from "../../components/InputField";
 import {Button} from "../../components/Button";
 import layout from "../../styles/layout.module.scss";
-import typography from "../../styles/typography.module.css";
 import style from "./PasswordChangePage.module.scss";
 
 export const PasswordChangePage = () => {
     const t = useT();
+    const isDesktop = useMediaQuery("(min-width: 1280px)");
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,8 +39,7 @@ export const PasswordChangePage = () => {
 
     return (
         <div className={`${layout.wrapper} ${style.desktopWrapper}`}>
-            <h2 className={`${typography.mobileTitle} ${style.title}`}>{t('password.title')}</h2>
-            <Link className={style.back} to={`/profile`}><IconBack/></Link>
+            <PageHeader back={isDesktop ? undefined : '/profile'} kicker={t('profile.kicker')} title={t('password.title')} />
 
             <InputField
                 label={t('password.current')} id='currentPassword' type='password' placeholder={t('password.current')}
