@@ -101,3 +101,57 @@
   font-weight: 700;
   color: #FFFAF5;
 }
+
+// «Так» is the answer most people give: cream, like a chosen chip.
+.yes {
+  background: #FFFAF5;
+  border-color: #FFFAF5;
+  color: var(--nb-borshch);
+}
+
+// «Ні, інша»: the number when no chip fits
+.otherField {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 14px;
+  min-height: 46px;
+  border: 2px solid rgba(255, 250, 245, 0.55);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.95);
+
+  input {
+    width: 7ch;
+    border: 0;
+    background: transparent;
+    color: #1A1A1A;
+    @include numeric(17px, 700);
+    outline: none;
+    text-align: right;
+    -moz-appearance: textfield;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  }
+}
+
+.otherUnit {
+  @include body;
+  font-weight: 700;
+  color: #5C4744;
+}
+
+.skipLink {
+  margin-top: 14px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: #FFFAF5;
+  font-family: var(--font-family-main);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

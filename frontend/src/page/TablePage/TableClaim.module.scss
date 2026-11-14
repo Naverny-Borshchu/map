@@ -1,0 +1,62 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+.claim {
+  width: 100%;
+  max-width: 460px;
+  margin: 14px auto 0;
+  padding: 14px 16px 16px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+// on the red frame of the thank-you
+.stage {
+  background: rgba(255, 250, 245, 0.14);
+  border: 1.5px solid rgba(255, 250, 245, 0.35);
+  color: #FFFAF5;
+
+  .cta {
+    background: #FFFAF5;
+    color: var(--nb-borshch);
+    box-shadow: 0 4px 0 rgba(60, 0, 18, 0.45);
+  }
+}
+
+// on the results page
+.page {
+  @include card(16px);
+  color: var(--nb-ink);
+}
+
+.title {
+  margin: 0;
+  @include displayS;
+}
+
+.text {
+  margin: 0;
+  @include footnote;
+  opacity: 0.9;
+}
+
+.cta {
+  @include btnPrimary;
+  margin-top: 4px;
+}
+
+.google {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.error {
+  margin: 0;
+  @include footnote;
+  font-weight: 700;
+}

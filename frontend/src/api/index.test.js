@@ -336,3 +336,65 @@ describe('a response with no id never becomes the string "undefined"', () => {
     expect(review.id_borsch).toBe('e76e07dc-9d6f-453f-8792-8534facf04a4');
   });
 });
+
+describe('stage 3: venues from Google, facts that want confirming', () => {
+  const signIn = () => {
+    localStorage.setItem('auth', 'true');
+    localStorage.setItem('access', 'a-token');
+    localStorage.setItem('refresh', 'r-token');
+  };
+  beforeEach(() => localStorage.clear());
+  afterEach(() => jest.restoreAllMocks());
+
+  const created = (extra) => ({
+    ok: true,
+    status: extra.reused ? 200 : 201,
+    json: async () => ({ id: 'p7', name: 'Криївка', address: 'пл. Ринок, 14', latitude: 49.8419, longitude: 24.0322, city: 'Львів', country: 'Україна', ...extra }),
+  });
+
+  it('a venue from Google is sent with its Place ID, and a reused one is a success with its id', async () => {
+    signIn();
+    const spy = jest.spyOn(global, 'fetch').mockResolvedValue(created({ reused: true, google_place_id: 'ChIJ' }));
+    const place = await placesAPI.create({
+      name: 'Криївка', address: 'пл. Ринок, 14', city: 'Львів', country: 'Україна',
+      location: { lat: 49.84190123, lng: 24.03220456 }, google_place_id: 'ChIJ',
+    });
+    const body = JSON.parse(spy.mock.calls[0][1].body);
+    expect(body).toEqual({
+      name: 'Криївка', address: 'пл. Ринок, 14', city: 'Львів', country: 'Україна',
+      location_lat: 49.841901, location_lng: 24.032205, google_place_id: 'ChIJ',
+    });
+    expect(place).toMatchObject({ id: 'p7', reused: true, google_place_id: 'ChIJ' });
+  });
+
+  it('a venue typed by hand is sent as before, without a Place ID', async () => {
+    signIn();
+    const spy = jest.spyOn(global, 'fetch').mockResolvedValue(created({ reused: false }));
+    await placesAPI.create({ name: 'Хата', city: 'Київ', latitude: 50.1, longitude: 30.1 });
+    expect(JSON.parse(spy.mock.calls[0][1].body)).not.toHaveProperty('google_place_id');
+  });
+
+  it('a borshch carries its facts as numbers and whether they want confirming', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        id: 'b1', place: 'p1', name: 'Борщ', price_uah: '330.00', price: '330.00', weight_grams: 0, grams: 0,
+        price_needs_confirmation: true, weight_needs_confirmation: true,
+      }),
+    });
+    const b = await borschAPI.getById('b1');
+    expect(b).toMatchObject({ price: '≈330 ₴', weight: '', price_value: 330, weight_value: 0, price_needs_confirmation: true, weight_needs_confirmation: true });
+  });
+
+  it('«Ціна досі?» goes to confirm_facts, signed in', async () => {
+    signIn();
+    const spy = jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, status: 200, json: async () => ({ id: 'b1', price_uah: '330.00' }) });
+    await borschAPI.confirmFacts('b1', { confirm: ['price'] });
+    const [url, options] = spy.mock.calls[0];
+    expect(String(url)).toMatch(/\/borsches\/b1\/confirm_facts\/$/);
+    expect(options.method).toBe('POST');
+    expect(options.headers.Authorization).toBe('Bearer a-token');
+    expect(JSON.parse(options.body)).toEqual({ confirm: ['price'] });
+  });
+});

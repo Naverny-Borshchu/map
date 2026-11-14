@@ -12,6 +12,7 @@ import { track } from '../analytics';
  *   POST /tables/{code}/reviews/  rate one borshch by its number, as yourself or as a named guest
  *   POST /tables/{code}/close/    host only
  *   GET  /tables/{code}/results/  host any time, everyone once closed
+ *   POST /tables/{code}/claim/    signed in + guest token: a guest's ratings become the account's
  *
  * A guest has no account. The first rating carries their name and returns a
  * token; every later request of theirs carries that token in a header, so the
@@ -49,6 +50,11 @@ export const tableLink = (code, shareUrl = '') => {
   const loc = typeof window !== 'undefined' ? window.location : null;
   if (loc && /(^|\.)navernyborshchu\.com$/.test(loc.hostname)) return `${loc.origin}/t/${code}`;
   return shareUrl || (loc ? `${loc.origin}/t/${code}` : `/t/${code}`);
+};
+
+const CLAIM_KEY = 'nb:table-claim-api';
+const rememberClaim = (ok) => {
+  try { sessionStorage.setItem(CLAIM_KEY, ok ? 'yes' : 'no'); } catch (e) { /* private mode */ }
 };
 
 const guestHeaders = (guestToken) => (guestToken ? { [GUEST_TOKEN_HEADER]: guestToken } : null);
@@ -124,6 +130,54 @@ export const tablesAPI = {
       rated: (result?.rated_positions || []).length,
     });
     return result;
+  },
+
+  /**
+   * Is POST /tables/{code}/claim/ there? It is on production since backend
+   * #25 (14.11.2026), so the offer is shown without asking; a backend without
+   * it answers the POST 404 (no code) or 405, and from then on this session
+   * offers nothing (see claim). No probe request: a GET would only add a red
+   * 405 line to every guest's console.
+   */
+  claimAvailable: async () => {
+    try {
+      return sessionStorage.getItem(CLAIM_KEY) !== 'no';
+    } catch (e) {
+      return true;
+    }
+  },
+
+  /**
+   * A guest who signs in takes their ratings at this table into the account
+   * (backend #25): { moved, dropped, table }. Signed in, the guest token in
+   * the header. A repeat by the same account answers zeros; 404
+   * guest_not_found means there is nothing of this token to move.
+   */
+  claim: async (code, guestToken, context = {}) => {
+    try {
+      const result = await apiRequest(`/tables/${encodeURIComponent(code)}/claim/`, {
+        method: 'POST',
+        authRequired: true,
+        headers: guestHeaders(guestToken),
+      });
+      rememberClaim(true);
+      track('table_claim', {
+        code,
+        moved: Number(result?.moved) || 0,
+        dropped: Number(result?.dropped) || 0,
+        ...context,
+      });
+      return { moved: Number(result?.moved) || 0, dropped: Number(result?.dropped) || 0 };
+    } catch (e) {
+      // the endpoint itself is missing: no such offer on this backend
+      if (e?.status === 405 || (e?.status === 404 && e?.code !== 'guest_not_found')) {
+        rememberClaim(false);
+        const missing = new Error('claim_unavailable');
+        missing.code = 'claim_unavailable';
+        throw missing;
+      }
+      throw e;
+    }
   },
 
   close: async (code, context = {}) => {

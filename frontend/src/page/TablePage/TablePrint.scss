@@ -1,0 +1,148 @@
+// «Надрукувати QR» (TablePrint.jsx): plain, global CSS on purpose. The print
+// rules have to reach <body> and its other children, which a CSS module
+// cannot name.
+
+.nb-print-root { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+
+  body.nb-printing { background: #FFFFFF !important; margin: 0 !important; }
+  body.nb-printing > *:not(.nb-print-root) { display: none !important; }
+  body.nb-printing .nb-print-root { display: block; }
+
+  .nb-print-root,
+  .nb-print-root * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+// The sheet itself, in millimetres so the browser lays it out on paper.
+// (Also used by the QA harness with the print media emulated.)
+.nb-print-page {
+  box-sizing: border-box;
+  width: 210mm;
+  height: 296mm;
+  overflow: hidden;
+  background: #FFFFFF;
+  color: #1A1A1A;
+  font-family: var(--font-family-main, Roboto, Arial, sans-serif);
+}
+
+.nb-print-page--a4 {
+  display: flex;
+  padding: 16mm 18mm;
+}
+
+// two tents: top row and bottom row, each a pair of A6 faces folded along the
+// vertical middle; the dashed line between the rows is where to cut
+.nb-print-page--a6 {
+  display: grid;
+  grid-template-columns: 105mm 105mm;
+  grid-template-rows: 148mm 148mm;
+
+  .nb-print-face { padding: 9mm 8mm 7mm; }
+  .nb-print-face:nth-child(odd) { border-right: 0.4mm dotted #8E8580; }
+  .nb-print-face:nth-child(-n + 2) { border-bottom: 0.4mm dashed #8E8580; }
+}
+
+.nb-print-face {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.nb-print-brand {
+  margin: 0 0 4mm;
+  font-size: 12pt;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #DC143C;
+}
+
+.nb-print-title {
+  margin: 0;
+  font-family: var(--font-display, Roboto, sans-serif);
+  font-size: 30pt;
+  line-height: 1.08;
+  font-weight: 700;
+  color: #860130;
+}
+
+.nb-print-venue {
+  margin: 3mm 0 0;
+  font-size: 15pt;
+  font-weight: 700;
+}
+
+.nb-print-qr {
+  display: block;
+  width: 118mm;
+  height: 118mm;
+  margin: 8mm 0 4mm;
+}
+
+.nb-print-code-label {
+  margin: 0;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5C4744;
+}
+
+.nb-print-code {
+  margin: 1mm 0 0;
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 30pt;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  font-variant-numeric: tabular-nums;
+}
+
+.nb-print-steps {
+  margin: 7mm 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: nb-step;
+  font-size: 14pt;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+
+  li { counter-increment: nb-step; }
+  li::before {
+    content: counter(nb-step);
+    display: inline-block;
+    width: 1.5em;
+    font-family: Roboto, Arial, sans-serif;
+    font-weight: 800;
+    color: #DC143C;
+  }
+}
+
+.nb-print-link {
+  margin: auto 0 0;
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 10pt;
+  color: #5C4744;
+}
+
+// the A6 faces: the same, smaller
+.nb-print-face--small {
+  .nb-print-brand { margin-bottom: 2mm; font-size: 7.5pt; }
+  .nb-print-title { font-size: 16pt; } // MAK below 21 px reads «M/N» as «H»
+  .nb-print-venue { margin-top: 1.5mm; font-size: 9pt; }
+  .nb-print-qr { width: 62mm; height: 62mm; margin: 4mm 0 2mm; }
+  .nb-print-code-label { font-size: 6.5pt; }
+  .nb-print-code { font-size: 15pt; }
+  .nb-print-steps { margin-top: 3mm; font-size: 8pt; line-height: 1.4; }
+  .nb-print-link { font-size: 6.5pt; }
+}

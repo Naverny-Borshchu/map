@@ -1,0 +1,42 @@
+@use "../../styles/mixin_font.scss" as *;
+
+// The rows share «Мої Столи» (MyTables.module.scss); only the button reset,
+// the note and the state colours are here.
+.row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note {
+  @include footnote;
+  font-style: italic;
+  color: var(--nb-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st_open {
+  border: 1.5px dashed #8E8580;
+  background: transparent;
+  color: var(--nb-ink);
+}
+
+.st_confirmed {
+  background: rgba(64, 208, 95, 0.16);
+  color: var(--nb-ink);
+}
+
+.st_converted {
+  background: var(--nb-borshch);
+  color: #FFFAF5;
+}
+
+.st_gone {
+  opacity: 0.7;
+  text-decoration: line-through;
+}

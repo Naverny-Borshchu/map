@@ -52,6 +52,9 @@ export const countryOf = (components) => componentText(components, 'country');
 export const toPlace = (raw) =>
   raw && {
     id: raw.id,
+    // said out loud: `id` here is Google's, not ours, and the add flow sends
+    // it as google_place_id so the backend can return the venue it has
+    googlePlaceId: raw.id,
     name: raw.displayName?.text || '',
     address: raw.formattedAddress || '',
     // '' when Google did not label it; the add flow falls back to its own
@@ -66,11 +69,11 @@ export const toPlace = (raw) =>
   };
 
 /** Exactly the venue that was tapped or picked — no proximity guessing. */
-export const fetchPlaceById = async (placeId) => {
+export const fetchPlaceById = async (placeId, language = placeLanguage()) => {
   if (!placeId) return null;
   try {
     const res = await fetch(
-      `https://places.googleapis.com/v1/places/${placeId}?languageCode=${placeLanguage()}`,
+      `https://places.googleapis.com/v1/places/${placeId}?languageCode=${language}`,
       { headers: { 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': FIELDS } }
     );
     if (!res.ok) return null;

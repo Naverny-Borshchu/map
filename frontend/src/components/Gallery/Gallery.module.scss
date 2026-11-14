@@ -127,3 +127,40 @@
   color: var(--color-text-btn);
   text-align: center;
 }
+
+// A venue with no borshch on it: its name, and «Я знаю, тут є Борщ»
+.emptyCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 18px 18px;
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  box-shadow: var(--nb-shadow-md);
+  text-align: center;
+
+  .empty {
+    padding: 0;
+    background: none;
+  }
+}
+
+.emptyName {
+  margin: 0;
+  @include displayM;
+  color: var(--nb-ink);
+  overflow-wrap: anywhere;
+}
+
+.emptyHint {
+  margin: 0 0 6px;
+  @include footnote;
+  color: var(--nb-ink-2);
+}
+
+.tipBtn {
+  @include btnPrimary;
+  width: 100%;
+}

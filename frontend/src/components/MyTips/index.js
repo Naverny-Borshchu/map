@@ -1,0 +1,1 @@
+export { MyTips } from './MyTips';

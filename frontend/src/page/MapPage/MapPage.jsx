@@ -1,4 +1,4 @@
-import { useJsApiLoader } from '@react-google-maps/api';
+import { useGoogleMaps } from '../../services/googleMaps';
 import { useCallback, useState } from 'react';
 import {useLocation, useNavigate} from "react-router-dom";
 import { Autocomplete } from '../../components/Autocomplete';
@@ -18,8 +18,6 @@ import { BowlLoader } from '../../components/EmptyState';
 import style from './MapPage.module.scss';
 import { useT } from "../../i18n";
 
-const API_KEY=process.env.REACT_APP_API_KEY_MAP;
-const libraries=['places'];
 
 export const MapPage = ( )=> { 
   const isDesktop = useMediaQuery("(min-width: 1280px)");
@@ -116,11 +114,7 @@ export const MapPage = ( )=> {
   const mode = location.pathname.startsWith('/add-borsch')
     ? MODES.SET_MARKER
     : MODES.MOVE;
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: API_KEY,
-    libraries
-  })
+  const { isLoaded } = useGoogleMaps();
 
   const onMarkerAdd=useCallback((coordinates)=>{            
     const newPlace = {

@@ -738,3 +738,77 @@
   font-weight: 700;
   color: #FFFAF5;
 }
+
+// --- stage 3: a new borshch's meat type, asked once at creation -------------
+.meatRow {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meatLabel {
+  @include caption;
+  font-weight: 700;
+  color: rgba(255, 250, 245, 0.9);
+}
+
+.meatChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meatChip {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 2px solid rgba(255, 250, 245, 0.45);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.12);
+  color: #FFFAF5;
+  font-family: var(--font-family-main);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.meatChipOn {
+  background: #FFFAF5;
+  border-color: #FFFAF5;
+  color: #860130;
+}
+
+// --- «Надрукувати QR» --------------------------------------------------------
+.printRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.printOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.printOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 2px solid rgba(26, 26, 26, 0.12);
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: #1A1A1A;
+  font-family: var(--font-family-main);
+  text-align: left;
+  cursor: pointer;
+
+  strong { font-size: 15px; font-weight: 800; }
+  span { font-size: 12px; font-weight: 600; color: #5C4744; line-height: 1.25; }
+}

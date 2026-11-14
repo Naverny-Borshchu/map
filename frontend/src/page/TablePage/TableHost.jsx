@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { tableLink, tablesAPI } from '../../api/tables';
 import { track } from '../../analytics';
@@ -10,6 +10,7 @@ import { IconShare } from '../../components/Icons';
 import { useI18n, useDishLabel, useVenueLabel, useCityLabel } from '../../i18n';
 import { TableFrame } from './TableFrame';
 import { TableQr } from './TableQr';
+import { TablePrint } from './TablePrint';
 import q from '../../components/QuestFlow/QuestFlow.module.scss';
 import style from './Table.module.scss';
 
@@ -36,6 +37,10 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
   const [confirming, setConfirming] = useState(false);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState('');
+  // «Надрукувати QR»: the size chooser, then the sheet that is being printed
+  const [printMenu, setPrintMenu] = useState(false);
+  const [printing, setPrinting] = useState(null);
+  const printDone = useCallback(() => setPrinting(null), []);
 
   useVisiblePolling(reload, HOST_POLL_MS, table.status === 'open');
 
@@ -53,6 +58,12 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
   const copy = async () => {
     await copyUrl(link, t, 'table.linkCopied');
     track('table_shared', { code, what: 'link', method: 'copy', from: 'host' });
+  };
+
+  const print = (size) => {
+    track('table_print', { code, size, blind: Boolean(table.blind), borsch_count: (table.borsches || []).length });
+    setPrintMenu(false);
+    setPrinting(size);
   };
 
   const close = async () => {
@@ -81,6 +92,28 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
           <IconShare size={20} /> {t('table.share')}
         </button>
         <button type="button" className={style.shareGhost} onClick={copy}>{t('table.copy')}</button>
+      </div>
+      <div className={style.printRow}>
+        <button
+          type="button"
+          className={style.shareGhost}
+          onClick={() => setPrintMenu((v) => !v)}
+          aria-expanded={printMenu}
+        >
+          {t('table.print')}
+        </button>
+        {printMenu && (
+          <div className={style.printOptions} role="group" aria-label={t('table.print')}>
+            <button type="button" className={style.printOption} onClick={() => print('a4')}>
+              <strong>{t('table.printA4')}</strong>
+              <span>{t('table.printA4Hint')}</span>
+            </button>
+            <button type="button" className={style.printOption} onClick={() => print('a6')}>
+              <strong>{t('table.printA6')}</strong>
+              <span>{t('table.printA6Hint')}</span>
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -126,6 +159,7 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
 
   return (
     <TableFrame hue="#A00322" onClose={() => navigate('/')} wide>
+      <TablePrint size={printing} code={code} table={table} link={link} onDone={printDone} />
       <p className={q.stepCount}>{t('table.hostKicker')}</p>
       <h2 className={q.question}>{heading}</h2>
       <p className={style.subline}>

@@ -5,6 +5,7 @@ import { I18nProvider } from '../../i18n';
 import { track } from '../../analytics';
 import { listDrafts, loadDraftPhotos } from '../../services/bowlDrafts';
 import { createMemoryPhotoStore, setPhotoStoreForTests } from '../../services/bowlPhotoStore';
+import { photoWithMeta } from '../../utils/exifFixture';
 import { BowlFlow } from './BowlFlow';
 
 jest.mock('react-router-dom', () => require('react-router'));
@@ -18,7 +19,7 @@ jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), 
 const HERE = { latitude: 50.4501, longitude: 30.5234 };
 const place = (id, name, lat, lng) => ({ id, name, latitude: lat, longitude: lng, city: 'Київ', address: `${name}, Київ` });
 const PLACES = [
-  place('p-far', 'Далекий', 50.4501, 30.5834),
+  { ...place('p-far', 'Далекий', 50.4501, 30.5834), google_place_id: 'g-far' },
   place('p-puzata', 'Пузата хата', 50.4511, 30.5234),   // ~110 m
   place('p-vatra', 'Ватра', 50.4505, 30.5236),          // ~50 m
   place('p-khata', 'Хата', 50.4521, 30.5234),           // ~220 m
@@ -44,6 +45,8 @@ const mockBorsch = {
 };
 jest.mock('../../context/PlacesContext', () => ({ usePlaces: () => mockPlaces }));
 jest.mock('../../context/BorschContext', () => ({ useBorsch: () => mockBorsch }));
+// the Maps script is «loaded»; google.maps.places is whatever a test puts on window
+jest.mock('../../services/googleMaps', () => ({ useGoogleMaps: () => ({ isLoaded: true, loadError: undefined }) }));
 
 const Where = () => {
   const loc = useLocation();
@@ -115,13 +118,16 @@ describe('«Ти зараз тут?»', () => {
     expect(venueButtons().map((b) => b.textContent)).toEqual([expect.stringContaining('Ватра')]);
   });
 
-  it('a venue we do not have goes to the existing add flow', async () => {
+  it('a venue we do not have is looked up in Google, and the map stays as the way out', async () => {
     geo('ok');
     const user = userEvent.setup();
     renderFlow();
     await user.click(await screen.findByRole('button', { name: 'Закладу нема в списку' }));
+    expect(screen.getByRole('heading', { name: 'Знайди заклад у Google' })).toBeInTheDocument();
+    expect(calls('flow_step').map((p) => p.step)).toEqual(['venue', 'venue_google']);
+    await user.click(screen.getByRole('button', { name: 'Нема й у Google? Постав мітку на мапі' }));
     expect(screen.getByTestId('where')).toHaveTextContent('/add-borsch');
-    expect(calls('flow_exit')).toEqual([expect.objectContaining({ flow: 'bowl', step: 'venue', via: 'new_place' })]);
+    expect(calls('flow_exit')).toEqual([expect.objectContaining({ flow: 'bowl', step: 'venue_google', via: 'new_place' })]);
   });
 });
 
@@ -185,10 +191,10 @@ describe('which borshch, then the photo', () => {
     expect(calls('bowl_photo')).toEqual([{ mode: 'camera_roll', count: 1 }]);
   });
 
-  it('«Інший Борщ» opens the add flow at this venue, with its id', async () => {
+  it('«Інший Борщ» in the rating opens the add flow at this venue, with its id', async () => {
     geo('ok');
     const user = userEvent.setup();
-    renderFlow();
+    renderFlow('/bowl/new?mode=rate&from=chooser');
     await user.click((await screen.findByText('Пузата хата')).closest('button'));
     await user.click(screen.getByRole('button', { name: /Інший Борщ/ }));
     const where = screen.getByTestId('where');
@@ -217,5 +223,235 @@ describe('«Оцінити Борщ, який уже скуштував»', () =
     expect(JSON.parse(screen.getByTestId('where').getAttribute('data-state'))).toMatchObject({ fromPicker: true });
     expect(listDrafts()).toEqual([]);
     expect(calls('flow_step')[0]).toMatchObject({ flow: 'rate', step: 'venue', index: 0, picker: true });
+  });
+});
+
+
+// --- stage 3 ---------------------------------------------------------------
+
+// google.maps.places as the new library has it: suggestions whose prediction
+// turns into a Place, and the Place's fields after fetchFields
+const googleVenue = (id, name, lat, lng) => ({
+  id,
+  displayName: name,
+  formattedAddress: `${name}, вул. Хрещатик, 1, Київ`,
+  addressComponents: [
+    { longText: 'Київ', shortText: 'Київ', types: ['locality'] },
+    { longText: 'Україна', shortText: 'UA', types: ['country'] },
+  ],
+  location: { lat: () => lat, lng: () => lng },
+  fetchFields: jest.fn(async () => {}),
+});
+const mockGooglePlaces = (venues) => {
+  const fetchAutocompleteSuggestions = jest.fn(async () => ({
+    suggestions: venues.map((v) => ({
+      placePrediction: {
+        placeId: v.id,
+        mainText: { text: v.displayName },
+        secondaryText: { text: 'Київ' },
+        types: ['restaurant', 'establishment'],
+        toPlace: () => v,
+      },
+    })),
+  }));
+  window.google = {
+    maps: {
+      places: {
+        AutocompleteSessionToken: function Token() {},
+        AutocompleteSuggestion: { fetchAutocompleteSuggestions },
+      },
+    },
+  };
+  return fetchAutocompleteSuggestions;
+};
+
+describe('Google Places for a venue we do not have', () => {
+  afterEach(() => { delete window.google; });
+
+  it('a new venue from Google goes into the bowl with a new borshch, both created only when rated', async () => {
+    geo('ok');
+    const fetchSuggestions = mockGooglePlaces([googleVenue('g-new', 'Криївка', 50.4512, 30.5240)]);
+    const user = userEvent.setup();
+    renderFlow();
+    await user.click(await screen.findByRole('button', { name: 'Закладу нема в списку' }));
+    await user.type(screen.getByTestId('google-place-search'), 'Криї');
+    await user.click(await screen.findByRole('button', { name: /Криївка/ }, { timeout: 2000 }));
+    expect(fetchSuggestions).toHaveBeenCalledWith(expect.objectContaining({
+      input: 'Криї',
+      locationBias: { center: { lat: HERE.latitude, lng: HERE.longitude }, radius: 30000 },
+    }));
+
+    // nothing of ours there yet: the borshch is typed in by its name
+    expect(screen.getByRole('heading', { name: 'Який Борщ тобі принесли?' })).toBeInTheDocument();
+    expect(screen.getByText('Закладу ще нема на мапі. Додамо його разом з Борщем, коли оціниш.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Додати Борщ/ }));
+    expect(screen.getByRole('heading', { name: 'Як він називається в меню?' })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox'), 'Борщ з квасолею');
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+
+    expect(screen.getByRole('heading', { name: 'Сфоткай, поки не взяв ложку' })).toBeInTheDocument();
+    expect(screen.getByText(/Криївка · Борщ з квасолею/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Сфоткаю пізніше' }));
+    await screen.findByRole('heading', { name: 'Смачного!' });
+    expect(screen.getByText('Миска чекає в «Моїх мисках». Новий Борщ зʼявиться на мапі, щойно ти його оціниш.')).toBeInTheDocument();
+
+    const [draft] = listDrafts();
+    expect(draft.place).toEqual({
+      id: null,
+      name: 'Криївка',
+      city: 'Київ',
+      google: {
+        googlePlaceId: 'g-new',
+        name: 'Криївка',
+        address: 'Криївка, вул. Хрещатик, 1, Київ',
+        city: 'Київ',
+        country: 'Україна',
+        location: { lat: 50.4512, lng: 30.524 },
+      },
+    });
+    expect(draft.borsch).toEqual({ id: null, name: 'Борщ з квасолею' });
+    expect(calls('bowl_started')).toEqual([expect.objectContaining({ new_place: true, new_borsch: true })]);
+    expect(calls('flow_step').map((p) => p.step)).toEqual(['venue', 'venue_google', 'borsch', 'borsch_new', 'photo', 'done']);
+  });
+
+  it('a Google venue we already have (same Place ID) is our venue, with its borshch', async () => {
+    geo('ok');
+    mockGooglePlaces([googleVenue('g-far', 'Далекий ресторан', 50.4501, 30.5834)]);
+    mockBorsch.borsch = [...BORSCH, borsch('b-far', 'p-far', 'Борщ далекий')];
+    const user = userEvent.setup();
+    try {
+      renderFlow();
+      await user.click(await screen.findByRole('button', { name: 'Закладу нема в списку' }));
+      await user.type(screen.getByTestId('google-place-search'), 'Дал');
+      await user.click(await screen.findByRole('button', { name: /Далекий ресторан/ }, { timeout: 2000 }));
+      // its only borshch is taken, straight to the photo
+      expect(screen.getByRole('heading', { name: 'Сфоткай, поки не взяв ложку' })).toBeInTheDocument();
+      expect(screen.getByText(/Далекий · Борщ далекий/)).toBeInTheDocument();
+      expect(calls('venue_google_picked')).toEqual([expect.objectContaining({ own: true })]);
+    } finally {
+      mockBorsch.borsch = BORSCH;
+    }
+  });
+
+  it('without google.maps.places the old way stays: a pin on the map', async () => {
+    geo('ok');
+    const user = userEvent.setup();
+    renderFlow();
+    await user.click(await screen.findByRole('button', { name: 'Закладу нема в списку' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Пошук Google зараз не відповідає. Постав мітку на мапі.');
+    await user.click(screen.getByRole('button', { name: 'Нема й у Google? Постав мітку на мапі' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/add-borsch');
+  });
+});
+
+describe('«Інший Борщ» in a bowl', () => {
+  it('asks only the name, and the venue\'s own borshch typed again is that borshch', async () => {
+    geo('ok');
+    const user = userEvent.setup();
+    renderFlow();
+    await user.click((await screen.findByText('Пузата хата')).closest('button'));
+    await user.click(screen.getByRole('button', { name: /Інший Борщ/ }));
+    expect(screen.getByText('Лише назва. Ціну й грамовку спитаємо, коли доїси.')).toBeInTheDocument();
+    // empty is refused
+    expect(screen.getByRole('button', { name: 'Далі' })).toBeDisabled();
+    await user.type(screen.getByRole('textbox'), '  борщ   ЗЕЛЕНИЙ ');
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    expect(screen.getByText(/Пузата хата · Борщ зелений/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Сфоткаю пізніше' }));
+    await screen.findByRole('heading', { name: 'Смачного!' });
+    expect(listDrafts()[0].borsch).toEqual({ id: 'b-puz2', name: 'Борщ зелений' });
+  });
+
+  it('a chip fills the name', async () => {
+    geo('ok');
+    const user = userEvent.setup();
+    renderFlow();
+    await user.click((await screen.findByText('Пузата хата')).closest('button'));
+    await user.click(screen.getByRole('button', { name: /Інший Борщ/ }));
+    await user.click(screen.getByRole('button', { name: 'Борщ з пампушками' }));
+    expect(screen.getByRole('textbox')).toHaveValue('Борщ з пампушками');
+  });
+});
+
+describe('«Фото вже на камері»: the photo says where and when', () => {
+  // Ватра in PLACES is at 50.4505, 30.5236
+  const AT_VATRA = { lat: [50, 27, 1.8], latRef: 'N', lng: [30, 31, 24.96], lngRef: 'E' };
+
+  it('a photo taken at a venue of ours asks «Це той заклад?», and yes goes on with the photo', async () => {
+    geo('denied');
+    const user = userEvent.setup();
+    renderFlow();
+    await screen.findByRole('heading', { name: 'Де ти їси Борщ?' });
+    fireEvent.change(screen.getByTestId('bowl-roll'), { target: { files: [photoWithMeta('roll.jpg', { gps: AT_VATRA })] } });
+
+    const ask = await screen.findByTestId('photo-venue');
+    expect(ask).toHaveTextContent('Фото зроблено біля закладу «Ватра». Це він?');
+    expect(ask).toHaveTextContent('14 листопада, 13:20');
+    // the venues near the photo come first, even with the location refused
+    expect(screen.getByRole('heading', { name: 'Фото зроблено тут?' })).toBeInTheDocument();
+    expect(calls('exif_used')).toEqual([{ gps: true, time: true, where: 'venue' }]);
+
+    await user.click(within(ask).getByRole('button', { name: 'Так, це він' }));
+    expect(screen.getByRole('heading', { name: 'Сфоткай, поки не взяв ложку' })).toBeInTheDocument();
+    expect(screen.getByText('Фото з 14 листопада, 13:20')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Готово' }));
+    await screen.findByRole('heading', { name: 'Смачного!' });
+    const [draft] = listDrafts();
+    expect(draft).toMatchObject({ place: { id: 'p-vatra' }, photoMode: 'camera_roll', photoCount: 1, photoTakenAt: '2026-11-14T13:20:05' });
+    expect(calls('bowl_photo')).toEqual([{ mode: 'camera_roll', count: 1 }]);
+  });
+
+  it('«Ні, інший» keeps the list; a photo with only the time shows the time', async () => {
+    geo('ok');
+    const user = userEvent.setup();
+    renderFlow();
+    await screen.findByRole('heading', { name: 'Ти зараз тут?' });
+    fireEvent.change(screen.getByTestId('bowl-roll'), { target: { files: [photoWithMeta('roll.jpg', { gps: AT_VATRA })] } });
+    const ask = await screen.findByTestId('photo-venue');
+    await user.click(within(ask).getByRole('button', { name: 'Ні, інший' }));
+    expect(screen.queryByTestId('photo-venue')).not.toBeInTheDocument();
+    expect(venueButtons().length).toBeGreaterThan(0);
+
+    cleanup();
+    track.mockClear();
+    geo('ok');
+    renderFlow();
+    await screen.findByRole('heading', { name: 'Ти зараз тут?' });
+    fireEvent.change(screen.getByTestId('bowl-roll'), { target: { files: [photoWithMeta('roll.jpg', { gps: null })] } });
+    expect(await screen.findByText('Фото з 14 листопада, 13:20')).toBeInTheDocument();
+    expect(screen.queryByTestId('photo-venue')).not.toBeInTheDocument();
+    expect(calls('exif_used')).toEqual([{ gps: false, time: true, where: 'venue' }]);
+  });
+
+  it('a photo taken far from the chosen venue is worth a second look', async () => {
+    geo('ok');
+    const user = userEvent.setup();
+    renderFlow();
+    await user.click((await screen.findByText('Хата')).closest('button'));
+    // Хата has no borshch: a new one
+    await user.click(screen.getByRole('button', { name: /Додати Борщ/ }));
+    await user.type(screen.getByRole('textbox'), 'Борщ');
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    fireEvent.change(screen.getByTestId('bowl-roll'), {
+      target: { files: [photoWithMeta('far.jpg', { gps: { lat: [50, 30, 0], latRef: 'N', lng: [30, 40, 0], lngRef: 'E' } })] },
+    });
+    expect(await screen.findByText(/Фото зроблено за .* від закладу «Хата». Точно той заклад\?/)).toBeInTheDocument();
+  });
+});
+
+describe('a venue given in the link (a tip\'s «Оцінити першим»)', () => {
+  it('opens at that venue: its only borshch and the photo', async () => {
+    geo('ok');
+    renderFlow('/bowl/new?place=p-kafe&tip=t1&from=tip');
+    expect(await screen.findByRole('heading', { name: 'Сфоткай, поки не взяв ложку' })).toBeInTheDocument();
+    expect(screen.getByText(/Кафе · Борщ/)).toBeInTheDocument();
+    expect(calls('flow_step')[0]).toMatchObject({ flow: 'bowl', step: 'photo', entry: 'tip', tip_id: 't1' });
+  });
+
+  it('a venue with no borshch yet asks for one by name', async () => {
+    geo('ok');
+    renderFlow('/bowl/new?place=p-khata&from=tip');
+    expect(await screen.findByRole('heading', { name: 'Який Борщ тобі принесли?' })).toBeInTheDocument();
+    expect(screen.getByText('У цьому закладі ще нема Борщу на мапі.')).toBeInTheDocument();
   });
 });

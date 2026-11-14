@@ -17,6 +17,7 @@ import { hasTenPointScale } from '../../variant';
 import { addressLine, borschTitle, formatAverage, nextUnrated } from '../../utils/tableView';
 import { useI18n, useDishLabel, useVenueLabel, useCityLabel } from '../../i18n';
 import { TableFrame } from './TableFrame';
+import { TableClaim } from './TableClaim';
 import q from '../../components/QuestFlow/QuestFlow.module.scss';
 import bowl from '../BowlFlow/BowlFlow.module.scss';
 import style from './Table.module.scss';
@@ -295,6 +296,18 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
           </ul>
         )}
         <p className={q.hint}>{t('table.thanksHint')}</p>
+        {identity === 'guest' && (
+          <TableClaim
+            code={code}
+            guestToken={guest.token}
+            from="done"
+            onClaimed={async () => {
+              onGuest();
+              const fresh = await reload();
+              if (fresh?.me) setRated(fresh.me.rated_positions || rated);
+            }}
+          />
+        )}
       </TableFrame>
     );
   }

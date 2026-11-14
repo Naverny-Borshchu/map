@@ -13,7 +13,12 @@ import { useFilters } from "../../context/FiltersContext";
 import { AddBorsch } from "../AddBorsch/AddBorsch";
 import { useMediaQuery } from "../../hook/useMediaQuery";
 import { hasFullscreenMap } from "../../variant";
-import { clusterCircleSvg, countCircleIcon } from "./markerIcons";
+import { clusterCircleSvg, countCircleIcon, tipPinIcon } from "./markerIcons";
+import { useMapTips } from "../../hook/useMapTips";
+import { tipPoint } from "../../api/tips";
+import { TipSheet } from "../TipSheet";
+import { venueLabel as rawVenueLabel } from "../../i18n/venueNames";
+import { useI18n } from "../../i18n";
 import { cityCenter } from "../../utils/cityCenter";
 import style from "./Map.module.scss";
 
@@ -61,7 +66,10 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   // borsch served by the restaurant that replaced it.
   const [candidates, setCandidates] = useState([]);
 
-  const { getAveragePlaceRating, getPlaceExploration } = useBorsch();
+  const { getAveragePlaceRating, getPlaceExploration, getBorschByPlaceId } = useBorsch();
+  const { t, lang } = useI18n();
+  // «Кажуть, тут є Борщ»: the tip a grey bowl opened
+  const [openTip, setOpenTip] = useState(null);
   const { selectedPlaceId, cities } = usePlaces();
   const { updateCity, updateCenter, mapTarget, focusMap } = useFilters();
 
@@ -224,6 +232,25 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   // not only the one selected in filters) with its borsch count
   const showCityMarkers = mode === MODES.MOVE && zoomLevel <= CITY_MARKERS_MAX_ZOOM;
 
+  // ----------------------------------------------------
+  // TIPS «тут є Борщ» (grey bowls), read for the view on idle
+  // ----------------------------------------------------
+  const tipsOn = mode === MODES.MOVE && !showCityMarkers;
+  const { tips, onIdle: onIdleTips, replaceTip } = useMapTips({ enabled: tipsOn });
+  // zoomed in past the city markers: the view's tips at once, not at the next pan
+  useEffect(() => {
+    if (tipsOn && mapRef.current) onIdleTips(mapRef.current);
+  }, [tipsOn, onIdleTips]);
+  // A venue that already has a borshch on the map shows that pin; the tip
+  // there says nothing the pin does not. A venue with nothing but a tip shows
+  // the grey bowl instead of an empty pin.
+  const shownTips = useMemo(
+    () => tips.filter((tip) => tipPoint(tip) && !(getBorschByPlaceId(tip.place?.id) || []).length),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tips, getBorschByPlaceId]
+  );
+  const tipPlaceIds = useMemo(() => new Set(shownTips.map((tip) => String(tip.place.id))), [shownTips]);
+
   // Clicking a city marker switches the app to that city: the city
   // filter button updates, that city's places load, and the map zooms in
   const onClickCityMarker = useCallback(
@@ -267,6 +294,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
         onUnmount={onUnmount}
         options={mapOptions}
         onClick={onClickMap}
+        onIdle={() => onIdleTips(mapRef.current)}
       >
         {/* Low zoom: one marker per city with its total borsch count */}
         {showCityMarkers &&
@@ -292,7 +320,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
           }}
         >
           {(clusterer) =>
-            places.map((p) => (
+            places.filter((p) => !tipPlaceIds.has(String(p.id))).map((p) => (
               <CurrentLocationMarker
                 key={p.id}
                 position={{"lat":Number(p.latitude),"lng":Number(p.longitude)}}
@@ -311,6 +339,34 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
             ))
           }
         </MarkerClustererF>
+        )}
+
+        {/* «Кажуть, тут є Борщ»: grey, round and outside the clusterer, so a
+            tip is never counted into a red bubble of rated borshch */}
+        {tipsOn && shownTips.map((tip) => (
+          <MarkerF
+            key={`tip-${tip.id}`}
+            position={tipPoint(tip)}
+            icon={tipPinIcon({
+              size: zoomLevel >= 15 ? 36 : 32,
+              confirmed: tip.status === 'confirmed',
+              selected: openTip?.id === tip.id,
+              dark: theme === 'dark',
+            })}
+            zIndex={1}
+            title={t('tip.markerTitle', { venue: rawVenueLabel(tip.place?.name || '', lang) })}
+            onClick={() => setOpenTip(tip)}
+          />
+        ))}
+
+        {openTip && (
+          <Modal onClose={() => setOpenTip(null)}>
+            <TipSheet
+              tip={openTip}
+              onClose={() => setOpenTip(null)}
+              onChanged={replaceTip}
+            />
+          </Modal>
         )}
 
         {isActiveAbout && (

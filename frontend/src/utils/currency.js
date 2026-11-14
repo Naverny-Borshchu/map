@@ -35,6 +35,13 @@ const EUR_COUNTRY_NAMES = [
   'malta',
   'cyprus',
   'croatia', 'hrvatska',
+  // The map files countries in Ukrainian («Німеччина», «Латвія»): Google is
+  // asked for venue data in Ukrainian since stage 3, so these are the names a
+  // new venue abroad actually arrives with.
+  'німеччина', 'австрія', 'франція', 'італія', 'іспанія', 'португалія',
+  'нідерланди', 'бельгія', 'ірландія', 'фінляндія', 'греція', 'словаччина',
+  'словенія', 'естонія', 'латвія', 'литва', 'люксембург', 'мальта', 'кіпр',
+  'хорватія',
 ];
 
 export const PRICE_CHIPS_BY_CURRENCY = {

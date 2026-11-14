@@ -200,3 +200,46 @@ describe('the host', () => {
     await expect(tablesAPI.listMine()).resolves.toEqual([{ code: 'K7M2QX' }]);
   });
 });
+
+describe('a guest takes the ratings into the account (claim)', () => {
+  beforeEach(() => sessionStorage.clear());
+
+  it('offers the claim without a probe request, until a POST says the endpoint is missing', async () => {
+    const spy = jest.spyOn(global, 'fetch');
+    expect(await tablesAPI.claimAvailable('K7M2QX')).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+    signIn();
+    spy.mockResolvedValue(fail(405, { detail: 'no' }));
+    await expect(tablesAPI.claim('K7M2QX', 'guest-token-1234567890abcdef')).rejects.toMatchObject({ code: 'claim_unavailable' });
+    expect(await tablesAPI.claimAvailable('K7M2QX')).toBe(false);
+  });
+
+  it('posts with the sign-in and the guest token, and reports what moved', async () => {
+    signIn();
+    const spy = jest.spyOn(global, 'fetch').mockResolvedValue(ok({ moved: 3, dropped: 1, table: 'K7M2QX' }));
+    expect(await tablesAPI.claim('K7M2QX', 'guest-token-1234567890abcdef', { from: 'done' })).toEqual({ moved: 3, dropped: 1 });
+    const call = lastCall(spy);
+    expect(call.url).toMatch(/\/tables\/K7M2QX\/claim\/$/);
+    expect(call.options.method).toBe('POST');
+    expect(call.headers.Authorization).toBe('Bearer host-access');
+    expect(call.headers[GUEST_TOKEN_HEADER]).toBe('guest-token-1234567890abcdef');
+    expect(track).toHaveBeenCalledWith('table_claim', { code: 'K7M2QX', moved: 3, dropped: 1, from: 'done' });
+  });
+
+  it('404 guest_not_found stays what it is; a missing endpoint becomes claim_unavailable', async () => {
+    signIn();
+    jest.spyOn(global, 'fetch').mockResolvedValue(fail(404, { error: 'Нема', code: 'guest_not_found' }));
+    await expect(tablesAPI.claim('K7M2QX', 'guest-token-1234567890abcdef')).rejects.toMatchObject({ code: 'guest_not_found' });
+    jest.spyOn(global, 'fetch').mockResolvedValue(fail(405, { detail: 'no' }));
+    await expect(tablesAPI.claim('K7M2QX', 'guest-token-1234567890abcdef')).rejects.toMatchObject({ code: 'claim_unavailable' });
+    expect(sessionStorage.getItem('nb:table-claim-api')).toBe('no');
+    jest.spyOn(global, 'fetch').mockResolvedValue(fail(404, { detail: 'Not found.' }));
+    await expect(tablesAPI.claim('K7M2QX', 'guest-token-1234567890abcdef')).rejects.toMatchObject({ code: 'claim_unavailable' });
+  });
+
+  it('nobody signed in: refused before anything leaves the device', async () => {
+    const spy = jest.spyOn(global, 'fetch');
+    await expect(tablesAPI.claim('K7M2QX', 'guest-token-1234567890abcdef')).rejects.toThrow('AUTH_REQUIRED');
+    expect(spy).not.toHaveBeenCalled();
+  });
+});

@@ -6,6 +6,7 @@ import { UserProvider } from '../../context/UserContext';
 import { track } from '../../analytics';
 import { tablesAPI } from '../../api/tables';
 import { TableCreate } from './TableCreate';
+import { placesAPI } from '../../api';
 
 jest.mock('react-router-dom', () => require('react-router'));
 jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), track: jest.fn() }));
@@ -13,6 +14,7 @@ jest.mock('../../api/tables', () => {
   const actual = jest.requireActual('../../api/tables');
   return { ...actual, tablesAPI: { create: jest.fn() } };
 });
+jest.mock('../../services/googleMaps', () => ({ useGoogleMaps: () => ({ isLoaded: true, loadError: undefined }) }));
 jest.mock('../../components/GoogleAuth', () => ({
   GoogleAuth: () => <button type="button">Google test</button>,
 }));
@@ -170,5 +172,73 @@ describe('setting up a table', () => {
     expect(screen.getByRole('button', { name: 'Google test' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Створити Стіл' })).toBeDisabled();
     expect(tablesAPI.create).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('stage 3', () => {
+  afterEach(() => {
+    delete window.google;
+    jest.restoreAllMocks();
+  });
+
+  it('a venue from Google is created on «Створити» with its Place ID; a new borshch gets its meat type', async () => {
+    signIn();
+    const createPlace = jest.spyOn(placesAPI, 'create').mockResolvedValue({ id: 'p-new', reused: false });
+    tablesAPI.create.mockResolvedValue({ code: 'P4RT9Z' });
+    window.google = {
+      maps: {
+        places: {
+          AutocompleteSuggestion: {
+            fetchAutocompleteSuggestions: jest.fn(async () => ({
+              suggestions: [{
+                placePrediction: {
+                  placeId: 'g-new', mainText: { text: 'Криївка' }, secondaryText: { text: 'Київ' }, types: ['restaurant'],
+                  toPlace: () => ({
+                    id: 'g-new', displayName: 'Криївка', formattedAddress: 'вул. Хрещатик, 1, Київ',
+                    addressComponents: [{ longText: 'Київ', types: ['locality'] }, { longText: 'Україна', types: ['country'] }],
+                    location: { lat: () => 50.4472, lng: () => 30.5222 },
+                    fetchFields: async () => {},
+                  }),
+                },
+              }],
+            })),
+          },
+        },
+      },
+    };
+    const user = userEvent.setup();
+    renderCreate();
+    await user.click(await screen.findByRole('button', { name: 'Закладу нема в списку' }));
+    await user.type(screen.getByTestId('google-place-search'), 'Крив');
+    await user.click(await screen.findByRole('button', { name: /Криївка/ }, { timeout: 2000 }));
+    // nothing of ours at a new venue: the borshch is typed in
+    await user.type(screen.getByLabelText('Іншого Борщу нема в списку? Впиши назву'), 'Борщ з квасолею{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    const meat = screen.getByRole('group', { name: 'Мʼясо в «Борщ з квасолею»' });
+    await user.click(within(meat).getByRole('button', { name: 'Свинина' }));
+    expect(within(meat).getByRole('button', { name: 'Свинина' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    await user.click(screen.getByRole('button', { name: 'Створити Стіл' }));
+
+    await waitFor(() => expect(tablesAPI.create).toHaveBeenCalledWith({
+      place: 'p-new',
+      blind: false,
+      title: '',
+      borsches: [{ name: 'Борщ з квасолею', type_meat: 'pork' }],
+    }, { entry: 'chooser', new_place: true }));
+    expect(createPlace).toHaveBeenCalledWith(expect.objectContaining({ name: 'Криївка', google_place_id: 'g-new', via: 'table' }));
+    // the photo is asked once the table is closed, on this device
+    expect(JSON.parse(localStorage.getItem('nb:table-host:P4RT9Z'))).toMatchObject({ newNames: ['Борщ з квасолею'], prompted: false });
+    expect(calls('flow_step').map((p) => p.step)).toEqual(['venue', 'venue_google', 'borsch', 'facts', 'settings']);
+  });
+
+  it('a borshch the venue already has gets no meat chips: only a new one can be given a type', async () => {
+    signIn();
+    const user = userEvent.setup();
+    renderCreate();
+    await user.click((await screen.findByText('Ватра')).closest('button'));
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    expect(screen.queryByRole('group', { name: /Мʼясо/ })).not.toBeInTheDocument();
   });
 });

@@ -17,6 +17,9 @@ import { shareUrl } from '../../utils/share';
 import { makeStoryImage, storyContent } from '../../utils/storyImage';
 import { CRITERION_LABEL, borschTitle, divisiveLabel, formatAverage, tableDate } from '../../utils/tableView';
 import { useI18n, useDishLabel, useVenueLabel, useCityLabel } from '../../i18n';
+import { readTableGuest } from '../../services/tableGuest';
+import { TableClaim } from './TableClaim';
+import { NewBorschPrompt } from './NewBorschPrompt';
 import layout from '../../styles/layout.module.scss';
 import style from './TableResults.module.scss';
 
@@ -38,7 +41,7 @@ const METERS = [
  * Everyone sees this once the table is closed; the host as well, right after
  * closing it.
  */
-export const TableResults = ({ code, table, guestToken = null }) => {
+export const TableResults = ({ code, table, guestToken: initialToken = null }) => {
   const { t, lang } = useI18n();
   const dishLabel = useDishLabel();
   const venueLabel = useVenueLabel();
@@ -47,6 +50,8 @@ export const TableResults = ({ code, table, guestToken = null }) => {
   const [state, setState] = useState('loading'); // loading | ok | error
   const [story, setStory] = useState(null); // { url, blob } | 'making' | 'failed'
   const reported = useRef(false);
+  // the guest token, until the guest takes the ratings into an account
+  const [guestToken, setGuestToken] = useState(initialToken);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +125,17 @@ export const TableResults = ({ code, table, guestToken = null }) => {
   return (
     <div className={`${layout.wrapper} ${style.page}`}>
       <PageHeader back="/" kicker={t('table.resultsKicker')} title={heading} lead={lead} />
+
+      {table?.is_host && <NewBorschPrompt code={code} results={results} />}
+      {!table?.is_host && guestToken && (
+        <TableClaim
+          code={code}
+          guestToken={guestToken}
+          from="results"
+          tone="page"
+          onClaimed={() => setGuestToken(readTableGuest(code).token)}
+        />
+      )}
 
       {results.blind && (
         <p className={style.blindChip}>{t(results.names_hidden ? 'table.blindStill' : 'table.blindRevealed')}</p>

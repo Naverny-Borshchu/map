@@ -1,0 +1,39 @@
+@use "../../styles/mixin_font.scss" as *;
+
+// On the quest's red stage, like the venue cards around it (BowlFlow.module.scss).
+
+.attribution {
+  margin: 4px 0 0;
+  @include caption;
+  color: rgba(255, 250, 245, 0.78);
+}
+
+.problem {
+  width: 100%;
+  max-width: 460px;
+  margin: 6px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.18);
+  @include footnote;
+  font-weight: 700;
+  color: #FFFAF5;
+  text-align: center;
+}
+
+// The old way out, quiet: a person standing outside a venue Google does not
+// know can still put a pin on the map.
+.manual {
+  margin-top: 6px;
+  min-height: 44px;
+  padding: 6px 14px;
+  border: 0;
+  background: transparent;
+  color: #FFFAF5;
+  font-family: var(--font-family-main);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
