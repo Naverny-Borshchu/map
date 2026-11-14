@@ -140,6 +140,8 @@ const handleResponse = async (response) => {
     failure.status = response.status;
     // and so does the API's own reason, where it gives one (table_closed, ...)
     if (error && typeof error.code === 'string') failure.code = error.code;
+    // and the rest of the body: a 409 already_rated names the venue it means
+    failure.data = error && typeof error === 'object' ? error : {};
     throw failure;
   }
   if (response.status === 204) {
@@ -158,6 +160,8 @@ const request = async (endpoint, options = {}) => {
     isFormData = false,
     query = {},
     headers: extraHeaders = null,
+    // an AbortSignal: the map drops a tips request the next pan made stale
+    signal = undefined,
   } = options;
 
   const params = new URLSearchParams();
@@ -185,6 +189,7 @@ const request = async (endpoint, options = {}) => {
       ...(extraHeaders || {}),
     },
     body: body === undefined || body === null ? undefined : (isFormData ? body : JSON.stringify(body)),
+    ...(signal ? { signal } : {}),
   });
 
   const response = authOptional && !authRequired
@@ -337,6 +342,14 @@ const mapBorsch = (apiBorsch) => {
     // "290.00" -> "≈290 ₴"; ціна 0 або порожня в базі = не показуємо
     price: parseFloat(apiBorsch.price) > 0 ? `≈${parseFloat(apiBorsch.price)} ₴` : '',
     weight: apiBorsch.grams ? `${apiBorsch.grams} g.` : '',
+    // The same two facts as numbers, and whether the card wants them checked
+    // (missing, or last confirmed more than half a year ago): the closing
+    // screen of a rating asks «Ціна досі 330 грн?» only then. A backend
+    // without the flags (older than 14.11.2026) asks nothing.
+    price_value: parseFloat(apiBorsch.price_uah ?? apiBorsch.price) > 0 ? parseFloat(apiBorsch.price_uah ?? apiBorsch.price) : 0,
+    weight_value: Number(apiBorsch.weight_grams ?? apiBorsch.grams) > 0 ? Number(apiBorsch.weight_grams ?? apiBorsch.grams) : 0,
+    price_needs_confirmation: apiBorsch.price_needs_confirmation === true,
+    weight_needs_confirmation: apiBorsch.weight_needs_confirmation === true,
     photo_urls: apiBorsch.photo_urls || [],
     extras: apiBorsch.extras || '',
     dish_features: apiBorsch.dish_features || '',
@@ -459,12 +472,29 @@ export const placesAPI = {
       location_lat: toStoredCoord(placeData.location?.lat ?? placeData.latitude ?? 0),
       location_lng: toStoredCoord(placeData.location?.lng ?? placeData.longitude ?? 0),
       ...(placeData.type_id && { type: placeData.type_id }),
+      // A venue picked from Google Places carries its Place ID: the backend
+      // then returns the venue it already has (200, reused) instead of a
+      // second pin for the same restaurant.
+      ...(placeData.google_place_id && { google_place_id: String(placeData.google_place_id) }),
     };
     const created = await request('/places/', { method: 'POST', body: payload, authRequired: true });
+    const reused = created?.reused === true;
     // Події пишемо після відповіді бекенду, а не по кліку: інакше в даних
-    // з'являються «додавання», яких насправді не сталось.
-    track('place_added', { place_id: created?.id, city: payload.city });
-    return mapPlace(created);
+    // з'являються «додавання», яких насправді не сталось. Наявний заклад,
+    // який бекенд повернув замість дубля, не «додавання».
+    if (!reused) track('place_added', { place_id: created?.id, city: payload.city });
+    if (payload.google_place_id) {
+      track('place_from_google', { reused, place_id: created?.id, via: placeData.via || null });
+    }
+    return { ...mapPlace(created), reused, google_place_id: created?.google_place_id || payload.google_place_id || null };
+  },
+
+  /** Our venue with this Google Place ID, or null. */
+  findByGoogleId: async (googlePlaceId) => {
+    if (!googlePlaceId) return null;
+    const data = await request('/places/', { query: { google_place_id: googlePlaceId } });
+    const list = Array.isArray(data) ? data : (data?.results || []);
+    return list[0] || null;
   },
 
   update: async (id, updates) => {
@@ -551,6 +581,17 @@ export const borschAPI = {
   getByPlaceId: async (placeId) => {
     const filtered = await fetchAllPages('/borsches/', { query: { place_id: placeId } });
     return filtered.map(mapBorsch);
+  },
+
+  /**
+   * «Ціна досі 330 грн?» (POST /borsches/{id}/confirm_facts/):
+   *   { confirm: ['price'] }   yes, still the same
+   *   { price_uah: 210 }       no, it is this now
+   * Fills, replaces or refreshes, never blanks. Returns the mapped borshch.
+   */
+  confirmFacts: async (id, body) => {
+    const updated = await request(`/borsches/${id}/confirm_facts/`, { method: 'POST', body, authRequired: true });
+    return mapBorsch(updated);
   },
 
   uploadPhoto: async (borschId, file) => {

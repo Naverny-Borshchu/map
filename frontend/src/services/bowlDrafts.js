@@ -66,11 +66,19 @@ export const getDraft = (id, now = Date.now()) =>
 /**
  * Moment 1 is over: keep the bowl.
  *
- * place  { id, name, city }      a venue from our own catalogue
- * borsch { id, name }            the borshch at that venue
+ * place  { id, name, city }      a venue from our own catalogue, or
+ *        { id: null, name, city, google: {...} }  a venue picked from Google
+ *        Places that the map does not have yet (services/googlePlaces)
+ * borsch { id, name }            the borshch at that venue, or
+ *        { id: null, name }      «Інший Борщ»: a new one, by its name
  * photoMode 'now' | 'camera_roll' | 'later'
+ * photoTakenAt  when the photo says it was taken (EXIF), 'YYYY-MM-DDTHH:MM'
+ *
+ * A new venue or borshch is created only when the bowl is rated (moment 2,
+ * services/bowlTargets): moment 1 needs no account, and a bowl that is
+ * dropped leaves no empty borshch on the map.
  */
-export const createDraft = async ({ place, borsch, photoMode = 'later', photos = [] }, now = Date.now()) => {
+export const createDraft = async ({ place, borsch, photoMode = 'later', photos = [], photoTakenAt = null }, now = Date.now()) => {
   const id = newId(now);
   let photoCount = 0;
   if (photos.length) {
@@ -84,16 +92,27 @@ export const createDraft = async ({ place, borsch, photoMode = 'later', photos =
   const draft = {
     id,
     createdAt: now,
-    place: place ? { id: String(place.id), name: place.name || '', city: place.city || '' } : null,
-    borsch: borsch ? { id: String(borsch.id), name: borsch.name || '' } : null,
+    place: place
+      ? {
+        id: place.id ? String(place.id) : null,
+        name: place.name || '',
+        city: place.city || '',
+        ...(!place.id && place.google ? { google: place.google } : {}),
+      }
+      : null,
+    borsch: borsch ? { id: borsch.id ? String(borsch.id) : null, name: borsch.name || '' } : null,
     photoMode,
     photoCount,
+    ...(photoTakenAt ? { photoTakenAt } : {}),
     snoozedUntil: 0,
     reviewedAt: null,
   };
   write([...read(), draft]);
   return draft;
 };
+
+/** Does rating this bowl first put a new venue or borshch on the map? */
+export const draftIsNew = (bowl) => Boolean(bowl && (!bowl.borsch?.id || !bowl.place?.id));
 
 export const updateDraft = (id, patch) => {
   const bowls = read();

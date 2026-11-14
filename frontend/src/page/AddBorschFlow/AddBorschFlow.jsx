@@ -169,6 +169,7 @@ export const AddBorschFlow = () => {
         place: flowContext.place,
         street: flowContext.street,
         city: flowContext.city,
+        country: flowContext.country || '',
         values,
         progress: progress.current,
         apis: { placesAPI, borschAPI, commentsAPI },

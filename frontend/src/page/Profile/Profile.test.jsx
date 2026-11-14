@@ -28,6 +28,8 @@ jest.mock('../PasswordChangePage', () => ({ PasswordChangePage: () => null }));
 jest.mock('../../components/MyBowls', () => ({ MyBowls: () => null }));
 // «Мої Столи» likewise: its own test, and here it would ask the API for tables.
 jest.mock('../../components/MyTables', () => ({ MyTables: () => null }));
+// «Мої підказки» likewise (MyTips.test.jsx): here it would ask the API for tips.
+jest.mock('../../components/MyTips', () => ({ MyTips: () => null }));
 jest.mock('../../components/ModalLogout', () => {
   const React = require('react');
   return {

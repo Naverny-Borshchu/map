@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useBorsch } from '../../context/BorschContext';
 import { CardBosch } from "../../components/CardBorsch/CardBorsch";
 import { CardActions } from "../../components/CardActions";
@@ -6,7 +7,7 @@ import { RouteButton } from "../../components/RouteButton";
 import { usePlaces } from "../../context/PlacesContext";
 import style from './Gallery.module.scss';
 import { IconClose, IconChevronLeft, IconChevronRight } from '../Icons';
-import { useT } from "../../i18n";
+import { useT, useVenueLabel } from "../../i18n";
 
 /**
  * The popup shown when a place marker is tapped: the borsches rated at that
@@ -23,6 +24,8 @@ export const Gallery = ({ onClose, id_place }) => {
   const { getBorschByPlaceId } = useBorsch();
   const { getPlaceById } = usePlaces();
   const t = useT();
+  const venueLabel = useVenueLabel();
+  const navigate = useNavigate();
 
   const list = getBorschByPlaceId(id_place) || [];
   const total = list.length;
@@ -39,10 +42,26 @@ export const Gallery = ({ onClose, id_place }) => {
   );
 
   if (!total) {
+    const venue = getPlaceById(id_place);
     return (
       <div className={style.container}>
         <div className={style.topBar}>{closeButton}</div>
-        <p className={style.empty}>{t('card.emptyPlace')}</p>
+        <div className={style.emptyCard}>
+          {venue?.name && <p className={style.emptyName}>{venueLabel(venue.name)}</p>}
+          <p className={style.empty}>{t('card.emptyPlace')}</p>
+          {/* a venue with nothing on it yet: the shortest contribution there is */}
+          <p className={style.emptyHint}>{t('tip.fromVenueHint')}</p>
+          <button
+            type="button"
+            className={style.tipBtn}
+            onClick={() => {
+              onClose?.();
+              navigate(`/tip/new?place=${encodeURIComponent(id_place)}&from=venue`);
+            }}
+          >
+            {t('tip.fromVenue')}
+          </button>
+        </div>
       </div>
     );
   }

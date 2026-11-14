@@ -1,0 +1,49 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+.card {
+  @include card(16px);
+  margin: 0 0 16px;
+  text-align: left;
+  border: 2px dashed rgba(220, 20, 60, 0.35);
+}
+
+.title {
+  margin: 0;
+  @include displayS;
+  color: var(--nb-ink);
+}
+
+.text {
+  margin: 4px 0 10px;
+  @include footnote;
+  color: var(--nb-ink-2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.name {
+  @include displayS;
+  color: var(--nb-ink);
+  overflow-wrap: anywhere;
+}
+
+.later {
+  @include btnText;
+  margin-top: 8px;
+}

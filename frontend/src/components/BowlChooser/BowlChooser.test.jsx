@@ -56,7 +56,7 @@ const openChooser = async (user) => {
 };
 
 describe('add chooser', () => {
-  it('offers the bowl first, then rating, then the table, then adding', async () => {
+  it('offers the bowl first, then rating, the table, the tip, then adding', async () => {
     const user = userEvent.setup();
     renderApp();
     const dialog = await openChooser(user);
@@ -65,6 +65,7 @@ describe('add chooser', () => {
       expect.stringContaining('Мені принесли Борщ'),
       expect.stringContaining('Оцінити Борщ, який уже скуштував'),
       expect.stringContaining('Ми зібрались компанією'),
+      expect.stringContaining('Я знаю, тут є Борщ'),
       expect.stringContaining('Додати новий Борщ'),
     ]);
   });
@@ -73,6 +74,7 @@ describe('add chooser', () => {
     ['Мені принесли Борщ', '/bowl/new?from=chooser', 'brought'],
     ['Оцінити Борщ, який уже скуштував', '/bowl/new?mode=rate&from=chooser', 'rate'],
     ['Ми зібрались компанією', '/table/new?from=chooser', 'table'],
+    ['Я знаю, тут є Борщ', '/tip/new?from=chooser', 'tip'],
     ['Додати новий Борщ', '/add-borsch', 'add'],
   ])('«%s» goes to %s', async (label, path, choice) => {
     const user = userEvent.setup();

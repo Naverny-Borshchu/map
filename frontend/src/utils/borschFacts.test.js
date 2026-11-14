@@ -1,4 +1,6 @@
-import { factsPatch, missingFacts, saveMissingFacts, WEIGHT_CHIPS } from './borschFacts';
+import {
+  factAnswer,
+  factsToAsk, factsPatch, missingFacts, saveMissingFacts, WEIGHT_CHIPS } from './borschFacts';
 import { borschAPI } from '../api';
 
 /**
@@ -82,5 +84,39 @@ describe('the PATCH that leaves the device', () => {
     expect(String(url)).toMatch(/\/borsches\/b1\/$/);
     expect(init.method).toBe('PATCH');
     expect(JSON.parse(init.body)).toEqual({ weight_grams: 350 });
+  });
+});
+
+describe('factsToAsk: never more than two questions', () => {
+  const card = (extra) => ({ weight: '400 g.', price: '≈330 ₴', price_value: 330, weight_value: 400, ...extra });
+
+  it('one «досі?» about an old value, the price first', () => {
+    expect(factsToAsk(card({ price_needs_confirmation: true, weight_needs_confirmation: true })))
+      .toEqual({ missing: { weight: false, price: false }, confirm: 'price' });
+    expect(factsToAsk(card({ price_needs_confirmation: false, weight_needs_confirmation: true })).confirm).toBe('weight');
+    expect(factsToAsk(card({})).confirm).toBeNull();
+  });
+
+  it('a missing value keeps its question; the other may add one «досі?»', () => {
+    expect(factsToAsk(card({ weight: '', weight_value: 0, price_needs_confirmation: true, weight_needs_confirmation: true })))
+      .toEqual({ missing: { weight: true, price: false }, confirm: 'price' });
+  });
+
+  it('two missing values leave no room for a third question', () => {
+    expect(factsToAsk({ weight: '', price: '', price_needs_confirmation: true, weight_needs_confirmation: true }))
+      .toEqual({ missing: { weight: true, price: true }, confirm: null });
+  });
+
+  it('a backend without the flags asks no «досі?»', () => {
+    expect(factsToAsk(card({ price_needs_confirmation: undefined })).confirm).toBeNull();
+    expect(factsToAsk(null)).toEqual({ missing: { weight: false, price: false }, confirm: null });
+  });
+
+  it('a «Ні, інша» answer is a number in range or nothing', () => {
+    expect(factAnswer('price', '345,50')).toBe(345.5);
+    expect(factAnswer('price', '0')).toBeNull();
+    expect(factAnswer('weight', '350.4')).toBe(350);
+    expect(factAnswer('weight', '20')).toBeNull();
+    expect(factAnswer('weight', '')).toBeNull();
   });
 });

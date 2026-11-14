@@ -1,6 +1,7 @@
 import { Marker, Circle } from "@react-google-maps/api";
 import { ratingPinIcon } from "../Map/markerIcons";
 import { formatGrade } from "../../utils/rating";
+import { useT } from "../../i18n";
 
 /**
  * A place on the map, showing its average borsch grade.
@@ -24,6 +25,7 @@ export const CurrentLocationMarker = ({
   dark = false,
   state = 'confirmed',
 }) => {
+  const t = useT();
   // Whole scores drop the trailing zero ("8", not "8.0"); halves keep it
   // ("7.5"). The pill is a fixed width with the number centred, so a shorter
   // string still sits dead centre.
@@ -75,12 +77,13 @@ export const CurrentLocationMarker = ({
         clickable={clickable}
         title={
           state === 'virgin'
-            ? 'Ніхто ще не куштував. Стань Першоваром!'
+            ? t('map.pinVirgin')
             : state === 'unverified'
-              ? `Оцінка ${label} · спільнота ще не підтвердила`
+              ? t('map.pinUnverified', { grade: label })
               : label
-                ? `Оцінка ${label}`
-                : undefined
+                ? t('map.pinGrade', { grade: label })
+                // a venue with no borshch on it: named too, so it can be found and tapped
+                : t('map.pinEmpty')
         }
         onClick={() => clickable && onClick(id)}
       />

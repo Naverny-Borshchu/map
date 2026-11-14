@@ -10,7 +10,9 @@ import style from './BowlRatePage.module.scss';
  * Moment 2 of a bowl, «Поїв»: the ordinary rating of the bowl's borshch, with
  * the photo from moment 1 already in it (so the photo screen is skipped). What
  * happens after the save (photos onto the borshch, the bowl removed, the
- * missing weight asked) lives in EvaluationsPage.
+ * missing weight asked) lives in EvaluationsPage. A bowl of a venue or a
+ * borshch the map does not have yet (stage 3) creates them there, right
+ * before the rating is sent.
  */
 export const BowlRatePage = () => {
   const { bowlId } = useParams();
@@ -30,7 +32,8 @@ export const BowlRatePage = () => {
     return () => { cancelled = true; };
   }, [bowl]);
 
-  if (!bowl || !bowl.borsch?.id) {
+  // a bowl of a new borshch has its name and no id yet: it is created when rated
+  if (!bowl || (!bowl.borsch?.id && !bowl.borsch?.name)) {
     return (
       <div className={style.page}>
         <EmptyState
@@ -49,7 +52,9 @@ export const BowlRatePage = () => {
         <EmptyState
           art="spoon"
           title={t('bowl.reviewed')}
-          action={{ onClick: () => navigate(`/borsch/${bowl.borsch.id}`), label: t('flow.toBorsch') }}
+          action={bowl.borsch.id
+            ? { onClick: () => navigate(`/borsch/${bowl.borsch.id}`), label: t('flow.toBorsch') }
+            : { onClick: () => navigate('/'), label: t('common.toMap') }}
         />
       </div>
     );
@@ -63,5 +68,5 @@ export const BowlRatePage = () => {
     );
   }
 
-  return <EvaluationsPage borschId={bowl.borsch.id} bowl={bowl} initialPhotos={photos} />;
+  return <EvaluationsPage borschId={bowl.borsch.id || null} bowl={bowl} initialPhotos={photos} />;
 };

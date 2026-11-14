@@ -114,3 +114,19 @@ describe('the body POST /api/tables/ gets', () => {
     expect(body.title).toBe('');
   });
 });
+
+
+describe('stage 3: a new borshch may carry its meat type', () => {
+  it('only a new one, only a known type', () => {
+    const body = buildTablePayload({
+      place: 'p1',
+      items: [
+        { key: 'b1', id: 'b1', name: 'Червоний' },
+        { key: 'new:a', id: null, name: 'Борщ з квасолею' },
+        { key: 'new:b', id: null, name: 'Борщ дня' },
+      ],
+      facts: { b1: { meat: 'pork' }, 'new:a': { meat: 'beef' }, 'new:b': { meat: 'горох' } },
+    });
+    expect(body.borsches).toEqual([{ id: 'b1' }, { name: 'Борщ з квасолею', type_meat: 'beef' }, { name: 'Борщ дня' }]);
+  });
+});

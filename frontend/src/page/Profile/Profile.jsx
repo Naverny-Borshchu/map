@@ -23,6 +23,7 @@ import {useT} from "../../i18n";
 import {selectProfileLinks} from "./profileLinks";
 import {MyBowls} from "../../components/MyBowls";
 import {MyTables} from "../../components/MyTables";
+import {MyTips} from "../../components/MyTips";
 
 
 export const Profile = () => {
@@ -205,6 +206,7 @@ export const Profile = () => {
                     <section className={style.content}>
                         <MyBowls />
                         <MyTables />
+                        <MyTips />
                         {advert}
 
                         <div className={style.settingsCard}>
@@ -232,6 +234,7 @@ export const Profile = () => {
                     {userCard}
                     <MyBowls />
                     <MyTables />
+                    <MyTips />
                     {advert}
 
                     <div className={style.userButtons} role="tablist">
