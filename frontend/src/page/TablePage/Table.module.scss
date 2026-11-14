@@ -304,6 +304,12 @@
   }
 }
 
+// the quest's cream pill stops at 460 px; in the host's column it fills the column
+.hostActions > button,
+.confirmRow > button {
+  max-width: none;
+}
+
 .ghostCream {
   width: 100%;
   min-height: 52px;
