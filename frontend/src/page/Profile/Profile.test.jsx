@@ -4,13 +4,18 @@ import { UserProvider } from '../../context/UserContext';
 import { Profile } from './Profile';
 import { useMediaQuery } from '../../hook/useMediaQuery';
 
+// A regular (not virtual) mock: jest keys it by the resolved path of react-router-dom, so EVERY module
+// that imports it (Profile, PageHeader, the sections) gets this stub. The old `{ virtual: true }` mock was
+// keyed by the bare name and, depending on load order, PageHeader sometimes got the real package, which
+// cannot load «react-router/dom» under CRA's jest: Profile.test failed on CI now and then (14.11.2026,
+// the release run of #61) while passing on the same code elsewhere.
 jest.mock('react-router-dom', () => {
   const React = require('react');
   return {
     Link: ({ children, to, ...props }) => React.createElement('a', { href: to, ...props }, children),
     useNavigate: () => jest.fn(),
   };
-}, { virtual: true });
+});
 jest.mock('../../assets/icons/arrow_back.svg', () => ({ ReactComponent: () => null }));
 jest.mock('../../hook/useMediaQuery', () => ({
   useMediaQuery: jest.fn(),
@@ -18,9 +23,7 @@ jest.mock('../../hook/useMediaQuery', () => ({
 jest.mock('../PersonalInfo', () => ({ PersonalInfo: () => null }));
 jest.mock('../AddedBorschesPage', () => ({ AddedBorschesPage: () => null }));
 jest.mock('../PasswordChangePage', () => ({ PasswordChangePage: () => null }));
-// «Мої миски» is a section of its own with its own test (MyBowls.test.jsx).
-// It uses the router, and the partial virtual router mock above does not reach
-// it on CI («Cannot find module 'react-router/dom'»), so it is stubbed like the
+// «Мої миски» is a section of its own with its own test (MyBowls.test.jsx), so it is stubbed like the
 // other sections.
 jest.mock('../../components/MyBowls', () => ({ MyBowls: () => null }));
 // «Мої Столи» likewise: its own test, and here it would ask the API for tables.
