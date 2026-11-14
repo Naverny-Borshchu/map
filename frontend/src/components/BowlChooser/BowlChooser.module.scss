@@ -1,0 +1,150 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+// Phone: a sheet rising from the bottom, over the tab bar. Desktop: a dialog.
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(23, 11, 11, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: fadeIn var(--dur-base) var(--ease-standard);
+  @include respond(desktop) {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 20px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-bg-grey);
+  box-shadow: 0 -12px 40px rgba(23, 11, 11, 0.25);
+  animation: rise var(--dur-slow) var(--ease-out);
+  @include respond(desktop) {
+    max-width: 520px;
+    padding: 24px 22px 22px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 60px rgba(23, 11, 11, 0.28);
+  }
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.kicker {
+  @include kicker;
+  margin: 0 0 6px;
+}
+
+.heading {
+  @include displayM;
+  margin: 0;
+  color: var(--nb-ink);
+}
+
+.close {
+  @include iconBtn(44px);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 14px 14px 16px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--nb-ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--nb-shadow-sm);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+
+  @media (hover: hover) {
+    &:hover { border-color: var(--nb-borshch); }
+  }
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+}
+
+// The bowl leads: brand red with the dark underside, like the primary pill.
+.primary {
+  border-color: var(--nb-borshch);
+  background: var(--nb-borshch);
+  color: #FFFAF5;
+  box-shadow: 0 4px 0 var(--nb-borshch-dark);
+
+  .icon { background: rgba(255, 250, 245, 0.2); color: #FFFAF5; }
+  .hint { color: rgba(255, 250, 245, 0.9); }
+  .chevron { color: #FFFAF5; }
+
+  @media (hover: hover) {
+    &:hover { background: #E5244A; border-color: #E5244A; }
+  }
+}
+
+.icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-bg-ad);
+  color: var(--nb-red-text);
+}
+
+.words {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.title {
+  @include displayS;
+}
+
+.hint {
+  @include footnote;
+  color: var(--nb-ink-2);
+}
+
+.chevron {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--nb-red-text);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(calc(24px * var(--nb-move, 1))); }
+  to { opacity: 1; transform: none; }
+}

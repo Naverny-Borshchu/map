@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useLocation, useMatch } from "react-router-dom";
 import { ReactComponent as IconLinkedIn} from './linked.svg';
@@ -17,6 +17,9 @@ import { ViewSwapIcon } from "./ViewSwapIcon";
 import { IconPlus, IconUser } from "./NavIcons";
 import { Toaster } from "../Toast";
 import { BugReport } from "../BugReport";
+import { BowlChooser } from "../BowlChooser";
+import { BowlReminder } from "../BowlReminder";
+import { cleanupDrafts } from "../../services/bowlDrafts";
 
 import style from "./Layout.module.scss";
 import { useT } from "../../i18n";
@@ -41,6 +44,17 @@ export const Layout = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === '1'
   );
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const closeChooser = useCallback(() => setChooserOpen(false), []);
+  const onAddRoute = location.pathname.startsWith('/add-borsch') || location.pathname.startsWith('/bowl');
+  // the bowl reminder belongs where people land, never over a flow
+  const showReminder = ['/', '/list', '/profile'].includes(location.pathname);
+
+  // Bowls older than three days, and photos whose bowl is gone, go once per
+  // app load (services/bowlDrafts).
+  useEffect(() => {
+    cleanupDrafts();
+  }, []);
 
   // Full-screen variants float their controls above the bottom nav. Publish the
   // nav's measured height as --nb-nav-h so those offsets stay exact instead of
@@ -119,6 +133,8 @@ export const Layout = ({ children }) => {
     <div className={`${style.container} nb-shell`}>
       <Onboarding />
       <Toaster />
+      <BowlChooser open={chooserOpen} onClose={closeChooser} />
+      {showReminder && <BowlReminder />}
       <main className={`${style.main} nb-main`}>
         {isDesktop ? (
           <>
@@ -179,17 +195,20 @@ export const Layout = ({ children }) => {
               </NavLink>
             </li>
 
+            {/* Оцінка Борщу 2.0: the add action opens a chooser, because there
+                are now three ways in and the most common one (a borshch was
+                just brought) is not «add a new borshch». */}
             <li className={style.slotCenter}>
-              <NavLink
-                to="/add-borsch"
-                className={({ isActive }) =>
-                  `${style.addBorsch} nb-addbtn ${isActive ? style.addActive : ''}`
-                }
-                onClick={() => localStorage.setItem('mode', MODES.SET_MARKER)}
+              <button
+                type="button"
+                className={`${style.addBorsch} nb-addbtn ${onAddRoute ? style.addActive : ''}`}
+                onClick={() => setChooserOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={chooserOpen}
               >
                 <IconPlus className={style.addIcon} aria-hidden="true" />
                 <span className={style.addText}>{t('nav.addBorsch')}</span>
-              </NavLink>
+              </button>
             </li>
             {/* Ви carries the reviews and favourites the tabs no longer show.
                 On desktop a signed-in visitor already has a clickable avatar in

@@ -233,6 +233,11 @@ export const BorschPage=({ borschId: propId })=>{
 
                 <div className={style.boxBtn}>
                     <Link to={`/borsch/${id}/evaluations`} className={style.btn}>{t('card.rate')}</Link>
+                    {/* Оцінка Борщу 2.0: the borshch has just been brought. Photo
+                        now, while the bowl is untouched; the rating after the meal. */}
+                    <Link to={`/bowl/new?borsch=${encodeURIComponent(id)}&from=card`} className={style.broughtBtn}>
+                        {t('card.broughtLater')}
+                    </Link>
                     <RouteButton place={place} label={t('card.routeLong')} className={style.routeBtn}/>
                 </div>
             </section>

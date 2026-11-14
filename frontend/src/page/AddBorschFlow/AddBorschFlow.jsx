@@ -18,6 +18,7 @@ import {
 import { useT } from '../../i18n';
 import { submitAddBorsch, uploadPendingPhotos, emptyProgress, STAGES } from './addBorschSubmit';
 import { getPriceChipsForCountry } from '../../utils/currency';
+import { WEIGHT_CHIPS } from '../../utils/borschFacts';
 import style from './AddBorschFlow.module.scss';
 
 /**
@@ -50,6 +51,42 @@ const MEAT_OPTIONS = [
   { value: 'Інше',      emoji: '🍲', i18n: 'ans.meatOther' },
 ];
 
+
+/**
+ * The quest's screens. Pure, so the screens before it (the map pick and the
+ * address check) can count them for their step events.
+ */
+export const buildAddSteps = ({ needsSignIn, priceChips = getPriceChipsForCountry('') }) => [
+  // The photo goes first, because by the end there is nothing left to
+  // photograph. Every taste question in tasteSteps() — how much meat, how
+  // thick, how salty, what aftertaste — can only be answered by someone
+  // who has eaten the bowl, so asking for a picture afterwards asks for it
+  // at the one moment it cannot exist. It stays optional and skippable.
+  { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
+  ...tasteSteps(),
+  { type: 'choice', key: 'meatType', i18n: 'flow.qMeatType', options: MEAT_OPTIONS },
+  {
+    type: 'text',
+    key: 'name',
+    i18n: 'flow.qName',
+    hint: 'flow.qNameHint',
+    placeholder: 'flow.qNamePlaceholder',
+    chips: ['chip.borsch', 'chip.borschRed', 'chip.borschGreen', 'chip.borschPampushky'],
+  },
+  { type: 'number', key: 'price', i18n: 'flow.qPrice', hint: 'flow.qPriceHint', unit: priceChips.unit, chips: priceChips.chips, min: 0 },
+  { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: WEIGHT_CHIPS, min: 0 },
+  { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
+  ...(needsSignIn
+    ? [{ type: 'signin', key: 'signin', i18n: 'flow.signinTitle', hint: 'flow.signinHint' }]
+    : []),
+  { type: 'done', key: 'done' },
+];
+
+/** The map pick and the address check come before the quest (step events). */
+export const ADD_PLACE_STEPS = ['place', 'place_confirm'];
+export const addFlowTotal = () =>
+  ADD_PLACE_STEPS.length + buildAddSteps({ needsSignIn: !tokenStorage.getAccess() }).length;
+
 const XP_MULTIPLIER = 3;
 const DRAFT_KEY = 'nb:quest-draft:add-borsch';
 
@@ -58,7 +95,17 @@ export const AddBorschFlow = () => {
   const navigate = useNavigate();
   const t = useT();
   const { completeGoogleSignIn } = useUser();
-  const [restoredDraft] = useState(() => readSessionDraft(DRAFT_KEY));
+  // A draft left from another venue must not ride along: its progress can hold
+  // that venue's id, and the new borshch would be filed under it.
+  const [restoredDraft] = useState(() => {
+    const draft = readSessionDraft(DRAFT_KEY);
+    if (!draft || !state?.place) return draft;
+    const ctx = draft.context || {};
+    const sameVenue = ctx.place?.name === state.place.name && (ctx.placeId || null) === (state.placeId || null);
+    if (sameVenue) return draft;
+    clearSessionDraft(DRAFT_KEY);
+    return null;
+  });
   const flowContext = state?.place ? state : restoredDraft?.context;
 
   // Decide once at mount so the step list stays stable until the successful
@@ -76,41 +123,20 @@ export const AddBorschFlow = () => {
   const [draftStep, setDraftStep] = useState(() => restoredDraft?.step || 0);
   const [status, setStatus] = useState({ saving: false, sent: false, error: '', stage: '' });
   const [xpTotal, setXpTotal] = useState(null);
-  const progress = useRef({ ...emptyProgress(), ...(restoredDraft?.progress || {}) });
+  // A venue picked from our own catalogue (the bowl's «Інший Борщ») comes
+  // with its id, so the place step neither searches nor creates anything.
+  const progress = useRef({
+    ...emptyProgress(),
+    ...(flowContext?.placeId ? { placeId: flowContext.placeId } : {}),
+    ...(restoredDraft?.progress || {}),
+  });
 
   // The venue's country (best-effort guess from the Google address, see
   // AddBorsch.jsx) decides which currency's quick-tap values the price
   // question offers — ₴120-300 means nothing next to a Berlin bill in euros.
   const priceChips = getPriceChipsForCountry(flowContext?.country);
 
-  const steps = useMemo(
-    () => [
-      // The photo goes first, because by the end there is nothing left to
-      // photograph. Every taste question in tasteSteps() — how much meat, how
-      // thick, how salty, what aftertaste — can only be answered by someone
-      // who has eaten the bowl, so asking for a picture afterwards asks for it
-      // at the one moment it cannot exist. It stays optional and skippable.
-      { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
-      ...tasteSteps(),
-      { type: 'choice', key: 'meatType', i18n: 'flow.qMeatType', options: MEAT_OPTIONS },
-      {
-        type: 'text',
-        key: 'name',
-        i18n: 'flow.qName',
-        hint: 'flow.qNameHint',
-        placeholder: 'flow.qNamePlaceholder',
-        chips: ['chip.borsch', 'chip.borschRed', 'chip.borschGreen', 'chip.borschPampushky'],
-      },
-      { type: 'number', key: 'price', i18n: 'flow.qPrice', hint: 'flow.qPriceHint', unit: priceChips.unit, chips: priceChips.chips, min: 0 },
-      { type: 'number', key: 'weight', i18n: 'flow.qWeight', hint: 'flow.qWeightHint', unit: 'flow.unitGram', chips: [250, 280, 350, 400, 500], min: 0 },
-      { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
-      ...(needsSignIn
-        ? [{ type: 'signin', key: 'signin', i18n: 'flow.signinTitle', hint: 'flow.signinHint' }]
-        : []),
-      { type: 'done', key: 'done' },
-    ],
-    [needsSignIn, priceChips]
-  );
+  const steps = useMemo(() => buildAddSteps({ needsSignIn, priceChips }), [needsSignIn, priceChips]);
 
   const onChange = useCallback((key, value) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -237,6 +263,11 @@ export const AddBorschFlow = () => {
       onSignIn={onSignIn}
       initialStep={draftStep}
       onStepChange={setDraftStep}
+      analytics={{
+        flow: 'add',
+        offset: ADD_PLACE_STEPS.length,
+        context: { entry: flowContext.placeId ? 'bowl' : 'map' },
+      }}
     />
   );
 };

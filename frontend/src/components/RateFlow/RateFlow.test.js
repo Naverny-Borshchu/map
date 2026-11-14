@@ -188,3 +188,42 @@ describe('the photo is asked for while there is still a borsch to photograph', (
     expect(await screen.findByText(/Скільки в ньому було мʼяса/i)).toBeInTheDocument();
   });
 });
+
+describe('RateFlow for a bowl (moment 2)', () => {
+  it('skips the photo screen when the bowl already brought a photo', () => {
+    render(
+      <MemoryRouter>
+        <I18nProvider>
+          <UserProvider>
+            <RateFlow
+              criteria={CRITERIA}
+              grades={{}}
+              onGrade={() => {}}
+              comment=""
+              onComment={() => {}}
+              photos={[]}
+              onPhotos={() => {}}
+              onSubmit={() => {}}
+              onExit={() => {}}
+              saving={false}
+              isSent={false}
+              error=""
+              borschName="Борщ"
+              withPhotoStep={false}
+            />
+          </UserProvider>
+        </I18nProvider>
+      </MemoryRouter>
+    );
+    // the first screen is the first taste question, not «Покажи свій борщ»
+    expect(screen.getByText('Скільки в ньому було мʼяса?')).toBeInTheDocument();
+    expect(screen.queryByText('Покажи свій борщ')).not.toBeInTheDocument();
+  });
+
+  it('counts its screens for a picker in front of it', () => {
+    const { rateStepCount } = require('./RateFlow');
+    expect(rateStepCount({ withPhoto: true, needsSignIn: false })).toBe(10);
+    expect(rateStepCount({ withPhoto: false, needsSignIn: true })).toBe(10);
+    expect(rateStepCount({ withPhoto: true, needsSignIn: true })).toBe(11);
+  });
+});

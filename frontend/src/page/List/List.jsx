@@ -11,6 +11,7 @@ import { useUser } from '../../context/UserContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useRequireAuthAction } from '../../hook/useRequireAuthAction';
 import { useT } from "../../i18n";
+import { AddPhotoLater } from '../../components/AddPhotoLater';
 
 export const List = () => {
   const t = useT();
@@ -107,6 +108,8 @@ export const List = () => {
             liked={isFavorite(el.id_borsch)}
             onToggleLike={() => handleToggleLike(el.id_borsch)}
             onOpen={() => onClickCard(el.id_borsch)}
+            // «Фото пізніше»: the photo of a borshch rated before it was taken
+            extra={<AddPhotoLater borschId={el.id_borsch} />}
           />
         ))}
       </div>

@@ -3,7 +3,7 @@ import { useT } from '../../i18n';
 import { useUser } from '../../context/UserContext';
 import { QuestFlow, XP_PER_STEP } from '../QuestFlow';
 import { hasTenPointScale } from '../../variant';
-import { SCALE_ANSWERS } from '../QuestFlow/answers';
+import { SCALE_ANSWERS, SCALE_KEYS } from '../QuestFlow/answers';
 import { googleAuth } from '../../services/googleAuth';
 
 /**
@@ -17,6 +17,13 @@ import { googleAuth } from '../../services/googleAuth';
  * The step machinery lives in QuestFlow; this component only knows which
  * questions a borsch has and where the answers go.
  */
+/**
+ * How many screens the rating has, for the step events of a picker that runs
+ * before it (see BowlFlow): photo, seven questions, comment, sign-in, done.
+ */
+export const rateStepCount = ({ withPhoto = true, needsSignIn = false } = {}) =>
+  (withPhoto ? 1 : 0) + SCALE_KEYS.length + 1 + (needsSignIn ? 1 : 0) + 1;
+
 export const RateFlow = ({
   criteria,          // [{ key, i18n, icon }] — order comes from the caller
   grades,
@@ -39,6 +46,12 @@ export const RateFlow = ({
   xpTotal = null,
   initialStep = 0,
   onStepChange,
+  // A bowl brought its photo from moment 1 (services/bowlDrafts): asking for
+  // one again, after the meal, is asking for a picture of an empty plate.
+  withPhotoStep = true,
+  analytics = null,
+  doneExtra = null,
+  cover = null,
 }) => {
   const t = useT();
   const { isAuthenticated, completeGoogleSignIn } = useUser();
@@ -51,7 +64,9 @@ export const RateFlow = ({
       // how salty, what aftertaste — can only be answered by someone who has
       // eaten the bowl, so asking for a picture afterwards asks for it at the
       // one moment it cannot exist. It stays optional and skippable.
-      { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
+      ...(withPhotoStep
+        ? [{ type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' }]
+        : []),
       ...criteria.map((c) => ({
         type: 'scale',
         key: c.key,
@@ -72,7 +87,7 @@ export const RateFlow = ({
         : []),
       { type: 'done', key: 'done' },
     ],
-    [criteria, needsSignIn]
+    [criteria, needsSignIn, withPhotoStep]
   );
 
   const values = useMemo(
@@ -129,6 +144,9 @@ export const RateFlow = ({
           onSignIn={onSignIn || handleSignIn}
           initialStep={initialStep}
           onStepChange={onStepChange}
+          analytics={analytics}
+          doneExtra={doneExtra}
+          cover={cover}
     />
   );
 };

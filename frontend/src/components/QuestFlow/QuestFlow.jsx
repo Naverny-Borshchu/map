@@ -6,6 +6,7 @@ import { useT } from '../../i18n';
 import { optionForValue, scaleEnds } from './answers';
 import { tokenStorage } from '../../services/tokenStorage';
 import { IconCamera, IconClose } from '../Icons';
+import { useFlowTracking } from '../../hook/useFlowTracking';
 import style from './QuestFlow.module.scss';
 
 /**
@@ -114,6 +115,15 @@ export const QuestFlow = ({
   onSignIn,
   initialStep = 0,
   onStepChange,
+  // Step events (services/flowAnalytics). `offset` counts the screens of the
+  // same flow that came before this one on other routes (the map pick, say),
+  // so `index` and `total` describe the whole journey, not just this part.
+  analytics = null,       // { flow, offset = 0, context }
+  // Shown on the closing screen once the save went through, under the XP.
+  doneExtra = null,
+  // A photo of the borshch being rated (a bowl's, from moment 1), shown next
+  // to the mascot so it is clear which bowl the questions are about.
+  cover = null,
 }) => {
   const t = useT();
   const [step, setStep] = useState(() => Math.max(0, Number(initialStep) || 0));
@@ -130,6 +140,21 @@ export const QuestFlow = ({
   if (status.photosFailed > 0) hadPhotoFailure.current = true;
   const taskSteps = useMemo(() => steps.filter((s) => s.type !== 'done'), [steps]);
   const scaleSteps = useMemo(() => steps.filter((s) => s.type === 'scale'), [steps]);
+
+  const offset = analytics?.offset || 0;
+  const { markClosing } = useFlowTracking({
+    flow: analytics?.flow || 'quest',
+    // no flow name, no events: a caller that did not ask is not measured
+    step: analytics ? current?.key || null : null,
+    index: offset + Math.min(step, steps.length - 1),
+    total: offset + steps.length,
+    finished: current?.type === 'done' && !!status.sent,
+    context: analytics?.context || null,
+  });
+  const handleExit = () => {
+    markClosing();
+    onExit?.();
+  };
 
   const filledCount = taskSteps.filter((s, i) => i < step || isStepAnswered(s, values)).length;
   const scaleFilled = scaleSteps.filter((s) => isStepFilled(s, values)).length;
@@ -198,6 +223,18 @@ export const QuestFlow = ({
     onChange('photos', photos.filter((_, i) => i !== index));
   };
 
+  const [coverUrl, setCoverUrl] = useState(null);
+  useEffect(() => {
+    if (!cover) {
+      setCoverUrl(null);
+      return undefined;
+    }
+    let url = null;
+    try { url = URL.createObjectURL(cover); } catch (e) { url = null; }
+    setCoverUrl(url);
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [cover]);
+
   const canAdvance = current ? isStepFilled(current, values) : false;
   const optional = current?.type === 'photo' || current?.type === 'comment';
 
@@ -265,7 +302,7 @@ export const QuestFlow = ({
       </div>
 
       <header className={style.head}>
-        <button type="button" className={style.quit} onClick={onExit} aria-label={t('card.close')}>
+        <button type="button" className={style.quit} onClick={handleExit} aria-label={t('card.close')}>
           <IconClose size={22} />
         </button>
 
@@ -301,6 +338,7 @@ export const QuestFlow = ({
           <>
             <div className={style.mascotBox}>
               <Mascot mood={mood} size={92} key={`${current?.key}-${mood}`} />
+              {coverUrl && <img className={style.cover} src={coverUrl} alt={t('bowl.coverAlt')} />}
             </div>
             <p className={style.stepCount}>
               {title ? `${title} · ` : ''}
@@ -552,6 +590,7 @@ export const QuestFlow = ({
                 {!status.photosFailed && hadPhotoFailure.current && (
                   <p className={style.photoWarn} role="status">{t('flow.photoRetryOk')}</p>
                 )}
+                {doneExtra}
               </>
             )}
             {!status.saving && !status.sent && (

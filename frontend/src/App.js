@@ -12,6 +12,8 @@ import {PersonalInfo} from "./page/PersonalInfo";
 import { EvaluationsPage } from "./page/EvaluationsPage";
 import { SelectPlacePage } from "./page/SelectPlacePage";
 import { AddBorschFlow } from "./page/AddBorschFlow";
+import { BowlFlow } from "./page/BowlFlow";
+import { BowlRatePage } from "./page/BowlRatePage";
 // import {UserPasswordPage} from "./page/UserPasswordPage";
 import {PasswordChangePage} from "./page/PasswordChangePage";
 import {HelpPage} from "./page/HelpPage/HelpPage";
@@ -53,6 +55,9 @@ export default function App() {
             <Route path="/add-borsch/select-place" element={<SelectPlacePage />} />
             <Route path="/add-borsch/select-place/:borschId" element={<AddBorschFlow />} />
             <Route path="/borsch/:borschId/evaluations" element={<EvaluationsPage />} />
+            {/* Оцінка Борщу 2.0: a bowl, brought now and rated after the meal */}
+            <Route path="/bowl/new" element={<BowlFlow />} />
+            <Route path="/bowl/:bowlId/rate" element={<BowlRatePage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/personal-information" element={<PersonalInfo />} />
             <Route path="/profile/added-borsches" element={<AddedBorschesPage />} />

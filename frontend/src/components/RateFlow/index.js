@@ -1,1 +1,1 @@
-export { RateFlow } from "./RateFlow";
+export { RateFlow, rateStepCount } from "./RateFlow";
