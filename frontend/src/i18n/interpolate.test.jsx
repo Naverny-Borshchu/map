@@ -11,5 +11,5 @@ test('«$&» and «$1» in a value stay literal', () => {
       <Line k="table.atVenue" vars={{ venue: 'Бар $& $1 $$' }} />
     </I18nProvider>
   );
-  expect(screen.getByText('Стіл у закладі «Бар $& $1 $$»')).toBeInTheDocument();
+  expect(screen.getByText('Дегустація в закладі «Бар $& $1 $$»')).toBeInTheDocument();
 });

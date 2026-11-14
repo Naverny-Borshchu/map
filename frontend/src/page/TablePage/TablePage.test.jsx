@@ -154,7 +154,7 @@ describe('the link /t/<code>', () => {
 
   it('something that cannot be a code is an unknown table, without asking the API', async () => {
     renderAt('/t/H0LA-1');
-    expect(screen.getByRole('heading', { name: 'Такого Столу нема' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Такої дегустації нема' })).toBeInTheDocument();
     expect(tablesAPI.get).not.toHaveBeenCalled();
   });
 
@@ -162,7 +162,7 @@ describe('the link /t/<code>', () => {
     tablesAPI.get.mockRejectedValue(Object.assign(new Error('Стіл з таким кодом не знайдено.'), { status: 404 }));
     const user = userEvent.setup();
     renderAt('/t/ZZZZZZ');
-    expect(await screen.findByRole('heading', { name: 'Такого Столу нема' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Такої дегустації нема' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'На мапу' }));
     expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/);
   });
@@ -174,10 +174,10 @@ describe('a guest at an open blind table', () => {
     const user = userEvent.setup();
     renderAt('/t/K7M2QX');
     expect(await screen.findByRole('heading', { name: 'День Борщу' })).toBeInTheDocument();
-    expect(screen.getByText('Збирає Андрій')).toBeInTheDocument();
+    expect(screen.getByText('Веде Андрій')).toBeInTheDocument();
     expect(screen.getByText('Борщ №1')).toBeInTheDocument();
     expect(screen.getByText('Борщ №2')).toBeInTheDocument();
-    expect(screen.getByText('Наосліп: назви відкриються, коли ведучий закриє Стіл.')).toBeInTheDocument();
+    expect(screen.getByText('Наосліп: назви відкриються, коли ведучий завершить дегустацію.')).toBeInTheDocument();
     expect(screen.queryByText(/Червоний|Зелений/)).not.toBeInTheDocument();
     // nothing about price, weight or photo is asked of a guest
     expect(screen.queryByText(/Ціна|Порція|фото на камері/i)).not.toBeInTheDocument();
@@ -239,7 +239,7 @@ describe('a guest at an open blind table', () => {
     }));
     renderAt('/t/K7M2QX');
     expect(await screen.findByRole('heading', { name: 'Дякуємо!' })).toBeInTheDocument();
-    expect(screen.getByText('Підсумок зʼявиться, коли ведучий закриє Стіл.')).toBeInTheDocument();
+    expect(screen.getByText('Підсумок зʼявиться, коли ведучий завершить дегустацію.')).toBeInTheDocument();
     const mine = screen.getByRole('list', { name: 'Твої оцінки' });
     expect(within(mine).getByText('Борщ №1')).toBeInTheDocument();
     expect(within(mine).getByText('8')).toBeInTheDocument();
@@ -256,7 +256,7 @@ describe('a guest at an open blind table', () => {
     await user.type(await screen.findByLabelText('Як тебе звати?'), 'Оля');
     await user.click(screen.getByRole('button', { name: 'Почати' }));
     await answerSeven(user, 'Борщ №1');
-    expect(await screen.findByText('Підсумок Столу')).toBeInTheDocument();
+    expect(await screen.findByText('Підсумок дегустації')).toBeInTheDocument();
   });
 });
 
@@ -265,7 +265,7 @@ describe('the host', () => {
     signIn();
     tablesAPI.get.mockResolvedValue(table({ is_host: true, names_hidden: false, borsches: NAMED, me: { kind: 'user', rated_positions: [] } }));
     renderAt('/t/K7M2QX');
-    expect(await screen.findByText('Твій Стіл')).toBeInTheDocument();
+    expect(await screen.findByText('Твоя дегустація')).toBeInTheDocument();
     expect(screen.getByTestId('table-code')).toHaveTextContent('K7M2QX');
     expect(screen.getByTestId('table-qr')).toHaveAttribute('data-link', 'https://map.navernyborshchu.com/t/K7M2QX');
     // a blind table's QR is shown to everyone: the host's names wait for a tap
@@ -286,11 +286,11 @@ describe('the host', () => {
     tablesAPI.results.mockResolvedValue(RESULTS);
     const user = userEvent.setup();
     renderAt('/t/K7M2QX');
-    await user.click(await screen.findByRole('button', { name: 'Закрити Стіл' }));
+    await user.click(await screen.findByRole('button', { name: 'Завершити дегустацію' }));
     expect(tablesAPI.close).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Так, закрити' }));
+    await user.click(screen.getByRole('button', { name: 'Так, завершити' }));
     expect(tablesAPI.close).toHaveBeenCalledWith('K7M2QX', { from: 'host' });
-    expect(await screen.findByText('Підсумок Столу')).toBeInTheDocument();
+    expect(await screen.findByText('Підсумок дегустації')).toBeInTheDocument();
     expect(calls('table_results_viewed')).toEqual([expect.objectContaining({ code: 'K7M2QX', as: 'host' })]);
   });
 });
@@ -300,7 +300,7 @@ describe('the results', () => {
     tablesAPI.get.mockResolvedValue(table({ status: 'closed', names_hidden: false, borsches: NAMED }));
     tablesAPI.results.mockResolvedValue(RESULTS);
     renderAt('/t/K7M2QX');
-    expect(await screen.findByText('Підсумок Столу')).toBeInTheDocument();
+    expect(await screen.findByText('Підсумок дегустації')).toBeInTheDocument();
     expect(screen.getByText('Наосліп: назви відкрито')).toBeInTheDocument();
     expect(screen.getByTestId('table-average')).toHaveTextContent('7.4');
     const divisive = screen.getByTestId('table-divisive');
@@ -458,7 +458,7 @@ describe('stage 3: after closing, a photo for the borshch the table put on the m
     tablesAPI.get.mockResolvedValue(CLOSED);
     tablesAPI.results.mockResolvedValue(WITH_NEW);
     renderAt('/t/K7M2QX');
-    await screen.findByText('Підсумок Столу');
+    await screen.findByText('Підсумок дегустації');
     expect(screen.queryByTestId('new-borsch-prompt')).not.toBeInTheDocument();
   });
 });

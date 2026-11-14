@@ -97,7 +97,7 @@ describe('setting up a table', () => {
     await user.click(screen.getByText('Ватра').closest('button'));
 
     // the venue's only borshch is on the table already, as №1
-    expect(screen.getByRole('heading', { name: 'Які Борщі на Столі?' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Які Борщі дегустуємо?' })).toBeInTheDocument();
     const only = screen.getByRole('button', { name: /Борщ український/ });
     expect(only).toHaveAttribute('aria-pressed', 'true');
     expect(only).toHaveTextContent('№1');
@@ -106,7 +106,7 @@ describe('setting up a table', () => {
     const field = screen.getByLabelText('Іншого Борщу нема в списку? Впиши назву');
     await user.type(field, 'борщ УКРАЇНСЬКИЙ');
     await user.click(screen.getByRole('button', { name: 'Додати' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Такий Борщ уже на Столі.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Цей Борщ уже є в дегустації.');
     await user.clear(field);
     await user.type(field, 'Борщ з чорносливом{Enter}');
     expect(screen.getByText('Борщ з чорносливом').closest('div')).toHaveTextContent('№2');
@@ -129,8 +129,8 @@ describe('setting up a table', () => {
     expect(blind).toHaveAttribute('aria-checked', 'false');
     await user.click(blind);
     expect(blind).toHaveAttribute('aria-checked', 'true');
-    await user.type(screen.getByLabelText('Назва Столу, якщо хочеш'), 'День Борщу');
-    await user.click(screen.getByRole('button', { name: 'Створити Стіл' }));
+    await user.type(screen.getByLabelText('Назва дегустації, якщо хочеш'), 'День Борщу');
+    await user.click(screen.getByRole('button', { name: 'Створити дегустацію' }));
 
     expect(tablesAPI.create).toHaveBeenCalledWith({
       place: 'p-vatra',
@@ -164,13 +164,13 @@ describe('setting up a table', () => {
     const user = userEvent.setup();
     renderCreate('/table/new?borsch=b-puz2&from=card');
     // from a borshch card: venue and borshch are set
-    expect(await screen.findByRole('heading', { name: 'Які Борщі на Столі?' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Які Борщі дегустуємо?' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Борщ зелений/ })).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Далі' }));
     await user.click(screen.getByRole('button', { name: 'Далі' }));
-    expect(screen.getByText('Стіл належить тому, хто його збирає. Увійди, і створимо.')).toBeInTheDocument();
+    expect(screen.getByText('Дегустація належить тому, хто її влаштовує. Увійди, і створимо.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Google test' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Створити Стіл' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Створити дегустацію' })).toBeDisabled();
     expect(tablesAPI.create).not.toHaveBeenCalled();
   });
 });
@@ -219,7 +219,7 @@ describe('stage 3', () => {
     await user.click(within(meat).getByRole('button', { name: 'Свинина' }));
     expect(within(meat).getByRole('button', { name: 'Свинина' })).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Далі' }));
-    await user.click(screen.getByRole('button', { name: 'Створити Стіл' }));
+    await user.click(screen.getByRole('button', { name: 'Створити дегустацію' }));
 
     await waitFor(() => expect(tablesAPI.create).toHaveBeenCalledWith({
       place: 'p-new',

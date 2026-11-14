@@ -30,15 +30,15 @@ it('lists my tables with their status and links them', async () => {
     { code: 'P4RT9Z', title: '', status: 'closed', created_at: '2026-11-14T13:00:00+02:00', place: { name: 'Пузата хата', city: 'Київ' }, borsch_count: 1, review_count: 1 },
   ]);
   renderMine();
-  expect(await screen.findByRole('heading', { name: 'Мої Столи' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Мої дегустації' })).toBeInTheDocument();
   const [open, closed] = screen.getAllByRole('link');
   expect(open).toHaveAttribute('href', '/t/K7M2QX');
   expect(within(open).getByText('День Борщу')).toBeInTheDocument();
-  expect(within(open).getByText('Відкритий')).toBeInTheDocument();
+  expect(within(open).getByText('Триває')).toBeInTheDocument();
   expect(open).toHaveTextContent('Ватра · 21 листопада · 3 Борщі · 22 оцінки');
   expect(closed).toHaveAttribute('href', '/t/P4RT9Z');
   expect(within(closed).getByText('Пузата хата')).toBeInTheDocument();
-  expect(within(closed).getByText('Закритий')).toBeInTheDocument();
+  expect(within(closed).getByText('Завершена')).toBeInTheDocument();
   expect(closed).toHaveTextContent('1 Борщ · 1 оцінка');
 });
 
