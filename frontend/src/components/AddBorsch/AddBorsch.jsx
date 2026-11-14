@@ -8,6 +8,7 @@ import style from './AddBorsch.module.scss';
 import { useT } from '../../i18n';
 import { useFilters } from '../../context/FiltersContext';
 import { guessCountryFromAddress } from '../../utils/currency';
+import { markFlowHandover } from '../../services/flowAnalytics';
 
 const API_KEY = process.env.REACT_APP_API_KEY_MAP;
 
@@ -93,6 +94,8 @@ export const AddBorsch = ({ onClose, placeData, place, candidates = [], onPickCa
   };
 
   const handleSelect = () => {
+    // the next screen of the same add flow, not a way out of it
+    markFlowHandover('add');
     navigate("/add-borsch/select-place", {
       state: {
         street,

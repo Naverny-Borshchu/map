@@ -42,7 +42,8 @@ describe('bottom navigation (NAV-203)', () => {
     const nav = renderAt('/');
     const slots = within(nav).getAllByRole('listitem');
     expect(slots).toHaveLength(3);
-    expect(within(slots[1]).getByRole('link', { name: 'Додати борщ' })).toHaveAttribute('href', '/add-borsch');
+    // Оцінка Борщу 2.0: the centre action opens a chooser instead of the map
+    expect(within(slots[1]).getByRole('button', { name: 'Додати борщ' })).toHaveAttribute('aria-haspopup', 'dialog');
     expect(within(slots[0]).getByRole('link', { name: 'Показати списком' })).toHaveAttribute('href', '/list');
     expect(within(slots[2]).getByRole('link', { name: 'Ви' })).toHaveAttribute('href', '/profile');
   });

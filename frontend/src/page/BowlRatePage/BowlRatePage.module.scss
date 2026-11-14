@@ -1,0 +1,12 @@
+@use "../../styles/mixin_adaptiv.scss" as *;
+
+// Only the waiting and «gone» states draw here; the rating itself is the
+// full-screen quest.
+.page {
+  min-height: 100%;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 24px;
+  background-color: var(--color-bg-grey);
+  @include respond(desktop) {
+    padding: calc(var(--nb-topbar-h) + 28px) 32px 40px;
+  }
+}

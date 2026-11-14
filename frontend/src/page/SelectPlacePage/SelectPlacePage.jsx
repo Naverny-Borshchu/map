@@ -7,6 +7,9 @@ import { PageHeader } from "../../components/PageHeader";
 import { EmptyState } from "../../components/EmptyState";
 import { ratingPinIcon } from "../../components/Map/markerIcons";
 import { useT } from "../../i18n";
+import { useFlowTracking } from "../../hook/useFlowTracking";
+import { markFlowHandover } from "../../services/flowAnalytics";
+import { addFlowTotal } from "../AddBorschFlow/AddBorschFlow";
 import style from "./SelectPlacePage.module.scss";
 const containerStyle = {
   width: "100%",
@@ -38,6 +41,13 @@ export const SelectPlacePage = () => {
   const [zoomLevel, setZoomLevel] = useState(17);
   const mapRef = React.useRef(null);
   const navigate = useNavigate();
+  useFlowTracking({
+    flow: 'add',
+    step: state?.place ? 'place_confirm' : null,
+    index: 1,
+    total: addFlowTotal(),
+    context: { entry: 'map' },
+  });
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: API_KEY,
@@ -54,6 +64,7 @@ export const SelectPlacePage = () => {
   }, []);
   const borschId="123";
   const handleSelect = () => {
+    markFlowHandover('add');
     navigate(`/add-borsch/select-place/${borschId}`, {
       state: {
         // the name as confirmed here: Google is often a tenant behind
