@@ -18,7 +18,7 @@ jest.mock('../../hook/useMediaQuery', () => ({ useMediaQuery: jest.fn() }));
 jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), track: jest.fn() }));
 
 /**
- * «Додати борщ» in the middle of the tab bar (and on top of the desktop
+ * «Додати Борщ» in the middle of the tab bar (and on top of the desktop
  * sidebar) opens a chooser with three ways in, the bowl first.
  */
 
@@ -51,7 +51,7 @@ beforeEach(() => {
 });
 
 const openChooser = async (user) => {
-  await user.click(screen.getByRole('button', { name: 'Додати борщ' }));
+  await user.click(screen.getByRole('button', { name: 'Додати Борщ' }));
   return screen.getByRole('dialog', { name: 'Борщ на столі?' });
 };
 

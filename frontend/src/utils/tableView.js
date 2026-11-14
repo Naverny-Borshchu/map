@@ -1,3 +1,4 @@
+import { dayMonth } from './dates';
 /**
  * Small readings of a table as the API returns it (api/tables.js), shared by
  * the host screen, the guest flow, the results and the story image.
@@ -62,7 +63,7 @@ export const tableDate = (iso, lang = 'uk') => {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'long' });
+  return dayMonth(d, lang);
 };
 
 /**

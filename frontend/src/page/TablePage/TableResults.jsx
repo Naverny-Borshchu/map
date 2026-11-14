@@ -22,6 +22,7 @@ import { TableClaim } from './TableClaim';
 import { NewBorschPrompt } from './NewBorschPrompt';
 import layout from '../../styles/layout.module.scss';
 import style from './TableResults.module.scss';
+import { joinMeta } from '../../utils/dates';
 
 const METERS = [
   { key: 'rating_meat', icon: IconMeat },
@@ -95,11 +96,11 @@ export const TableResults = ({ code, table, guestToken: initialToken = null }) =
 
   const venue = venueLabel(results.place?.name || '');
   const heading = results.title || t('table.atVenue', { venue });
-  const lead = [
+  const lead = joinMeta([
     results.title ? venue : null,
     results.place?.city ? cityLabel(results.place.city) : null,
     tableDate(results.closed_at, lang),
-  ].filter(Boolean).join(' · ');
+  ]);
   const divisive = divisiveLabel(results, t, dishLabel);
   const raters = results.raters_total || 0;
   const link = tableLink(code, table?.share_url);

@@ -38,12 +38,12 @@ beforeEach(() => localStorage.clear());
 // NAV-203 (Andrii, 10.11.2026): the green «+» sat off-centre and above the
 // bar, and «Помилка» sat among the tabs.
 describe('bottom navigation (NAV-203)', () => {
-  it('is three slots with «Додати борщ» in the middle one', () => {
+  it('is three slots with «Додати Борщ» in the middle one', () => {
     const nav = renderAt('/');
     const slots = within(nav).getAllByRole('listitem');
     expect(slots).toHaveLength(3);
     // Оцінка Борщу 2.0: the centre action opens a chooser instead of the map
-    expect(within(slots[1]).getByRole('button', { name: 'Додати борщ' })).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(within(slots[1]).getByRole('button', { name: 'Додати Борщ' })).toHaveAttribute('aria-haspopup', 'dialog');
     expect(within(slots[0]).getByRole('link', { name: 'Показати списком' })).toHaveAttribute('href', '/list');
     expect(within(slots[2]).getByRole('link', { name: 'Ви' })).toHaveAttribute('href', '/profile');
   });

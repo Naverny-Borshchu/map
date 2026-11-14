@@ -1,3 +1,4 @@
+import { dayMonth } from './dates';
 /**
  * When and where a photo from the camera roll was taken, read on the device
  * from the ORIGINAL file, before preparePhoto shrinks it. Nothing of this is
@@ -215,6 +216,6 @@ export const formatTakenAt = (takenAt, lang = 'uk') => {
   if (!m) return '';
   const [, y, mo, d, h, mi] = m.map(Number);
   const date = new Date(y, mo - 1, d, h, mi);
-  const day = date.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'long' });
+  const day = dayMonth(date, lang);
   return `${day}, ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
 };

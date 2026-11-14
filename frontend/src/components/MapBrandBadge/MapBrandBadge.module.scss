@@ -14,10 +14,14 @@
   align-items: stretch;
   gap: 8px;
 
+  // As wide as the lock-up needs. It was capped at 220px to share the row
+  // with the Мапа / Список toggle; the toggle moved into the bottom bar, and
+  // the cap made «Наверни Борщу» stick out of the plaque on every phone
+  // from 380px up (34px past the edge at 390, measured 14.11.2026).
   width: max-content;
-  max-width: min(58vw, 220px);
+  max-width: calc(100vw - 24px);
 
-  padding: 10px 14px 10px 10px;
+  padding: 10px 16px 10px 10px;
   border-radius: 20px;
 
   background-color: var(--surface-soft);
@@ -29,35 +33,23 @@
   user-select: none;
 }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
 .logo {
-  // MAK below 21px reads «M/N» as «H» (brand kit), so the name keeps 21px
-  // and the plate shrinks instead
-  :global(img) {
-    width: 30px;
-    height: 30px;
+  // MAK below 21px reads «M/N» as «H» (brand kit), so the name keeps 21px;
+  // the plate spans both lines (name and counter) of the lock-up
+  :global(.nb-plate) {
+    width: 40px;
+    height: 40px;
   }
 }
 
-.count {
+// two classes: wins over Brand's own tagline style whatever the CSS order
+.logo .count {
   @include footnote;
+  margin-top: 2px;
   font-size: 12.5px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--nb-ink-2);
   white-space: nowrap;
-  padding-left: 2px;
   font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 379px) {
-  .badge {
-    max-width: min(86vw, 260px);
-  }
 }

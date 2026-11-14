@@ -6,6 +6,7 @@ import { usePlaces } from '../../context/PlacesContext';
 import { useI18n, useVenueLabel, useCityLabel } from '../../i18n';
 import style from '../MyTables/MyTables.module.scss';
 import own from './MyTips.module.scss';
+import { dayMonth, joinMeta } from '../../utils/dates';
 
 // a person's own words go in as they are, never through t(): «$&» in a note must stay «$&»
 const quote = (note, lang) => (lang === 'en' ? `“${note}”` : `«${note}»`);
@@ -13,7 +14,7 @@ const quote = (note, lang) => (lang === 'en' ? `“${note}”` : `«${note}»`);
 const tipDate = (iso, lang) => {
   const d = iso ? new Date(iso) : null;
   if (!d || Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'long' });
+  return dayMonth(d, lang);
 };
 
 /**
@@ -54,11 +55,11 @@ export const MyTips = ({ className = '' }) => {
       <p className={style.lead}>{t('tip.mineLead')}</p>
       <ul className={style.list}>
         {tips.map((tip) => {
-          const meta = [
+          const meta = joinMeta([
             tip.place?.city ? cityLabel(tip.place.city) : null,
             tipDate(tip.created_at, lang),
             tip.confirmations ? t('tip.confirmations', { count: tip.confirmations }) : null,
-          ].filter(Boolean).join(' · ');
+          ]);
           return (
             <li key={tip.id}>
               <button type="button" className={`${style.row} ${own.row}`} onClick={() => open(tip)}>

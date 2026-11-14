@@ -74,5 +74,5 @@ test('says how long ago the borshch was brought', () => {
   expect(bowlAge(now - 20 * 1000, now, t)).toBe('щойно');
   expect(bowlAge(now - 25 * 60000, now, t)).toBe('25 хв тому');
   expect(bowlAge(now - 3 * 3600000, now, t)).toBe('3 год тому');
-  expect(bowlAge(now - 30 * 3600000, now, t, 'uk')).toMatch(/13 листопада/);
+  expect(bowlAge(now - 30 * 3600000, now, t, 'uk')).toMatch(/13\u00a0листопада/);
 });

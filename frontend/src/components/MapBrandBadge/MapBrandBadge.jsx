@@ -52,12 +52,12 @@ export const MapBrandBadge = () => {
 
   return (
     <div ref={boxRef} className={`${style.badge} nb-brandbadge`}>
-      <div className={style.brand}>
-        <Brand size="sm" className={style.logo} />
-        <span className={style.count}>
-          {loading ? t('map.loadingShort') : t('map.borschesShort', { count })}
-        </span>
-      </div>
+      <Brand
+        size="sm"
+        className={style.logo}
+        sub={loading ? t('map.loadingShort') : t('map.borschesShort', { count })}
+        subClassName={style.count}
+      />
       {!loading && <QuestChip inline />}
     </div>
   );
