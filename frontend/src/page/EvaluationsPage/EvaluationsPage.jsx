@@ -17,7 +17,8 @@ import { EmptyState } from '../../components/EmptyState';
 import { FactsQuestion } from '../../components/FactsQuestion';
 import { usePlaces } from '../../context/PlacesContext';
 import { track } from '../../analytics';
-import { deleteDraft, updateDraft } from '../../services/bowlDrafts';
+import { deleteDraft, getDraft, updateDraft } from '../../services/bowlDrafts';
+import { ensureBowlTargets } from '../../services/bowlTargets';
 import style from './EvaluationsPage.module.scss';
 import { useT, useDishLabel } from "../../i18n";
 import {
@@ -41,11 +42,34 @@ const GradesArray = [
  * bowl           moment 2 of a bowl (services/bowlDrafts): the rating of a
  *                borshch whose photo was taken when it arrived
  * initialPhotos  that photo, read back from IndexedDB by BowlRatePage
+ *
+ * A bowl of a venue from Google Places or of «Інший Борщ» has no borshch id
+ * yet: the questions show its name, and the venue and the borshch are created
+ * (services/bowlTargets) right before the rating is sent, signed in by then.
+ * Nobody has rated a borshch that does not exist yet, so it is a Першовар.
  */
+const pendingBorsch = (bowl) => ({
+  id_borsch: null,
+  name: bowl.borsch?.name || '',
+  place_id: bowl.place?.id || null,
+  place_name: bowl.place?.name || '',
+  place_city: bowl.place?.city || '',
+  price: '',
+  weight: '',
+  price_value: 0,
+  weight_value: 0,
+  rating_count: 0,
+  community_review_count: 0,
+  overall_rating: '—',
+  photo_urls: [],
+});
+
 export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos = [] }) => {
     const params = useParams();
     const location = useLocation();
-    const id = propId || params?.borschId || bowl?.borsch?.id;
+    // the id of a bowl's new borshch, once it has been created
+    const [createdId, setCreatedId] = useState(null);
+    const id = propId || params?.borschId || bowl?.borsch?.id || createdId;
     const draftKey = bowl ? `nb:quest-draft:bowl:${bowl.id}` : `nb:quest-draft:rate:${id}`;
     const [restoredDraft] = useState(() => readSessionDraft(draftKey));
     const [isSent, setIsSent] = useState(false);
@@ -93,8 +117,8 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const [notFound, setNotFound] = useState(false);
     const [xpTotal, setXpTotal] = useState(null);
     const bowlRated = useRef(false);
-    const fromContext = getBorschById(id);
-    const borschOne = fromContext || fetched;
+    const fromContext = id ? getBorschById(id) : null;
+    const borschOne = fromContext || fetched || (bowl && !id ? pendingBorsch(bowl) : null);
 
     // "Розвідка борщу": rating a borsch nobody ever tried makes you its
     // Першовар (×3 XP); confirming a founders'-catalogue score is worth ×2.
@@ -148,8 +172,17 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       setSaving(true);
       setSaveError('');
       try {
+        // A bowl's new venue and borshch first; their ids go into the bowl at
+        // once, so a retry after a failure here does not create them twice.
+        let targetId = id;
+        if (!targetId && bowl) {
+          const made = await ensureBowlTargets(getDraft(bowl.id) || bowl);
+          targetId = made.borschId;
+          if (made.borsch) setFetched(made.borsch);
+          setCreatedId(targetId);
+        }
         // Реальний бекенд: POST /api/reviews/ з Bearer-токеном (id борщу — UUID-рядок)
-        await commentsAPI.createByBorschId(id, {
+        await commentsAPI.createByBorschId(targetId, {
           rating_meat: grades.meat,
           rating_beet: grades.beetroot,
           rating_density: grades.density,
@@ -166,13 +199,13 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         let photosFailed = 0;
         if (photos.length) {
           const result = await uploadPhotos({
-            borschId: id, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
+            borschId: targetId, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
           });
           photosFailed = result.failed;
           setPhotosUploaded(result.uploaded);
           setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
         }
-        if (bowl) settleBowl(photosFailed);
+        if (bowl) settleBowl(photosFailed, targetId);
 
         // Re-read both server-backed contracts: the reviews list AND the
         // borsch aggregate the backend recalculated after the POST. Without
@@ -181,8 +214,8 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         await Promise.all([syncWithServer(), loadBorschData()]);
         // Save to rated list
         const ratedIds = JSON.parse(localStorage.getItem('ratedBorsch') || '[]');
-        if (!ratedIds.includes(String(id))) {
-          localStorage.setItem('ratedBorsch', JSON.stringify([...ratedIds, String(id)]));
+        if (!ratedIds.includes(String(targetId))) {
+          localStorage.setItem('ratedBorsch', JSON.stringify([...ratedIds, String(targetId)]));
         }
         // XP: 10 per rating step, tripled for a first discovery. The running
         // total lives in localStorage until accounts carry it server-side.
@@ -212,13 +245,14 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     // borshch. A photo that did not upload keeps the bowl (marked as rated, so
     // the reminder stops asking): a camera shot exists nowhere else, and «Мої
     // миски» can still send it.
-    function settleBowl(photosFailed) {
+    function settleBowl(photosFailed, borschId = id) {
       if (!bowl) return;
       if (!bowlRated.current) {
         bowlRated.current = true;
         track('bowl_rated', {
           bowl_id: bowl.id,
-          borsch_id: id,
+          borsch_id: borschId,
+          ...(bowl.borsch?.id ? {} : { new_borsch: true }),
           photos: photos.length,
           minutes_since_brought: Math.round((Date.now() - bowl.createdAt) / 60000),
         });
@@ -268,14 +302,14 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       photos={photos}
       onPhotos={setPhotos}
       onSubmit={handleSubmitForm}
-      onExit={() => navigate(`/borsch/${id}`)}
+      onExit={() => navigate(id ? `/borsch/${id}` : '/')}
       withPhotoStep={withPhotoStep}
       cover={withPhotoStep ? null : photos[0] || null}
       analytics={analytics}
       doneExtra={
         <FactsQuestion
           borsch={borschOne}
-          country={getPlaceById(borschOne.place_id)?.country || ''}
+          country={getPlaceById(borschOne.place_id)?.country || bowl?.place?.google?.country || ''}
           context={{ from_bowl: Boolean(bowl), entry }}
         />
       }

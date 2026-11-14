@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { I18nProvider } from '../../i18n';
@@ -7,6 +7,7 @@ import { track } from '../../analytics';
 import { tablesAPI } from '../../api/tables';
 import { readTableGuest } from '../../services/tableGuest';
 import { TablePage } from './TablePage';
+import { googleAuth } from '../../services/googleAuth';
 
 jest.mock('react-router-dom', () => require('react-router'));
 jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), track: jest.fn() }));
@@ -14,7 +15,10 @@ jest.mock('../../api/tables', () => {
   const actual = jest.requireActual('../../api/tables');
   return {
     ...actual,
-    tablesAPI: { get: jest.fn(), results: jest.fn(), rate: jest.fn(), close: jest.fn(), create: jest.fn(), listMine: jest.fn() },
+    tablesAPI: {
+      get: jest.fn(), results: jest.fn(), rate: jest.fn(), close: jest.fn(), create: jest.fn(), listMine: jest.fn(),
+      claimAvailable: jest.fn(), claim: jest.fn(),
+    },
   };
 });
 // CRA's SVG transform builds elements of an older React; the criterion icons are
@@ -26,8 +30,9 @@ jest.mock('../BorschPage/salt.svg', () => ({ ReactComponent: () => null }));
 jest.mock('../BorschPage/aftertaste.svg', () => ({ ReactComponent: () => null }));
 jest.mock('../BorschPage/serving.svg', () => ({ ReactComponent: () => null }));
 jest.mock('../../components/GoogleAuth', () => ({
-  GoogleAuth: () => <button type="button">Google test</button>,
+  GoogleAuth: ({ onSuccess }) => <button type="button" onClick={() => onSuccess && onSuccess({ credential: 'cred' })}>Google test</button>,
 }));
+jest.mock('../../services/googleAuth', () => ({ ...jest.requireActual('../../services/googleAuth'), googleAuth: jest.fn() }));
 
 /**
  * map.navernyborshchu.com/t/<code>: one link, a different screen for the host,
@@ -129,6 +134,8 @@ beforeEach(() => {
   localStorage.setItem('lang', 'uk');
   track.mockClear();
   Object.values(tablesAPI).forEach((fn) => fn.mockReset());
+  // the claim offer stays away unless a test asks for it
+  tablesAPI.claimAvailable.mockResolvedValue(false);
 });
 
 afterEach(async () => {
@@ -317,5 +324,141 @@ describe('the results', () => {
     renderAt('/t/K7M2QX');
     const divisive = await screen.findByTestId('table-divisive');
     expect(within(divisive).getByText('Думки ніде не розійшлися: або всі одностайні, або оцінок замало.')).toBeInTheDocument();
+  });
+});
+
+
+describe('stage 3: a guest takes the ratings into the account', () => {
+  const GUEST = { token: 'tok-aaaaaaaaaaaaaaaaaaaaaaaa', name: 'Оля', updatedAt: Date.now() };
+  const DONE = table({
+    me: { kind: 'guest', name: 'Оля', rated_positions: [1, 2], reviews: [{ position: 1, overall_rating: '8.0' }, { position: 2, overall_rating: '6.0' }] },
+  });
+
+  it('on the thank-you: Google, then the ratings move, the toast says so, the token goes', async () => {
+    localStorage.setItem('nb:table:K7M2QX', JSON.stringify(GUEST));
+    tablesAPI.get.mockResolvedValue(DONE);
+    tablesAPI.claimAvailable.mockResolvedValue(true);
+    tablesAPI.claim.mockResolvedValue({ moved: 2, dropped: 0 });
+    googleAuth.mockResolvedValue({ access: 'new-a', refresh: 'new-r', user: { id: 9, given_name: 'Оля' } });
+    const toast = jest.fn();
+    window.addEventListener('nb:toast', toast);
+    const user = userEvent.setup();
+    renderAt('/t/K7M2QX');
+    expect(await screen.findByText('Увійди, щоб оцінки стали твоїми')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Google test' }));
+    await waitFor(() => expect(tablesAPI.claim).toHaveBeenCalledWith('K7M2QX', GUEST.token, { from: 'done' }));
+    await waitFor(() => expect(toast).toHaveBeenCalled());
+    expect(toast.mock.calls[0][0].detail.message).toBe('Оцінки тепер у твоєму профілі');
+    expect(JSON.parse(localStorage.getItem('nb:table:K7M2QX')).token).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId('table-claim')).not.toBeInTheDocument());
+    window.removeEventListener('nb:toast', toast);
+  });
+
+  it('nothing to move (404 guest_not_found): the offer goes quietly, no error', async () => {
+    localStorage.setItem('nb:table:K7M2QX', JSON.stringify(GUEST));
+    signIn();
+    tablesAPI.get.mockResolvedValue(DONE);
+    tablesAPI.claimAvailable.mockResolvedValue(true);
+    tablesAPI.claim.mockRejectedValue(Object.assign(new Error('nope'), { status: 404, code: 'guest_not_found' }));
+    const user = userEvent.setup();
+    renderAt('/t/K7M2QX');
+    // signed in already: one tap, no Google
+    await user.click(await screen.findByRole('button', { name: 'Перенести в мій профіль' }));
+    await waitFor(() => expect(screen.queryByTestId('table-claim')).not.toBeInTheDocument());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('a backend without the endpoint offers nothing', async () => {
+    localStorage.setItem('nb:table:K7M2QX', JSON.stringify(GUEST));
+    tablesAPI.get.mockResolvedValue(DONE);
+    tablesAPI.claimAvailable.mockResolvedValue(false);
+    renderAt('/t/K7M2QX');
+    await screen.findByRole('heading', { name: 'Дякуємо!' });
+    await waitFor(() => expect(tablesAPI.claimAvailable).toHaveBeenCalledWith('K7M2QX'));
+    expect(screen.queryByTestId('table-claim')).not.toBeInTheDocument();
+  });
+
+  it('the endpoint answering 405 to the POST hides the offer too', async () => {
+    localStorage.setItem('nb:table:K7M2QX', JSON.stringify(GUEST));
+    signIn();
+    tablesAPI.get.mockResolvedValue(DONE);
+    tablesAPI.claimAvailable.mockResolvedValue(true);
+    tablesAPI.claim.mockRejectedValue(Object.assign(new Error('x'), { code: 'claim_unavailable' }));
+    const user = userEvent.setup();
+    renderAt('/t/K7M2QX');
+    await user.click(await screen.findByRole('button', { name: 'Перенести в мій профіль' }));
+    await waitFor(() => expect(screen.queryByTestId('table-claim')).not.toBeInTheDocument());
+  });
+
+  it('on the results of a closed table as well', async () => {
+    localStorage.setItem('nb:table:K7M2QX', JSON.stringify(GUEST));
+    tablesAPI.get.mockResolvedValue(table({ status: 'closed', names_hidden: false, borsches: NAMED }));
+    tablesAPI.results.mockResolvedValue(RESULTS);
+    tablesAPI.claimAvailable.mockResolvedValue(true);
+    renderAt('/t/K7M2QX');
+    expect(await screen.findByText('Увійди, щоб оцінки стали твоїми')).toBeInTheDocument();
+  });
+});
+
+describe('stage 3: the host prints the QR', () => {
+  it('A4 or A6: the sheet with the QR, the title, the venue, the code and three lines goes to the print dialog', async () => {
+    signIn();
+    const print = jest.spyOn(window, 'print').mockImplementation(() => {});
+    tablesAPI.get.mockResolvedValue(table({ is_host: true, names_hidden: false, borsches: NAMED, me: { kind: 'user', rated_positions: [] } }));
+    const user = userEvent.setup();
+    renderAt('/t/K7M2QX');
+    await user.click(await screen.findByRole('button', { name: 'Надрукувати QR' }));
+    await user.click(screen.getByRole('button', { name: /A6, на стіл/ }));
+    const sheet = await screen.findByTestId('table-print');
+    expect(sheet).toHaveAttribute('data-size', 'a6');
+    expect(document.body).toHaveClass('nb-printing');
+    // a tent: four faces, each with the QR and the code
+    expect(within(sheet).getAllByTestId('table-qr')).toHaveLength(4);
+    expect(within(sheet).getAllByText('K7M2QX')).toHaveLength(4);
+    expect(within(sheet).getAllByText('День Борщу')).toHaveLength(4);
+    expect(within(sheet).getAllByText('Наведи камеру телефона на QR')).toHaveLength(4);
+    await waitFor(() => expect(print).toHaveBeenCalled());
+    expect(calls('table_print')).toEqual([expect.objectContaining({ code: 'K7M2QX', size: 'a6' })]);
+    // the dialog closed: the page is back
+    act(() => { window.dispatchEvent(new Event('afterprint')); });
+    await waitFor(() => expect(screen.queryByTestId('table-print')).not.toBeInTheDocument());
+    expect(document.body).not.toHaveClass('nb-printing');
+    print.mockRestore();
+  });
+});
+
+describe('stage 3: after closing, a photo for the borshch the table put on the map', () => {
+  const CLOSED = table({ is_host: true, status: 'closed', names_hidden: false, borsches: NAMED });
+  const WITH_NEW = {
+    ...RESULTS,
+    borsches: [
+      RESULTS.borsches[0],
+      { ...RESULTS.borsches[1], borsch: { id: 'b2', name: 'Зелений', photo_urls: [] } },
+    ],
+  };
+
+  it('asks the host once, on the device that created the table; «Пізніше» ends it', async () => {
+    signIn();
+    localStorage.setItem('nb:table-host:K7M2QX', JSON.stringify({ newNames: ['Зелений'], prompted: false }));
+    tablesAPI.get.mockResolvedValue(CLOSED);
+    tablesAPI.results.mockResolvedValue(WITH_NEW);
+    const user = userEvent.setup();
+    renderAt('/t/K7M2QX');
+    const card = await screen.findByTestId('new-borsch-prompt');
+    expect(within(card).getByText('Новий Борщ на мапі')).toBeInTheDocument();
+    expect(within(card).getByText('Зелений')).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Додати фото' })).toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'Пізніше' }));
+    expect(screen.queryByTestId('new-borsch-prompt')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('nb:table-host:K7M2QX')).prompted).toBe(true);
+  });
+
+  it('nothing on another device, and nothing for a borshch that has a photo', async () => {
+    signIn();
+    tablesAPI.get.mockResolvedValue(CLOSED);
+    tablesAPI.results.mockResolvedValue(WITH_NEW);
+    renderAt('/t/K7M2QX');
+    await screen.findByText('Підсумок Столу');
+    expect(screen.queryByTestId('new-borsch-prompt')).not.toBeInTheDocument();
   });
 });

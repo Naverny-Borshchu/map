@@ -282,3 +282,18 @@ test('a matched catalogue venue with a real id is used without creating a duplic
   expect(apis.placesAPI.create).not.toHaveBeenCalled();
   expect(apis.commentsAPI.createByBorschId).toHaveBeenCalledWith('borsch-1', expect.any(Object));
 });
+
+test('a venue from Google is created with its Place ID, and the backend\'s own venue (reused) is taken', async () => {
+  const apis = makeApis({ placesAPI: { create: jest.fn().mockResolvedValue({ id: 'place-old', reused: true }) } });
+  const progress = await submitAddBorsch({
+    place: { ...place, googlePlaceId: 'ChIJvatra' }, street: 'Городецького, 4', city: 'Київ', country: 'Україна',
+    values, progress: emptyProgress(), apis,
+  });
+  // no name search across the country: «Пузата Хата» in Lviv is not the one in Kyiv
+  expect(apis.placesAPI.search).not.toHaveBeenCalled();
+  expect(apis.placesAPI.create).toHaveBeenCalledWith(expect.objectContaining({
+    name: 'Ватра', google_place_id: 'ChIJvatra', country: 'Україна', via: 'add',
+  }));
+  expect(progress.placeId).toBe('place-old');
+  expect(apis.borschAPI.create).toHaveBeenCalledWith(expect.objectContaining({ place_id: 'place-old' }));
+});

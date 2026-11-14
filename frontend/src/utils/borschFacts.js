@@ -63,3 +63,35 @@ export async function saveMissingFacts({ borschId, answers, api }) {
   await api.update(borschId, patch);
   return { saved: patch };
 }
+
+/**
+ * Everything the closing screen of a rating may ask about the facts, at most
+ * two questions in all:
+ *
+ *   missing   the existing «only if missing» question, for each fact the card
+ *             does not have (weight, price)
+ *   confirm   ONE «Ціна досі 330 грн?» about a value the card has but has not
+ *             had confirmed for half a year (price_needs_confirmation from the
+ *             API), price first, else weight; only while fewer than two
+ *             missing questions are asked already
+ *
+ * A borshch from a backend without the confirmation flags asks no «досі?».
+ */
+export const factsToAsk = (borsch) => {
+  const missing = missingFacts(borsch);
+  if (!borsch) return { missing, confirm: null };
+  const missingCount = (missing.weight ? 1 : 0) + (missing.price ? 1 : 0);
+  let confirm = null;
+  if (missingCount < 2) {
+    if (!missing.price && borsch.price_needs_confirmation && Number(borsch.price_value) > 0) confirm = 'price';
+    else if (!missing.weight && borsch.weight_needs_confirmation && Number(borsch.weight_value) > 0) confirm = 'weight';
+  }
+  return { missing, confirm };
+};
+
+/** A «Ні, інша» answer as the number confirm_facts takes, or null when it cannot be right. */
+export const factAnswer = (kind, value) => {
+  const n = number(value, kind === 'weight' ? WEIGHT_RANGE : PRICE_RANGE);
+  if (n === null) return null;
+  return kind === 'weight' ? Math.round(n) : Math.round(n * 100) / 100;
+};

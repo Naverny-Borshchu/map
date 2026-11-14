@@ -1,0 +1,193 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+// The sheet a grey bowl opens. Grey and quiet like the bowl itself: this is
+// somebody's word, not a rating, so no score, no red header photo.
+.sheet {
+  position: relative;
+  width: min(92vw, 420px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 18px 18px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--nb-ink);
+  box-shadow: var(--nb-shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kicker {
+  margin: 0;
+  @include kicker;
+  color: var(--nb-red-text);
+}
+
+.close {
+  @include iconBtn(40px);
+}
+
+.title {
+  margin: 0;
+  @include displayM;
+  color: var(--nb-ink);
+}
+
+.venue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1.5px dashed rgba(142, 133, 128, 0.7);
+  background: rgba(142, 133, 128, 0.08);
+}
+
+.venueIcon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #8E8580;
+  color: #FFFAF5;
+}
+
+.venueWords {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.venueName {
+  @include displayS;
+  overflow-wrap: anywhere;
+}
+
+.venueAddr {
+  @include caption;
+  color: var(--nb-ink-2, rgba(26, 26, 26, 0.7));
+}
+
+.note {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid #8E8580;
+  border-radius: 0 12px 12px 0;
+  background: rgba(142, 133, 128, 0.1);
+  @include body;
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin: 0;
+  @include footnote;
+  color: var(--nb-ink-2, rgba(26, 26, 26, 0.7));
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 12px;
+  border-radius: var(--radius-pill);
+  border: 1.5px dashed #8E8580;
+  @include footnote;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.badgeOn {
+  border-style: solid;
+  background: rgba(64, 208, 95, 0.14);
+  border-color: rgba(30, 140, 60, 0.6);
+}
+
+.count {
+  @include footnote;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lead {
+  margin: 2px 0 0;
+  @include body;
+  font-weight: 600;
+}
+
+.primary {
+  @include btnPrimary(lg);
+  width: 100%;
+}
+
+.votes {
+  display: flex;
+  gap: 8px;
+}
+
+.vote {
+  @include btnGhost;
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: normal;
+  color: var(--nb-ink);
+}
+
+.voteOn {
+  background: var(--nb-ink);
+  color: var(--surface);
+  box-shadow: none;
+}
+
+.hint {
+  margin: 0;
+  @include footnote;
+  color: var(--nb-ink-2, rgba(26, 26, 26, 0.7));
+}
+
+.signin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.thanks {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(64, 208, 95, 0.14);
+  @include footnote;
+  font-weight: 700;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(220, 20, 60, 0.1);
+  color: var(--nb-red-text);
+  @include footnote;
+  font-weight: 700;
+}

@@ -29,9 +29,10 @@ export const emptyProgress = () => ({
 });
 
 export async function submitAddBorsch({
-  place,           // Google Places object picked on the map
+  place,           // Google Places object picked on the map (googlePlaceId when from Google)
   street,
   city,
+  country = '',
   values,          // grades + meatType/name/price/weight/photo/comment
   progress,
   apis,            // { placesAPI, borschAPI, commentsAPI }
@@ -42,28 +43,48 @@ export async function submitAddBorsch({
 
   // 1. The venue may already be in our catalogue — adding a second row for the
   //    same restaurant would split its borsches across two pins.
+  //    A venue from Google Places carries its Place ID: the backend itself
+  //    returns the venue it has (the same ID, or the same name within 50 m;
+  //    200, reused), which is safer than matching names across the whole
+  //    country, where «Пузата Хата» in Lviv is not the one in Kyiv.
   if (!progress.placeId) {
     onStage(STAGES.place);
-    const found = await placesAPI.search(place.name).catch(() => []);
-    const existing = (Array.isArray(found) ? found : []).find(
-      (p) => String(p.name).trim().toLowerCase() === String(place.name).trim().toLowerCase()
-    );
-    if (existing) {
-      // a catalogue row with no id is as unusable as a created one with no id,
-      // and it reaches the same `place:` field on the next request
-      progress.placeId = requireId(existing.id, 'existing place');
-    } else {
+    if (place.googlePlaceId) {
       const created = await placesAPI.create({
         name: place.name,
         address: [street, city].filter(Boolean).join(', '),
         city,
+        country: country || undefined,
         type: place.type || '',
         latitude: place.location?.lat || 0,
         longitude: place.location?.lng || 0,
+        google_place_id: place.googlePlaceId,
+        via: 'add',
       });
       progress.placeId = requireId(created?.id, 'created place');
+      onProgress({ ...progress });
+    } else {
+      const found = await placesAPI.search(place.name).catch(() => []);
+      const existing = (Array.isArray(found) ? found : []).find(
+        (p) => String(p.name).trim().toLowerCase() === String(place.name).trim().toLowerCase()
+      );
+      if (existing) {
+        // a catalogue row with no id is as unusable as a created one with no id,
+        // and it reaches the same `place:` field on the next request
+        progress.placeId = requireId(existing.id, 'existing place');
+      } else {
+        const created = await placesAPI.create({
+          name: place.name,
+          address: [street, city].filter(Boolean).join(', '),
+          city,
+          type: place.type || '',
+          latitude: place.location?.lat || 0,
+          longitude: place.location?.lng || 0,
+        });
+        progress.placeId = requireId(created?.id, 'created place');
+      }
+      onProgress({ ...progress });
     }
-    onProgress({ ...progress });
   }
 
   // 2. the borsch itself

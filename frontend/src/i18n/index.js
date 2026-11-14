@@ -62,7 +62,9 @@ export const I18nProvider = ({ children }) => {
       let s = dict[lookup] ?? dict[key] ?? translations[DEFAULT_LANG][key] ?? key;
       if (vars) {
         Object.entries(vars).forEach(([k, v]) => {
-          s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+          // a function, not a string: a venue or a person's name with «$&» or
+          // «$1» in it must come out as typed, not as a replacement pattern
+          s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), () => String(v));
         });
       }
       return s;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VenuePicker } from '../../components/VenuePicker';
+import { GooglePlacePicker } from '../../components/GooglePlacePicker';
 import { GoogleAuth } from '../../components/GoogleAuth';
 import { BowlLoader } from '../../components/EmptyState';
 import { IconClose } from '../../components/Icons';
@@ -10,11 +11,14 @@ import { useUser } from '../../context/UserContext';
 import { borschAPI, placesAPI, AUTH_REQUIRED_ERROR } from '../../api';
 import { MAX_TABLE_BORSCHES, TITLE_MAX, tablesAPI } from '../../api/tables';
 import { googleAuth } from '../../services/googleAuth';
+import { findOwnPlace, pendingPlace } from '../../services/googlePlaces';
+import { ensurePlace } from '../../services/bowlTargets';
+import { saveHostTable } from '../../services/tableHost';
 import { useNearbyVenues } from '../../hook/useNearbyVenues';
 import { useFlowTracking } from '../../hook/useFlowTracking';
 import { getPriceChipsForCountry } from '../../utils/currency';
 import {
-  NEW_NAME_MAX, buildTablePayload, isTableValid, knownFacts, newNameError, validateTable,
+  MEAT_TYPES, NEW_NAME_MAX, buildTablePayload, isTableValid, knownFacts, newNameError, validateTable,
 } from '../../utils/tableForm';
 import { useI18n, useDishLabel, useVenueLabel } from '../../i18n';
 import { TableFrame, FrameSegments } from '../TablePage/TableFrame';
@@ -38,7 +42,11 @@ import style from '../TablePage/Table.module.scss';
  */
 
 const STEPS = ['venue', 'borsch', 'facts', 'settings'];
-const HUE = { venue: '#A00322', borsch: '#B5122E', facts: '#860130', settings: '#C0102F' };
+// «Закладу нема в списку» (Google Places) is part of the venue screen
+const STEP_INDEX = { venue: 0, google: 0, borsch: 1, facts: 2, settings: 3 };
+const STEP_EVENT = { venue: 'venue', google: 'venue_google', borsch: 'borsch', facts: 'facts', settings: 'settings' };
+const HUE = { venue: '#A00322', google: '#A00322', borsch: '#B5122E', facts: '#860130', settings: '#C0102F' };
+const MEAT_LABEL = { no_meat: 'ans.meatNo', chicken: 'ans.meatChicken', pork: 'ans.meatPork', beef: 'ans.meatBeef', other: 'ans.meatOther' };
 
 const itemFromBorsch = (b) => ({ key: String(b.id_borsch), id: String(b.id_borsch), name: b.name, known: knownFacts(b) });
 
@@ -48,7 +56,7 @@ export const TableCreate = () => {
   const { t } = useI18n();
   const dishLabel = useDishLabel();
   const venueLabel = useVenueLabel();
-  const { loading: placesLoading, getPlaceById } = usePlaces();
+  const { allPlaces, loading: placesLoading, getPlaceById } = usePlaces();
   const { borsch: allBorsch, loading: borschLoading, getBorschById } = useBorsch();
   const { isAuthenticated, completeGoogleSignIn } = useUser();
 
@@ -73,8 +81,8 @@ export const TableCreate = () => {
 
   const { markClosing, exit } = useFlowTracking({
     flow: 'table_create',
-    step,
-    index: step ? STEPS.indexOf(step) : 0,
+    step: step ? STEP_EVENT[step] : null,
+    index: step ? STEP_INDEX[step] : 0,
     total: STEPS.length,
     finished: created,
     context: { entry },
@@ -107,7 +115,7 @@ export const TableCreate = () => {
   }, [prefillId, step, borschLoading, getBorschById, getPlaceById]);
 
   const borschAt = useCallback(
-    (p) => (allBorsch || []).filter((b) => String(b.place_id) === String(p?.id)),
+    (p) => (p?.id ? (allBorsch || []).filter((b) => String(b.place_id) === String(p.id)) : []),
     [allBorsch]
   );
   const errors = useMemo(() => validateTable({ items, facts, title }), [items, facts, title]);
@@ -127,6 +135,9 @@ export const TableCreate = () => {
     setFacts({});
     setStep('borsch');
   };
+
+  // a venue from Google: ours if we have it, otherwise created on «Створити»
+  const pickGoogle = (venue) => pickPlace(findOwnPlace(allPlaces, venue) || pendingPlace(venue));
 
   const toggle = (b) => {
     const key = String(b.id_borsch);
@@ -170,8 +181,13 @@ export const TableCreate = () => {
     setSaving(true);
     setSaveError('');
     try {
-      const payload = buildTablePayload({ place: String(place.id), items, facts, blind, title });
-      const table = await tablesAPI.create(payload, { entry });
+      const { id: placeId } = await ensurePlace(place, { via: 'table' });
+      if (!place.id) setPlace((p) => ({ ...p, id: placeId }));
+      const payload = buildTablePayload({ place: placeId, items, facts, blind, title });
+      const table = await tablesAPI.create(payload, { entry, ...(place.id ? {} : { new_place: true }) });
+      // the borshch this table puts on the map: a photo is asked once it closes
+      const newNames = items.filter((it) => !it.id).map((it) => it.name);
+      if (newNames.length) saveHostTable(table.code, { newNames, prompted: false, createdAt: Date.now() });
       setCreated(true);
       window.dispatchEvent(new Event('borschDataUpdated'));
       navigate(`/t/${table.code}`, { replace: true, state: { created: true } });
@@ -195,7 +211,7 @@ export const TableCreate = () => {
   };
 
   // --- render ------------------------------------------------------------------
-  const stepIndex = step ? STEPS.indexOf(step) : 0;
+  const stepIndex = step ? STEP_INDEX[step] : 0;
   const kicker = (
     <p className={q.stepCount}>
       {t('table.createKicker')}
@@ -245,10 +261,23 @@ export const TableCreate = () => {
       />
     );
     foot = (
-      <button type="button" className={q.skip} onClick={() => { exit('new_place'); navigate('/add-borsch'); }}>
+      <button type="button" className={q.skip} onClick={() => setStep('google')}>
         {t('bowl.notListed')}
       </button>
     );
+  }
+
+  if (step === 'google') {
+    body = (
+      <GooglePlacePicker
+        near={nearby.geo.point}
+        kicker={kicker}
+        headingRef={headingRef}
+        onPick={pickGoogle}
+        onManual={() => { exit('new_place'); navigate('/add-borsch'); }}
+      />
+    );
+    foot = back('venue');
   }
 
   if (step === 'borsch' && place) {
@@ -387,6 +416,24 @@ export const TableCreate = () => {
                     </span>
                   </label>
                 </div>
+                {!it.id && (
+                  <div className={style.meatRow} role="group" aria-label={t('table.meatLabel', { name: it.name })}>
+                    <span className={style.meatLabel}>{t('table.meat')}</span>
+                    <div className={style.meatChips}>
+                      {MEAT_TYPES.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          className={`${style.meatChip} ${f.meat === m ? style.meatChipOn : ''}`}
+                          aria-pressed={f.meat === m}
+                          onClick={() => setFact(it.key, 'meat', f.meat === m ? null : m)}
+                        >
+                          {t(MEAT_LABEL[m])}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {(err.price || err.weight) && (
                   <p className={style.error} role="alert">{t(err.price ? 'table.errPrice' : 'table.errWeight')}</p>
                 )}

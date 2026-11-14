@@ -33,6 +33,8 @@ import { EmptyState } from "./components/EmptyState";
 // the QR code and the story picture load only when a table link is followed.
 const TableCreate = lazy(() => import("./page/TableCreate").then((m) => ({ default: m.TableCreate })));
 const TablePage = lazy(() => import("./page/TablePage").then((m) => ({ default: m.TablePage })));
+// «Я знаю, тут є Борщ» (stage 3): a short flow most visitors never open either
+const TipFlow = lazy(() => import("./page/TipFlow").then((m) => ({ default: m.TipFlow })));
 const tableScreen = (element) => (
   <Suspense fallback={<EmptyState loading />}>{element}</Suspense>
 );
@@ -71,6 +73,8 @@ export default function App() {
             {/* Оцінка Борщу 2.0, stage 2: «Стіл», a host and a QR, guests rate the taste */}
             <Route path="/table/new" element={tableScreen(<TableCreate />)} />
             <Route path="/t/:code" element={tableScreen(<TablePage />)} />
+            {/* Оцінка Борщу 2.0, stage 3: «Я знаю, тут є Борщ», a grey bowl on the map */}
+            <Route path="/tip/new" element={tableScreen(<TipFlow />)} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/personal-information" element={<PersonalInfo />} />
             <Route path="/profile/added-borsches" element={<AddedBorschesPage />} />

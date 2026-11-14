@@ -6,7 +6,10 @@
  * An item on the table:
  *   { key, id, name }        a borshch the venue already has (id from the map)
  *   { key, id: null, name }  a new one the host typed in
- * Its price and weight live apart, in facts[key] = { price, weight }, as typed.
+ * Its price and weight live apart, in facts[key] = { price, weight }, as typed;
+ * a new one may carry its meat type there too (facts[key].meat), because the
+ * table's create is the one moment it can be set: afterwards only a moderator
+ * may change it.
  */
 import { MAX_TABLE_BORSCHES, TITLE_MAX } from '../api/tables';
 
@@ -15,6 +18,8 @@ import { MAX_TABLE_BORSCHES, TITLE_MAX } from '../api/tables';
 export const PRICE_RANGE = [1, 10000];
 export const WEIGHT_RANGE = [50, 2000];
 export const NEW_NAME_MAX = 120;
+/** The backend's type_meat values, in the order the chips show them. */
+export const MEAT_TYPES = ['no_meat', 'chicken', 'pork', 'beef', 'other'];
 
 const fold = (s) => String(s ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('uk');
 
@@ -88,6 +93,7 @@ export const buildTablePayload = ({ place, items = [], facts = {}, blind = false
     const weight = factError('weight', f.weight) ? null : parseAmount(f.weight);
     return {
       ...(it.id ? { id: it.id } : { name: String(it.name).trim().replace(/\s+/g, ' ') }),
+      ...(!it.id && MEAT_TYPES.includes(f.meat) ? { type_meat: f.meat } : {}),
       ...(price !== null ? { price_uah: Math.round(price * 100) / 100 } : {}),
       ...(weight !== null ? { weight_grams: Math.round(weight) } : {}),
     };

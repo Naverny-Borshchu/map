@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import { useGoogleMaps } from "../../services/googleMaps";
 import { defaultTheme } from "../../components/Map/Theme";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
@@ -30,8 +31,6 @@ const defoultOptions = {
   fullscreenControl: false,
   styles: defaultTheme,
 };
-const libraries=['places'];
-const API_KEY = process.env.REACT_APP_API_KEY_MAP;
 
 export const SelectPlacePage = () => {
   const { state } = useLocation();
@@ -48,11 +47,7 @@ export const SelectPlacePage = () => {
     total: addFlowTotal(),
     context: { entry: 'map' },
   });
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: API_KEY,
-    libraries
-  });
+  const { isLoaded } = useGoogleMaps();
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;

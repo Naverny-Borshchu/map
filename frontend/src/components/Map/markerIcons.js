@@ -187,3 +187,45 @@ export const countCircleIcon = (count, diameter = 44, dark = false) => {
     anchor: new window.google.maps.Point(c, c),
   };
 };
+
+// ---- «Кажуть, тут є Борщ»: a tip, not a rating ----
+// Grey on purpose: nobody has rated anything here, somebody only said there is
+// a borshch. A round disc with the bowl, a dashed ring while it is just one
+// person's word, a solid one once somebody else confirmed it, and a small
+// question mark: the eye must never take it for a rated pin.
+const TIP_GREY = '#8E8580';
+const TIP_GREY_DARK = '#6F6662';
+const TIP_VB = 40;
+const TIP_DISC_R = 15;
+const TIP_TAIL_Y = 38;
+
+export const tipPinSvg = ({ confirmed = false, selected = false, dark = false } = {}) => {
+  const c = TIP_VB / 2;
+  const ring = selected ? RED : confirmed ? (dark ? '#CFC6C1' : TIP_GREY_DARK) : (dark ? '#CFC6C1' : TIP_GREY_DARK);
+  const dash = confirmed || selected ? '' : ' stroke-dasharray="4 3"';
+  const fill = dark ? '#5A514D' : TIP_GREY;
+  return encode(`
+<svg xmlns="http://www.w3.org/2000/svg" width="${TIP_VB}" height="${TIP_VB}" viewBox="0 0 ${TIP_VB} ${TIP_VB}">
+  <defs>
+    <filter id="s" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#2a1617" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <path filter="url(#s)" d="M${c - 5} ${c + TIP_DISC_R - 2} L${c} ${TIP_TAIL_Y} L${c + 5} ${c + TIP_DISC_R - 2} Z" fill="${fill}"/>
+  <circle filter="url(#s)" cx="${c}" cy="${c - 1}" r="${TIP_DISC_R}" fill="${fill}" stroke="${ring}" stroke-width="${selected ? 2.4 : 1.8}"${dash}/>
+  ${bowlGlyph(c - 12, c - 13.5, dark ? '#E9E2DE' : CREAM)}
+  <circle cx="${c + 11}" cy="${c - 11}" r="6.2" fill="${dark ? SURFACE_DARK : '#ffffff'}" stroke="${ring}" stroke-width="1.2"/>
+  <text x="${c + 11}" y="${c - 10.6}" text-anchor="middle" dominant-baseline="central"
+        font-family="Roboto, Arial, sans-serif" font-size="9" font-weight="800" fill="${dark ? INK_DARK : TIP_GREY_DARK}">?</text>
+</svg>`);
+};
+
+/** Size + anchor for a tip pin; smaller than a rating pin, the tail on the venue. */
+export const tipPinIcon = ({ size = 34, confirmed = false, selected = false, dark = false } = {}) => {
+  const s = selected ? Math.round(size * 1.18) : size;
+  return {
+    url: tipPinSvg({ confirmed, selected, dark }),
+    scaledSize: new window.google.maps.Size(s, s),
+    anchor: new window.google.maps.Point(Math.round(s / 2), Math.round((TIP_TAIL_Y / TIP_VB) * s)),
+  };
+};
