@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {MapPage} from "./page/MapPage";
 import { Layout } from "./components/Layout";
@@ -26,6 +27,15 @@ import { AppProvider } from "./context/AppProvider";
 import { I18nProvider } from "./i18n";
 import { FilterUrlSync } from "./components/FilterUrlSync";
 import { PageviewTracker } from "./components/PageviewTracker";
+import { EmptyState } from "./components/EmptyState";
+
+// «Стіл» (stage 2) is a screen most visitors of the map never open: its pages,
+// the QR code and the story picture load only when a table link is followed.
+const TableCreate = lazy(() => import("./page/TableCreate").then((m) => ({ default: m.TableCreate })));
+const TablePage = lazy(() => import("./page/TablePage").then((m) => ({ default: m.TablePage })));
+const tableScreen = (element) => (
+  <Suspense fallback={<EmptyState loading />}>{element}</Suspense>
+);
 
 
 
@@ -58,6 +68,9 @@ export default function App() {
             {/* Оцінка Борщу 2.0: a bowl, brought now and rated after the meal */}
             <Route path="/bowl/new" element={<BowlFlow />} />
             <Route path="/bowl/:bowlId/rate" element={<BowlRatePage />} />
+            {/* Оцінка Борщу 2.0, stage 2: «Стіл», a host and a QR, guests rate the taste */}
+            <Route path="/table/new" element={tableScreen(<TableCreate />)} />
+            <Route path="/t/:code" element={tableScreen(<TablePage />)} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/personal-information" element={<PersonalInfo />} />
             <Route path="/profile/added-borsches" element={<AddedBorschesPage />} />

@@ -22,6 +22,7 @@ import {PasswordChangePage} from "../PasswordChangePage";
 import {useT} from "../../i18n";
 import {selectProfileLinks} from "./profileLinks";
 import {MyBowls} from "../../components/MyBowls";
+import {MyTables} from "../../components/MyTables";
 
 
 export const Profile = () => {
@@ -203,6 +204,7 @@ export const Profile = () => {
 
                     <section className={style.content}>
                         <MyBowls />
+                        <MyTables />
                         {advert}
 
                         <div className={style.settingsCard}>
@@ -229,6 +231,7 @@ export const Profile = () => {
                     <PageHeader back="/" kicker={t('profile.kicker')} title={t('profile.title')} />
                     {userCard}
                     <MyBowls />
+                    <MyTables />
                     {advert}
 
                     <div className={style.userButtons} role="tablist">
