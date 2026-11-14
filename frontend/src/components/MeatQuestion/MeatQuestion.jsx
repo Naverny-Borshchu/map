@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useT } from '../../i18n';
+import { useDishLabel, useT } from '../../i18n';
 import { borschAPI } from '../../api';
 import { track } from '../../analytics';
 import style from '../FactsQuestion/FactsQuestion.module.scss';
@@ -28,6 +28,7 @@ export const MEAT_CHOICES = [
  */
 export const MeatQuestion = ({ borsch, created = false, context = {}, api = borschAPI }) => {
   const t = useT();
+  const dishLabel = useDishLabel();
   // fixed when the screen opens: the refresh after the save changes type_meat
   const [asked] = useState(() => Boolean(created && borsch?.id_borsch && borsch?.type_meat === 'other'));
   const [state, setState] = useState('idle'); // idle | saving | saved | error | gone
@@ -60,6 +61,8 @@ export const MeatQuestion = ({ borsch, created = false, context = {}, api = bors
     setState('gone');
   };
 
+  const label = t('meatq.label', { name: dishLabel(borsch.name) });
+
   return (
     <section className={style.card} aria-label={t('meatq.kicker')} data-testid="meat-question">
       <p className={style.kicker}>{t('meatq.kicker')}</p>
@@ -67,8 +70,8 @@ export const MeatQuestion = ({ borsch, created = false, context = {}, api = bors
         <p className={style.saved} role="status">{t('facts.saved')}</p>
       ) : (
         <div className={style.question}>
-          <p className={style.label}>{t('meatq.label', { name: borsch.name })}</p>
-          <div className={style.chips} role="group" aria-label={t('meatq.label', { name: borsch.name })}>
+          <p className={style.label}>{label}</p>
+          <div className={style.chips} role="group" aria-label={label}>
             {MEAT_CHOICES.map((m) => (
               <button
                 key={m.code}
