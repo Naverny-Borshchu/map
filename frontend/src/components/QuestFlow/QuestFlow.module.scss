@@ -207,6 +207,17 @@
   transform-origin: center bottom;
 }
 
+.cover {
+  width: 72px;
+  height: 72px;
+  margin-left: -6px;
+  object-fit: cover;
+  border: 3px solid #FFFAF5;
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transform: rotate(calc(5deg * var(--nb-move, 1)));
+}
+
 .hint {
   @include footnote;
   color: rgba(255, 250, 245, 0.85);

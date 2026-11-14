@@ -175,17 +175,28 @@
     font-size: 17px;
     font-weight: 600;
     outline: none;
+
+    // the field's own ring (below) is the focus indicator on the red stage
+    &:focus-visible { outline: none; }
+    // the browser's blue clear cross is not ours
+    &::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
   }
 
   &:focus-within {
     border-color: #FFFAF5;
-    box-shadow: 0 0 0 4px rgba(255, 250, 245, 0.25);
+    box-shadow: 0 0 0 4px rgba(255, 250, 245, 0.45);
   }
 }
 
 // --- photo ----------------------------------------------------------------
+// One photo is the usual case: centred and large enough to check the shot.
 .shots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   max-width: 340px;
+
+  > div { width: min(44vw, 160px); }
 }
 
 .foot {

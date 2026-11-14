@@ -51,6 +51,7 @@ export const RateFlow = ({
   withPhotoStep = true,
   analytics = null,
   doneExtra = null,
+  cover = null,
 }) => {
   const t = useT();
   const { isAuthenticated, completeGoogleSignIn } = useUser();
@@ -145,6 +146,7 @@ export const RateFlow = ({
           onStepChange={onStepChange}
           analytics={analytics}
           doneExtra={doneExtra}
+          cover={cover}
     />
   );
 };

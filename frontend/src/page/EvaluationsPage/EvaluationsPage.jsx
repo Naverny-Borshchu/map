@@ -270,6 +270,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       onSubmit={handleSubmitForm}
       onExit={() => navigate(`/borsch/${id}`)}
       withPhotoStep={withPhotoStep}
+      cover={withPhotoStep ? null : photos[0] || null}
       analytics={analytics}
       doneExtra={
         <FactsQuestion

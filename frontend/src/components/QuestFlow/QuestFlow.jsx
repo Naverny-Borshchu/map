@@ -121,6 +121,9 @@ export const QuestFlow = ({
   analytics = null,       // { flow, offset = 0, context }
   // Shown on the closing screen once the save went through, under the XP.
   doneExtra = null,
+  // A photo of the borshch being rated (a bowl's, from moment 1), shown next
+  // to the mascot so it is clear which bowl the questions are about.
+  cover = null,
 }) => {
   const t = useT();
   const [step, setStep] = useState(() => Math.max(0, Number(initialStep) || 0));
@@ -219,6 +222,18 @@ export const QuestFlow = ({
   const removePhoto = (index) => {
     onChange('photos', photos.filter((_, i) => i !== index));
   };
+
+  const [coverUrl, setCoverUrl] = useState(null);
+  useEffect(() => {
+    if (!cover) {
+      setCoverUrl(null);
+      return undefined;
+    }
+    let url = null;
+    try { url = URL.createObjectURL(cover); } catch (e) { url = null; }
+    setCoverUrl(url);
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [cover]);
 
   const canAdvance = current ? isStepFilled(current, values) : false;
   const optional = current?.type === 'photo' || current?.type === 'comment';
@@ -323,6 +338,7 @@ export const QuestFlow = ({
           <>
             <div className={style.mascotBox}>
               <Mascot mood={mood} size={92} key={`${current?.key}-${mood}`} />
+              {coverUrl && <img className={style.cover} src={coverUrl} alt={t('bowl.coverAlt')} />}
             </div>
             <p className={style.stepCount}>
               {title ? `${title} · ` : ''}

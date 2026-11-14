@@ -150,8 +150,14 @@ export const BowlFlow = () => {
   );
 
   // --- photo thumbnails --------------------------------------------------
-  const photoUrls = useMemo(() => photos.map((f) => URL.createObjectURL(f)), [photos]);
-  useEffect(() => () => photoUrls.forEach((u) => URL.revokeObjectURL(u)), [photoUrls]);
+  // made and released in one effect: a URL made during render and revoked in
+  // a cleanup dies in StrictMode's rehearsal while the img still points at it
+  const [photoUrls, setPhotoUrls] = useState([]);
+  useEffect(() => {
+    const urls = photos.map((f) => URL.createObjectURL(f));
+    setPhotoUrls(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [photos]);
 
   // --- navigation --------------------------------------------------------
   const close = () => {
