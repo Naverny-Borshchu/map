@@ -3,7 +3,7 @@
 @use "../../styles/brand.scss" as *;
 
 // Floats above the tab bar on a phone (its height is published by Layout as
-// --nb-nav-h) and in the lower right corner on a desktop.
+// --nb-nav-h) and near the lower right corner on a desktop.
 .banner {
   position: fixed;
   z-index: 998;
@@ -18,9 +18,10 @@
   color: var(--nb-ink);
   box-shadow: var(--nb-shadow-float), 0 0 0 1.5px var(--nb-borshch);
   animation: rise var(--dur-slow) var(--ease-out);
+  // clear of the map's zoom and recentre buttons in the lower right corner
   @include respond(desktop) {
     left: auto;
-    right: 24px;
+    right: 76px;
     bottom: 24px;
     width: 420px;
     margin: 0;
