@@ -345,6 +345,17 @@ html[data-variant='map1'] {
         gap: 3px;
       }
 
+      // Рівні слоти замість space-between: пункти різної ширини («Список»,
+      // кругла «+», «Ви», «Помилка») давали проміжки 105/96/102 px, і ряд
+      // виглядав розсипаним. Тепер центри стоять через однаковий крок.
+      nav li {
+        flex: 1 1 0;
+        display: flex;
+        justify-content: center;
+        // без цього flex розтягує кнопку «+» на висоту слота і коло стає еліпсом
+        align-items: flex-start;
+      }
+
       // central "add borsch" button, slightly enlarged as the primary action
       // (44px stock → 56px; 1.5x/66px read as too heavy)
       .nb-addbtn {

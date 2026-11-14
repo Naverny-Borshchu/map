@@ -47,7 +47,7 @@ export const ListPage=()=>{
     return place ? place.name : "Невідоме місце";
   }
 
-  // Синхронизация с фильтрами - обновляем места при изменении поиска
+  // Синхронізація з фільтрами: оновлюємо заклади, коли змінюється пошук
   useEffect(() => {
     if (filters.search && filters.search.trim() !== '') {
       updatePlacesBySearch(filters.search);
@@ -59,7 +59,7 @@ export const ListPage=()=>{
   const handleCopyAndShare = (id_borsch) => {
     const url = `${window.location.origin}/borsch/${id_borsch}`;
 
-    // Если Web Share API поддерживается — вызываем нативное окно
+    // Якщо браузер має Web Share API — відкриваємо системне вікно «Поділитися»
     if (navigator.share) {
       navigator.share({
         title: 'Перегляньте цей борщ',
@@ -69,11 +69,11 @@ export const ListPage=()=>{
       .then(() => console.log("Поділитися успішно"))
       .catch((err) => {
         console.error("Помилка при шерингу:", err);
-        // Если шеринга нет или отказались — копируем в буфер один раз
+        // Поділитися не вийшло або людина відмовилась — один раз копіюємо в буфер
         copyToClipboardWithAlert(url);
       });
     } else {
-      // Web Share API нет — просто копируем в буфер и alert
+      // Web Share API немає — просто копіюємо в буфер і показуємо alert
       copyToClipboardWithAlert(url);
     }
   };

@@ -58,7 +58,7 @@ export const PlacesProvider = ({ children }) => {
       setPlaces(data);
 
     } catch (error) {
-      console.error('Ошибка загрузки мест:', error);
+      console.error('Не вдалося завантажити заклади:', error);
     } finally {
       if (requestId === loadRequestIdRef.current) {
         setLoading(false);
@@ -71,7 +71,7 @@ export const PlacesProvider = ({ children }) => {
       const data = await placesAPI.getAllCities();      
       setCities(data)      
     } catch (error) {
-      console.error('Ошибка загрузки мест:', error);
+      console.error('Не вдалося завантажити міста:', error);
     } 
   }, []);
 

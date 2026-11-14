@@ -10,6 +10,7 @@ API тести для основних endpoint-ів Core.
 - upload_photo (multipart upload)
 """
 
+import io
 import shutil
 import tempfile
 from decimal import Decimal
@@ -21,6 +22,7 @@ from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from core.models import PlaceType, Place, Borsch, Review, FavoriteBorsch
 
@@ -238,9 +240,12 @@ class TestCoreAPI(APITestCase):
         """POST /api/borsches/{id}/upload_photo/ - завантаження фото."""
         self._auth()
         url = f"/api/borsches/{self.borsch.id}/upload_photo/"
+        # справжній JPEG: з NAV-176 upload_photo відкидає те, що не є фото
+        buf = io.BytesIO()
+        Image.new("RGB", (16, 16), (155, 27, 48)).save(buf, "JPEG")
         photo = SimpleUploadedFile(
             "borsch.jpg",
-            b"fake-image-content",
+            buf.getvalue(),
             content_type="image/jpeg",
         )
 

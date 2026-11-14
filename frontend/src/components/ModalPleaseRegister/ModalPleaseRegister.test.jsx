@@ -38,4 +38,25 @@ describe('ModalPleaseRegister', () => {
       expect(onClose).not.toHaveBeenCalled();
     }
   );
+
+  it('lets someone who already has a profile sign in instead of signing up', () => {
+    const onLoginPage = jest.fn();
+    const onRegisterPage = jest.fn();
+    render(
+      <I18nProvider>
+        <ModalPleaseRegister
+          asPage
+          onRegisterPage={onRegisterPage}
+          onLoginPage={onLoginPage}
+          onGoToMap={jest.fn()}
+        />
+      </I18nProvider>
+    );
+
+    expect(screen.getByText(/Вже маєш профіль\?/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Увійти' }));
+
+    expect(onLoginPage).toHaveBeenCalledTimes(1);
+    expect(onRegisterPage).not.toHaveBeenCalled();
+  });
 });

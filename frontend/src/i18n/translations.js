@@ -108,6 +108,7 @@ export const translations = {
     'sort.cheapest': 'Найдешевші',
     'sort.expensive': 'Найдорожчі',
     'map.register': 'Зареєструватись',
+    'map.login': 'Увійти',
     'map.clearSearch': 'Очистити пошук',
     'map.search': 'Пошук',
     'map.list': 'Список',
@@ -282,6 +283,9 @@ export const translations = {
     'flow.photoRemove': 'Прибрати фото',
     'flow.photoCount': '{n} з {max} фото',
     'flow.photoRetake': 'Інше фото',
+    'flow.photoFailed': 'Оцінку збережено, але фото не завантажилось: {n} з {total}.',
+    'flow.photoRetry': 'Спробувати ще раз',
+    'flow.photoRetryOk': 'Фото завантажено ✅',
     'flow.commentTitle': 'Кілька слів?',
     'flow.commentHint': 'Що запамʼяталось? Теж необовʼязково.',
 
@@ -398,7 +402,7 @@ export const translations = {
 
     // --- city sheet
     'city.title': 'Населений пункт',
-    'city.placeholder': 'Назва населенного пункта',
+    'city.placeholder': 'Назва населеного пункту',
     'city.popular': 'Популярні',
     'city.all': 'Всі',
 
@@ -406,6 +410,8 @@ export const translations = {
     'modal.noProfileTitle': 'Без профілю? Це як борщ без сметани!',
     'modal.noProfileText': 'Наче все ок, але чогось не вистачає. Створи профіль - і буде повний смак',
     'modal.createProfile': 'Створити профіль',
+    'modal.haveProfile': 'Вже маєш профіль?',
+    'modal.signIn': 'Увійти',
     'modal.notNow': 'Не зараз',
 
     // --- geolocation
@@ -527,6 +533,7 @@ export const translations = {
     'sort.cheapest': 'Cheapest',
     'sort.expensive': 'Most expensive',
     'map.register': 'Sign up',
+    'map.login': 'Sign in',
     'map.clearSearch': 'Clear search',
     'map.search': 'Search',
     'map.list': 'List',
@@ -689,6 +696,9 @@ export const translations = {
     'flow.photoRemove': 'Remove photo',
     'flow.photoCount': '{n} of {max} photos',
     'flow.photoRetake': 'Different photo',
+    'flow.photoFailed': 'Your rating is saved, but {n} of {total} photos did not upload.',
+    'flow.photoRetry': 'Try again',
+    'flow.photoRetryOk': 'Photos uploaded ✅',
     'flow.commentTitle': 'A few words?',
     'flow.commentHint': 'What stood out? Also optional.',
 
@@ -811,6 +821,8 @@ export const translations = {
     'modal.noProfileTitle': 'No profile? That is borshch without sour cream!',
     'modal.noProfileText': 'Looks fine, but something is missing. Create a profile for the full flavour',
     'modal.createProfile': 'Create a profile',
+    'modal.haveProfile': 'Already have a profile?',
+    'modal.signIn': 'Sign in',
     'modal.notNow': 'Not now',
 
     'geo.blockedTitle': 'Location access is blocked.',

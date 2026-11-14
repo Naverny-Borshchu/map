@@ -1,5 +1,6 @@
 import { gradesToReview } from '../../components/QuestFlow/answers';
 import { requireId } from '../../utils/ids';
+import { uploadPhotos } from '../../utils/uploadPhotos';
 
 /**
  * The four writes behind "add a borsch", in order, with the stage reported so
@@ -23,6 +24,8 @@ export const emptyProgress = () => ({
   borschId: null,
   reviewDone: false,
   photoDone: false,
+  photosUploaded: [],   // indices into values.photos that already landed
+  photosFailed: 0,
 });
 
 export async function submitAddBorsch({
@@ -86,20 +89,29 @@ export async function submitAddBorsch({
   }
 
   // 4. the photos are a bonus: losing one must not fail a finished rating, and
-  //    must not take the other photos with it either
+  //    must not take the other photos with it either. But it must be SAID:
+  //    photoDone stays false and photosFailed carries the count, so the closing
+  //    screen can offer to retry just the ones that did not land.
   const photos = values.photos || [];
   if (photos.length && !progress.photoDone) {
     onStage(STAGES.photo);
-    for (const file of photos) {
-      try {
-        await borschAPI.uploadPhoto(progress.borschId, file);
-      } catch (e) {
-        console.error('Не вдалося завантажити фото:', e);
-      }
-    }
-    progress.photoDone = true;
+    await uploadPendingPhotos({ photos, progress, borschAPI });
     onProgress({ ...progress });
   }
 
+  return progress;
+}
+
+/** Step 4 on its own, for the "retry the photos" button on the closing screen. */
+export async function uploadPendingPhotos({ photos, progress, borschAPI }) {
+  const { uploaded, failed } = await uploadPhotos({
+    borschId: progress.borschId,
+    photos,
+    uploaded: progress.photosUploaded,
+    upload: borschAPI.uploadPhoto,
+  });
+  progress.photosUploaded = uploaded;
+  progress.photosFailed = failed;
+  progress.photoDone = failed === 0;
   return progress;
 }

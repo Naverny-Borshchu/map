@@ -104,6 +104,8 @@ export const QuestFlow = ({
   done = {},
   onSubmit,
   onRetry,
+  // retries only the photos that did not upload; the rest is already saved
+  onRetryPhotos,
   onExit,
   onSignIn,
   initialStep = 0,
@@ -118,6 +120,10 @@ export const QuestFlow = ({
   const [authed, setAuthed] = useState(isAuthed);
 
   const current = steps[Math.min(step, steps.length - 1)];
+  // Once a photo failed on this screen, a later clean retry deserves a word;
+  // otherwise the warning would simply vanish and leave people guessing.
+  const hadPhotoFailure = useRef(false);
+  if (status.photosFailed > 0) hadPhotoFailure.current = true;
   const taskSteps = useMemo(() => steps.filter((s) => s.type !== 'done'), [steps]);
   const scaleSteps = useMemo(() => steps.filter((s) => s.type === 'scale'), [steps]);
 
@@ -519,6 +525,26 @@ export const QuestFlow = ({
                 </p>
                 {xp.total !== null && xp.total !== undefined && (
                   <p className={style.xpTotal}>{t('flow.xpTotal', { n: xp.total })}</p>
+                )}
+                {status.photosFailed > 0 && (
+                  <div className={style.photoWarn} role="alert">
+                    <p>
+                      {t('flow.photoFailed', { n: status.photosFailed, total: status.photosTotal || status.photosFailed })}
+                    </p>
+                    {onRetryPhotos && (
+                      <button
+                        type="button"
+                        className={style.back}
+                        onClick={onRetryPhotos}
+                        disabled={status.photoRetrying}
+                      >
+                        {status.photoRetrying ? t('flow.stagePhoto') : t('flow.photoRetry')}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {!status.photosFailed && hadPhotoFailure.current && (
+                  <p className={style.photoWarn} role="status">{t('flow.photoRetryOk')}</p>
                 )}
               </>
             )}

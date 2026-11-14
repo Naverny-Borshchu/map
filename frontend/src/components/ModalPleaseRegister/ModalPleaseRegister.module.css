@@ -28,6 +28,30 @@
     margin-bottom: 24px;
 }
 
+.haveProfile {
+    margin: 14px 0 0;
+    color: var(--color-text-main);
+    font-family: var(--font-family-main);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.loginLink {
+    border: none;
+    background: none;
+    padding: 6px 2px;
+    color: var(--color-text-active);
+    font: inherit;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.loginLink:hover {
+    color: var(--color-btn-hover);
+}
+
 .modalCloseBtn {
     background-color: inherit;
     display: block;

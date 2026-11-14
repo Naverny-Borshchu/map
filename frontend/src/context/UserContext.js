@@ -10,7 +10,7 @@ export const UserProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Загрузка данных пользователя при инициализации. The API layer emits this
+  // Завантаження даних користувача під час ініціалізації. The API layer emits this
   // event when both an access token and its refresh path are no longer valid.
   useEffect(() => {
     const handleExpiredSession = () => {
@@ -24,7 +24,7 @@ export const UserProvider = ({ children }) => {
     return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleExpiredSession);
   }, []);
 
-  // Загрузка данных пользователя из localStorage
+  // Завантаження даних користувача з localStorage
   //
   // `auth === 'true'` alone used to be enough to count as signed in. It is not:
   // the flag survives cleared tokens. A refresh token, however, is a valid
@@ -51,13 +51,13 @@ export const UserProvider = ({ children }) => {
         localStorage.removeItem('userProfile');
       }
     } catch (error) {
-      console.error('Ошибка загрузки данных пользователя:', error);
+      console.error('Не вдалося завантажити дані користувача:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Вход пользователя
+  // Вхід користувача
   const login = (userData) => {
     const userWithTimestamp = {
       ...userData,
@@ -73,11 +73,11 @@ export const UserProvider = ({ children }) => {
 
     identifyUser(userWithTimestamp);
 
-    // TODO: При появлении API заменить на:
+    // TODO: коли зʼявиться API, замінити на:
     // await api.auth.login(userData);
   };
 
-  // Выход пользователя
+  // Вихід користувача
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -90,17 +90,17 @@ export const UserProvider = ({ children }) => {
     clearAuthSession();
   };
 
-  // Обновление данных пользователя
+  // Оновлення даних користувача
   const updateUser = (updates) => {
     const updatedUser = { ...user, ...updates, updated_at: new Date().toISOString() };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
 
-    // TODO: При появлении API заменить на:
+    // TODO: коли зʼявиться API, замінити на:
     // await api.user.update(updates);
   };
 
-  // Обновление времени последней активности
+  // Оновлення часу останньої активності
   const updateLastActivity = () => {
     if (user) {
       const updatedUser = { ...user, lastActivity: new Date().toISOString() };
@@ -109,7 +109,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Проверка авторизации
+  // Перевірка авторизації
   const checkAuth = () => {
     const auth = localStorage.getItem('auth');
     const userData = localStorage.getItem('user');
@@ -122,7 +122,7 @@ export const UserProvider = ({ children }) => {
         setIsAuthenticated(true);
         return true;
       } catch (error) {
-        console.error('Ошибка парсинга данных пользователя:', error);
+        console.error('Не вдалося розібрати дані користувача:', error);
         logout();
         return false;
       }

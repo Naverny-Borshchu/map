@@ -31,6 +31,8 @@ export const RateFlow = ({
   saving,
   isSent,
   error,
+  photoStatus = null,     // { failed, total, retrying } once the photos were tried
+  onRetryPhotos,
   borschName,
   firstDiscovery = false, // nobody had ever rated it → "Першовар"
   xpMultiplier = 1,       // ×3 for a discovery, ×2 for confirming a seed score
@@ -109,10 +111,18 @@ export const RateFlow = ({
       scale10={hasTenPointScale}
       title={borschName}
       xp={{ perStep: XP_PER_STEP, multiplier: xpMultiplier, total: xpTotal }}
-      status={{ saving, sent: isSent, error }}
+      status={{
+        saving,
+        sent: isSent,
+        error,
+        photosFailed: photoStatus?.failed || 0,
+        photosTotal: photoStatus?.total || 0,
+        photoRetrying: Boolean(photoStatus?.retrying),
+      }}
       done={{ ...doneCopy, cta: t('flow.toBorsch') }}
       onSubmit={onSubmit}
       onRetry={onSubmit}
+      onRetryPhotos={onRetryPhotos}
       onExit={onExit}
           // #34 moved the Google handler up to EvaluationsPage, which needs it
           // to resume the pending review; #36 kept an identical one here for

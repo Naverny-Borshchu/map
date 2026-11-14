@@ -75,7 +75,7 @@ export const MapPage = ( )=> {
   //         return;
   //       }
   //     } catch (error) {
-  //       console.error('❌ Ошибка проверки восстановления:', error);
+  //       console.error('❌ Не вдалося перевірити відновлення:', error);
   //     }
   //   }
     

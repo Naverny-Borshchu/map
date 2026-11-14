@@ -59,16 +59,15 @@ export const categorizeMeat = (raw) => {
   return 'інше';
 };
 
-// type_label is equally free-form, and about a third of it is still Russian —
-// both languages are matched here on purpose.
+// type_label is equally free-form, so it is matched by stem rather than equality.
 export const categorizePlaceType = (raw) => {
   const v = String(raw || '').toLowerCase().trim();
   if (!v) return null;
   if (v.includes('кафе') || v.includes('кав') || v.includes('пекарн') || v.includes('кондитер')) return 'Кафе';
-  if (v.includes('бістро') || v.includes('бистро')) return 'Бістро';
+  if (v.includes('бістро')) return 'Бістро';
   if (v.includes('паб') || v.includes('pub') || v.includes('бар') || v.includes('коктейль')) return 'Паб';
   if (v.includes('ресторан') || v.includes('стейк') || v.includes('бургер') || v.includes('хаус') ||
-      v.includes('піц') || v.includes('пиц')) return 'Ресторан';
+      v.includes('піц')) return 'Ресторан';
   return null;
 };
 

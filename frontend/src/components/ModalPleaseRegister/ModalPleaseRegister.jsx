@@ -12,7 +12,7 @@ import {useT} from "../../i18n";
  *   1000 vs nav 130), so a signed-out visitor could not tap Мапа/Обране, and
  *   its onClose was wired to unused state so it could not be dismissed either.
  */
-export const ModalPleaseRegister = ({onClose, onRegisterPage, onGoToMap, asPage = false}) => {
+export const ModalPleaseRegister = ({onClose, onRegisterPage, onLoginPage, onGoToMap, asPage = false}) => {
     const t = useT();
     const [spin, setSpin] = useState(false);
 
@@ -34,6 +34,17 @@ export const ModalPleaseRegister = ({onClose, onRegisterPage, onGoToMap, asPage 
                 <Button type="button"
                         name={t('modal.createProfile')}
                         onClick={onRegisterPage}/>
+                {/* Текст кличе лише створити профіль, і хто вже має акаунт, не
+                    бачив, куди йому. Google-вхід один для обох випадків, але
+                    людина цього не знає, доки не натисне. */}
+                {onLoginPage && (
+                    <p className={style.haveProfile}>
+                        {t('modal.haveProfile')}{' '}
+                        <button type="button" className={style.loginLink} onClick={onLoginPage}>
+                            {t('modal.signIn')}
+                        </button>
+                    </p>
+                )}
                 <button
                     className={`${typography.fontBtn} ${style.modalCloseBtn}`}
                     onClick={() => {

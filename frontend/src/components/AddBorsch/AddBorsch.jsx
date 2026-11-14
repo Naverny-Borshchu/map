@@ -10,7 +10,7 @@ import { guessCountryFromAddress } from '../../utils/currency';
 
 const API_KEY = process.env.REACT_APP_API_KEY_MAP;
 
-// Формируем ссылку на фото (Places API v1)
+// Будуємо посилання на фото (Places API v1)
 const getPhotoUrl = (photo, maxWidth = 600) =>
   photo?.name
     ? `https://places.googleapis.com/v1/${photo.name}/media?key=${API_KEY}&maxWidthPx=${maxWidth}`

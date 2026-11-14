@@ -48,6 +48,7 @@ export const Profile = () => {
                 asPage
                 onClose={() => navigate('/')}
                 onRegisterPage={() => navigate('/register')}
+                onLoginPage={() => navigate('/login')}
                 onGoToMap={() => navigate('/')}
             />
         );

@@ -62,7 +62,7 @@ export const Filters = ({ hideBoxFilter = false }) => {
     window.addEventListener('storage', readProfile);
     return () => window.removeEventListener('storage', readProfile);
   }, [isAuthenticated]);  
-  // Синхронизация с фильтрами при изменении
+  // Синхронізація з фільтрами, коли вони змінюються
   useEffect(() => {
     setSearchValue(search);
   }, [search]);
@@ -79,12 +79,12 @@ export const Filters = ({ hideBoxFilter = false }) => {
   const handleSearch = (queryArg) => {
     const query = (typeof queryArg === 'string' ? queryArg : searchValue).trim();
 
-    // обновляем filters context
+    // оновлюємо filters context
     updateSearchQuery(query);
 
     activateSearch();
 
-    // запускаем фильтрацию мест
+    // запускаємо фільтрацію закладів
     applyFilters({
       filters: {
         ...filters,
@@ -197,7 +197,11 @@ export const Filters = ({ hideBoxFilter = false }) => {
               <span className={style.userName}>{user.given_name || user.name}</span>
             </button>
           ) : (
-            <Link to="/register" className={style.btnReg}>{t('map.register')}</Link>
+            <>
+              {/* поруч із реєстрацією, бо тут бувають і ті, хто вже з нами */}
+              <Link to="/login" className={style.btnLogin}>{t('map.login')}</Link>
+              <Link to="/register" className={style.btnReg}>{t('map.register')}</Link>
+            </>
           )}
       </div>
       {/* {location.pathname === "/" &&   */}

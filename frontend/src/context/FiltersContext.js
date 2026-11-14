@@ -42,11 +42,11 @@ export const FiltersProvider = ({ children }) => {
   const updateCity = (city) => {
     setCity(city);
 
-    // 💥 ВАЖНО: сброс фильтров при смене города
+    // 💥 ВАЖЛИВО: скидаємо фільтри, коли змінюється місто
     setFilters(DEFAULT_FILTERS);
   };
   
-  // Обновить центр 
+  // Оновити центр
   const updateCenter = useCallback((newLocation) => {
     setCenter(newLocation);
   }, []);
@@ -56,7 +56,7 @@ export const FiltersProvider = ({ children }) => {
     setIsSearchActive(false);
   };
 
-    // Обновление поискового запроса
+    // Оновлення пошукового запиту
   const updateSearchQuery = (query) => {
     setFilters(prev => ({
       ...prev,
@@ -67,8 +67,8 @@ export const FiltersProvider = ({ children }) => {
     setIsSearchActive(true);
   };
   
-    // Проверка активности фильтров
-    // (все типы выбраны = фильтр по типу неактивен)
+    // Чи увімкнено хоч один фільтр
+    // (вибрані всі типи = фільтр за типом вимкнений)
   const hasActiveFilters = () => countActiveFilters(filters) > 0 || filters.search !== '';
 
   /** How many filters are on — drives the badge on the Фільтри button. */

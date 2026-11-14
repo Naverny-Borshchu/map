@@ -118,7 +118,7 @@ export const CommentsProvider = ({ children }) => {
           }, 100);
         }
       } catch (error) {
-        console.error('Ошибка при обновлении оценок борща:', error);
+        console.error('Не вдалося оновити оцінки борщу:', error);
       }
     }
   };
