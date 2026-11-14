@@ -261,7 +261,10 @@ describe('the host', () => {
     expect(await screen.findByText('Твій Стіл')).toBeInTheDocument();
     expect(screen.getByTestId('table-code')).toHaveTextContent('K7M2QX');
     expect(screen.getByTestId('table-qr')).toHaveAttribute('data-link', 'https://map.navernyborshchu.com/t/K7M2QX');
-    // the host sees the names even at a blind table: they put the bowls on it
+    // a blind table's QR is shown to everyone: the host's names wait for a tap
+    expect(screen.queryByText('Червоний')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Назву сховано')).toHaveLength(2);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Показати назви' }));
     expect(screen.getByText('Червоний')).toBeInTheDocument();
     expect(screen.getByText('Зелений')).toBeInTheDocument();
     expect(screen.getByTestId('raters-total')).toHaveTextContent('3');

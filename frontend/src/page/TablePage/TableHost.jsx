@@ -30,6 +30,9 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const justCreated = Boolean(location.state?.created);
+  // A blind table's QR is often on a projector or a phone held up to the
+  // table, so the host's own names stay hidden until asked for.
+  const [showNames, setShowNames] = useState(!table.blind);
   const [confirming, setConfirming] = useState(false);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState('');
@@ -96,7 +99,9 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
           <li key={b.position} className={style.row}>
             <div className={style.rowTop}>
               <span className={style.badge}>{t('table.numberShort', { n: b.position })}</span>
-              <span className={style.rowName}>{borschTitle(b, t, dishLabel)}</span>
+              <span className={`${style.rowName} ${showNames ? '' : style.rowNameHidden}`}>
+                {showNames ? borschTitle(b, t, dishLabel) : t('table.nameHidden')}
+              </span>
               <span className={style.rowCount}>{t('table.ratedCount', { count: b.rated_count || 0 })}</span>
             </div>
             {(b.raters || []).length > 0 && (
@@ -109,6 +114,11 @@ export const TableHost = ({ code, table, onTable, reload, onRateSelf }) => {
           </li>
         ))}
       </ul>
+      {table.blind && (
+        <button type="button" className={style.namesToggle} onClick={() => setShowNames((v) => !v)} aria-pressed={showNames}>
+          {t(showNames ? 'table.hideNames' : 'table.showNames')}
+        </button>
+      )}
       {raters === 0 && <p className={style.panelHint}>{t('table.nobodyYet')}</p>}
       <p className={style.panelHint}>{t('table.liveHint')}</p>
     </section>
