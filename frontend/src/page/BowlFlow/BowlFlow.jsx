@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mascot } from '../../components/Mascot';
 import { BowlLoader } from '../../components/EmptyState';
 import { MAX_PHOTOS } from '../../components/QuestFlow';
 import { rateStepCount } from '../../components/RateFlow';
-import { IconCamera, IconClose, IconMapPin, IconSearch, IconChevronRight } from '../../components/Icons';
+import { IconCamera, IconClose, IconChevronRight } from '../../components/Icons';
+import { VenuePicker } from '../../components/VenuePicker';
 import { usePlaces } from '../../context/PlacesContext';
 import { useBorsch } from '../../context/BorschContext';
 import { borschAPI, placesAPI } from '../../api';
@@ -13,9 +14,9 @@ import { tokenStorage } from '../../services/tokenStorage';
 import { createDraft } from '../../services/bowlDrafts';
 import { markFlowHandover } from '../../services/flowAnalytics';
 import { useFlowTracking } from '../../hook/useFlowTracking';
-import { publishLocation, placePoint } from '../../utils/distance';
-import { nearestPlaces, searchPlaces, formatDistanceLocal } from '../../utils/nearestPlaces';
-import { useI18n, useDishLabel, useVenueLabel, useCityLabel } from '../../i18n';
+import { placePoint } from '../../utils/distance';
+import { useNearbyVenues } from '../../hook/useNearbyVenues';
+import { useI18n, useDishLabel, useVenueLabel } from '../../i18n';
 import q from '../../components/QuestFlow/QuestFlow.module.scss';
 import style from './BowlFlow.module.scss';
 
@@ -47,11 +48,10 @@ const placeOfBorsch = (b) => ({ id: b.place_id, name: b.place_name, city: b.plac
 export const BowlFlow = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const dishLabel = useDishLabel();
   const venueLabel = useVenueLabel();
-  const cityLabel = useCityLabel();
-  const { allPlaces, loading: placesLoading, getPlaceById } = usePlaces();
+  const { loading: placesLoading, getPlaceById } = usePlaces();
   const { borsch: allBorsch, loading: borschLoading, getBorschById } = useBorsch();
 
   const rateMode = params.get('mode') === 'rate';
@@ -66,8 +66,7 @@ export const BowlFlow = () => {
   const [photoMode, setPhotoMode] = useState(null);
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState('');
-  const [geo, setGeo] = useState({ status: prefillId ? 'skipped' : 'locating', point: null });
+  const nearby = useNearbyVenues({ skip: Boolean(prefillId) });
   const [prefillFailed, setPrefillFailed] = useState(false);
   const cameraRef = useRef(null);
   const rollRef = useRef(null);
@@ -88,30 +87,6 @@ export const BowlFlow = () => {
   useEffect(() => {
     headingRef.current?.focus?.();
   }, [step]);
-
-  // --- where is the phone ------------------------------------------------
-  useEffect(() => {
-    if (prefillId) return undefined;
-    if (!navigator.geolocation) {
-      setGeo({ status: 'unavailable', point: null });
-      return undefined;
-    }
-    let cancelled = false;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (cancelled) return;
-        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        publishLocation(point);
-        setGeo({ status: 'ok', point });
-      },
-      (err) => {
-        if (cancelled) return;
-        setGeo({ status: err?.code === 1 ? 'denied' : 'unavailable', point: null });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
-    return () => { cancelled = true; };
-  }, [prefillId]);
 
   // --- prefilled from a borshch card -------------------------------------
   useEffect(() => {
@@ -136,14 +111,6 @@ export const BowlFlow = () => {
   }, [prefillId, step, borschLoading, getBorschById, getPlaceById]);
 
   // --- venue lists -------------------------------------------------------
-  const nearest = useMemo(
-    () => (geo.status === 'ok' ? nearestPlaces(allPlaces, geo.point) : []),
-    [allPlaces, geo]
-  );
-  const results = useMemo(
-    () => searchPlaces(allPlaces, query, geo.point),
-    [allPlaces, query, geo.point]
-  );
   const borschAt = useCallback(
     (p) => (allBorsch || []).filter((b) => String(b.place_id) === String(p?.id)),
     [allBorsch]
@@ -248,21 +215,6 @@ export const BowlFlow = () => {
   const shownSteps = rateMode ? STEPS.slice(0, 2) : STEPS.slice(0, 3);
   const loadingVenues = placesLoading || borschLoading;
 
-  const venueCard = ({ place: p, distance }) => (
-    <button key={p.id} type="button" className={style.venue} onClick={() => pickPlace(p)}>
-      <span className={style.venueIcon} aria-hidden="true"><IconMapPin size={22} /></span>
-      <span className={style.venueWords}>
-        <span className={style.venueName}>{venueLabel(p.name)}</span>
-        <span className={style.venueAddr}>
-          {[p.address || p.adress, p.city && cityLabel(p.city)].filter(Boolean)[0] || ''}
-        </span>
-      </span>
-      {distance !== null && distance !== undefined && (
-        <span className={style.venueDist}>{formatDistanceLocal(distance, t, lang)}</span>
-      )}
-    </button>
-  );
-
   const header = (
     <header className={q.head}>
       <button type="button" className={q.quit} onClick={close} aria-label={t('card.close')}>
@@ -314,42 +266,18 @@ export const BowlFlow = () => {
   }
 
   if (step === 'venue') {
-    const askHere = geo.status === 'ok' && nearest.length > 0;
-    const title = askHere
-      ? t(rateMode ? 'bowl.nearRateTitle' : 'bowl.hereTitle')
-      : t(rateMode ? 'bowl.whereRateTitle' : 'bowl.whereTitle');
-    const note = {
-      locating: t('bowl.locating'),
-      denied: t('bowl.geoDenied'),
-      unavailable: t('bowl.geoUnavailable'),
-    }[geo.status] || (geo.status === 'ok' && !loadingVenues && nearest.length === 0 ? t('bowl.noneNear') : '');
     body = (
-      <>
-        {stepCount}
-        <h2 className={q.question} ref={headingRef} tabIndex={-1}>{title}</h2>
-        {note && <p className={q.hint} role="status">{note}</p>}
-        {geo.status === 'locating' && <div className={style.loaderRow}><BowlLoader size={40} /></div>}
-        {askHere && <div className={style.venues}>{nearest.map(venueCard)}</div>}
-        {geo.status === 'ok' && loadingVenues && <div className={style.loaderRow}><BowlLoader size={40} /></div>}
-
-        <label className={style.search}>
-          <span className="nb-sr-only">{t('bowl.searchLabel')}</span>
-          <IconSearch size={20} aria-hidden="true" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('bowl.searchPlaceholder')}
-            autoComplete="off"
-            enterKeyHint="search"
-          />
-        </label>
-        {query.trim() && (
-          results.length
-            ? <div className={style.venues}>{results.map(venueCard)}</div>
-            : <p className={q.hint}>{t('bowl.searchEmpty')}</p>
-        )}
-      </>
+      <VenuePicker
+        nearby={nearby}
+        loading={loadingVenues}
+        titles={{
+          here: t(rateMode ? 'bowl.nearRateTitle' : 'bowl.hereTitle'),
+          where: t(rateMode ? 'bowl.whereRateTitle' : 'bowl.whereTitle'),
+        }}
+        kicker={stepCount}
+        headingRef={headingRef}
+        onPick={pickPlace}
+      />
     );
     foot = (
       <button type="button" className={q.skip} onClick={toNewPlace}>{t('bowl.notListed')}</button>

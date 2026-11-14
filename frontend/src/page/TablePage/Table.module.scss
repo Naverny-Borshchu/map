@@ -1,0 +1,740 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/mixin_adaptiv.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+// «Стіл» on the red stage of the quest (QuestFlow.module.scss, BowlFlow's
+// venue cards). Only what those have no shape for lives here: the QR card, the
+// code, the progress panel, the door's name field, the create form's rows.
+
+// the root of /t/<code> and /table/new (see TablePage)
+.route {
+  min-height: 100%;
+}
+
+// the waiting and «no such table» states: a cream page like BowlRatePage
+.page {
+  min-height: 100%;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 24px;
+  background-color: var(--color-bg-grey);
+  @include respond(desktop) {
+    padding: calc(var(--nb-topbar-h) + 28px) 32px 40px;
+  }
+}
+
+.stage {
+  gap: 10px;
+}
+
+// The host's screen takes two columns on a desktop: the QR beside the
+// progress, so both fit a projector without scrolling.
+@media (min-width: 1024px) {
+  .wideFlow > header,
+  .wideFlow > div:nth-child(3),
+  .wideFlow > footer {
+    width: min(100%, 1000px);
+  }
+}
+
+.subline {
+  margin: -2px 0 0;
+  max-width: 460px;
+  @include footnote;
+  font-weight: 700;
+  color: rgba(255, 250, 245, 0.92);
+}
+
+.notice,
+.blindNote {
+  margin: 2px 0 0;
+  max-width: 460px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.16);
+  @include caption;
+  font-weight: 700;
+  color: #FFFAF5;
+}
+
+.blindNote {
+  background: rgba(23, 11, 11, 0.22);
+  border-radius: var(--radius-sm);
+}
+
+// --- host: QR and progress -------------------------------------------------
+.hostGrid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+  margin-top: 8px;
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    align-items: start;
+    max-width: 960px;
+    gap: 24px;
+    text-align: left;
+  }
+}
+
+.hostSide {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.qrCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 18px 16px;
+  border-radius: 28px;
+  background: #FFFAF5;
+  color: #1A1A1A;
+  box-shadow: 0 8px 0 rgba(60, 0, 18, 0.35), 0 18px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.qr {
+  display: block;
+  width: min(72vw, 300px);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 14px;
+
+  @media (min-width: 1024px) {
+    width: 340px;
+  }
+}
+
+.codeLabel {
+  margin: 6px 0 0;
+  @include kicker;
+  color: #860130;
+}
+
+// the code is read aloud and typed in: Roboto, wide, tabular
+.code {
+  margin: 0;
+  @include numeric(44px, 800);
+  letter-spacing: 0.16em;
+  padding-left: 0.16em;
+  color: #860130;
+}
+
+.link {
+  margin: 0;
+  @include caption;
+  color: #5C4744;
+  overflow-wrap: anywhere;
+}
+
+.shareRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.sharePrimary {
+  @include btnPrimary(sm);
+  flex: 1 1 auto;
+}
+
+.shareGhost {
+  @include btnGhost(sm);
+  color: #C8102E;
+}
+
+.panel {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid rgba(255, 250, 245, 0.32);
+  border-radius: 24px;
+  background: rgba(255, 250, 245, 0.1);
+  text-align: left;
+}
+
+.bigRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bigNumber {
+  margin: 0;
+  @include numeric(64px, 800);
+  color: #FFFAF5;
+}
+
+.bigWords {
+  min-width: 0;
+}
+
+.bigLabel {
+  margin: 0;
+  @include body;
+  font-weight: 700;
+  color: #FFFAF5;
+}
+
+.bigSub {
+  margin: 2px 0 0;
+  @include footnote;
+  color: rgba(255, 250, 245, 0.85);
+}
+
+.rows {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 250, 245, 0.2);
+}
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  flex: 0 0 auto;
+  min-width: 44px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: #FFFAF5;
+  color: #860130;
+  @include numeric(15px, 800);
+  text-align: center;
+}
+
+.rowName {
+  flex: 1 1 auto;
+  min-width: 0;
+  @include display(21px, 1.15);
+  color: #FFFAF5;
+  overflow-wrap: anywhere;
+}
+
+.rowNameHidden {
+  font-family: var(--font-family-main);
+  font-size: 15px;
+  font-weight: 600;
+  font-style: italic;
+  color: rgba(255, 250, 245, 0.8);
+}
+
+.namesToggle {
+  margin-top: 12px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: #FFFAF5;
+  box-shadow: inset 0 0 0 2px rgba(255, 250, 245, 0.7);
+  font-family: var(--font-family-main);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rowCount {
+  flex: 0 0 auto;
+  @include footnote;
+  font-weight: 700;
+  color: rgba(255, 250, 245, 0.9);
+  white-space: nowrap;
+}
+
+.names {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.name {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.2);
+  @include caption;
+  font-weight: 600;
+  color: #FFFAF5;
+}
+
+// a guest without an account: outlined, so the host sees who has no account
+.nameGuest {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 250, 245, 0.55);
+}
+
+.panelHint {
+  margin: 12px 0 0;
+  @include caption;
+  color: rgba(255, 250, 245, 0.8);
+}
+
+.hostActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    align-items: stretch;
+  }
+}
+
+// the quest's cream pill stops at 460 px; in the host's column it fills the column
+.hostActions > button,
+.confirmRow > button {
+  max-width: none;
+}
+
+.ghostCream {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: #FFFAF5;
+  box-shadow: inset 0 0 0 2px rgba(255, 250, 245, 0.85);
+  font-family: var(--font-family-main);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  @media (hover: hover) {
+    &:hover { background: rgba(255, 250, 245, 0.12); }
+  }
+}
+
+.confirm {
+  width: 100%;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(23, 11, 11, 0.28);
+  text-align: center;
+}
+
+.confirmTitle {
+  margin: 0;
+  @include display(21px, 1.15);
+  color: #FFFAF5;
+}
+
+.confirmText {
+  margin: 6px 0 12px;
+  @include footnote;
+  color: rgba(255, 250, 245, 0.9);
+}
+
+.confirmRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.error {
+  margin: 0;
+  @include footnote;
+  font-weight: 700;
+  color: #FFE1A8;
+}
+
+.errorBox {
+  width: 100%;
+  max-width: 460px;
+  margin: 4px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(23, 11, 11, 0.3);
+  @include footnote;
+  font-weight: 700;
+  color: #FFFAF5;
+}
+
+// --- guest: the door --------------------------------------------------------
+.venueStatic {
+  max-width: 460px;
+  cursor: default;
+  box-shadow: none;
+  margin-top: 6px;
+  &:active { transform: none; box-shadow: none; }
+}
+
+.onTable {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.onTableTitle {
+  margin: 0;
+  @include kicker;
+  color: rgba(255, 250, 245, 0.85);
+}
+
+.chipsRow {
+  list-style: none;
+  width: 100%;
+  max-width: 460px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.borschChip {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.16);
+  border: 2px solid rgba(255, 250, 245, 0.4);
+  @include footnote;
+  font-weight: 700;
+  color: #FFFAF5;
+}
+
+.borschChipDone {
+  background: #FFFAF5;
+  border-color: #FFFAF5;
+  color: #860130;
+}
+
+.door {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.nameLabel {
+  @include display(21px, 1.15);
+  color: #FFFAF5;
+}
+
+.or {
+  position: relative;
+  margin: 6px 0 2px;
+  text-align: center;
+  @include caption;
+  font-weight: 700;
+  color: rgba(255, 250, 245, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 40px);
+    height: 1px;
+    background: rgba(255, 250, 245, 0.35);
+  }
+  &::before { left: 0; }
+  &::after { right: 0; }
+}
+
+.asWho {
+  margin: 6px 0 0;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.16);
+  @include footnote;
+  font-weight: 700;
+  color: #FFFAF5;
+}
+
+// --- guest: the thank-you ---------------------------------------------------
+.mine {
+  list-style: none;
+  width: 100%;
+  max-width: 340px;
+  margin: 6px 0 0;
+  padding: 10px 14px;
+  border-radius: 20px;
+  background: rgba(255, 250, 245, 0.14);
+}
+
+.mineRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  @include footnote;
+  font-weight: 700;
+  color: #FFFAF5;
+
+  & + & {
+    border-top: 1px solid rgba(255, 250, 245, 0.2);
+  }
+}
+
+.mineScore {
+  @include numeric(20px, 800);
+}
+
+// --- host: the create form --------------------------------------------------
+.pickCard {
+  position: relative;
+  padding-right: 18px;
+}
+
+.pickNumber {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  border: 2px solid rgba(255, 250, 245, 0.55);
+  @include numeric(16px, 800);
+}
+
+.pickCardOn .pickNumber {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--hue) 72%, #000 28%);
+  color: #FFFAF5;
+}
+
+.newRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 460px;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    height: 54px;
+  }
+}
+
+.addBtn {
+  flex: 0 0 auto;
+  min-width: 96px;
+  height: 54px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: #FFFAF5;
+  color: #C8102E;
+  font-family: var(--font-family-main);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+.removeBtn {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 250, 245, 0.2);
+  color: inherit;
+  cursor: pointer;
+}
+
+.factsList {
+  list-style: none;
+  width: 100%;
+  max-width: 460px;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.factsItem {
+  padding: 14px;
+  border: 2px solid rgba(255, 250, 245, 0.32);
+  border-radius: 22px;
+  background: rgba(255, 250, 245, 0.1);
+  text-align: left;
+}
+
+.factsHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.factsKnown {
+  margin: -4px 0 10px;
+  @include caption;
+  color: rgba(255, 250, 245, 0.85);
+}
+
+.factsInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.factField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  @include caption;
+  font-weight: 700;
+  color: rgba(255, 250, 245, 0.9);
+}
+
+.factWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    width: 100%;
+    height: 50px;
+    padding: 0 48px 0 14px;
+    border: 2px solid rgba(255, 250, 245, 0.5);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 250, 245, 0.95);
+    color: #1A1A1A;
+    @include numeric(18px, 700);
+    appearance: textfield;
+    -moz-appearance: textfield;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    &::placeholder { color: #9C8580; font-weight: 500; }
+    &:focus { outline: none; border-color: #FFFAF5; box-shadow: 0 0 0 4px rgba(255, 250, 245, 0.3); }
+  }
+}
+
+.factUnit {
+  position: absolute;
+  right: 14px;
+  color: #5C4744;
+  font-size: 15px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.factErr input {
+  border-color: #FFE1A8;
+  box-shadow: 0 0 0 3px rgba(255, 225, 168, 0.4);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+  padding: 14px 16px;
+  border: 2px solid rgba(255, 250, 245, 0.38);
+  border-radius: 22px;
+  background: rgba(255, 250, 245, 0.12);
+  color: #FFFAF5;
+  text-align: left;
+  cursor: pointer;
+}
+
+.toggleWords {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggleTitle {
+  @include display(21px, 1.15);
+}
+
+.toggleHint {
+  @include caption;
+  color: rgba(255, 250, 245, 0.88);
+}
+
+.switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 250, 245, 0.3);
+  transition: background-color var(--transition-fast);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #FFFAF5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    transition: transform var(--transition-fast);
+  }
+}
+
+.switchOn {
+  background: #FFFAF5;
+  &::after {
+    background: color-mix(in srgb, var(--hue) 80%, #000 20%);
+    transform: translateX(24px);
+  }
+}
+
+.titleField {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+
+  input {
+    text-align: left;
+  }
+}
+
+.fieldLabel {
+  @include footnote;
+  font-weight: 700;
+  color: #FFFAF5;
+}

@@ -23,6 +23,8 @@ jest.mock('../PasswordChangePage', () => ({ PasswordChangePage: () => null }));
 // it on CI («Cannot find module 'react-router/dom'»), so it is stubbed like the
 // other sections.
 jest.mock('../../components/MyBowls', () => ({ MyBowls: () => null }));
+// «Мої Столи» likewise: its own test, and here it would ask the API for tables.
+jest.mock('../../components/MyTables', () => ({ MyTables: () => null }));
 jest.mock('../../components/ModalLogout', () => {
   const React = require('react');
   return {

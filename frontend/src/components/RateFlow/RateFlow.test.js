@@ -170,7 +170,7 @@ describe('the photo is asked for while there is still a borsch to photograph', (
 
   it('opens on the photo, not on a taste question', () => {
     withCriteria();
-    expect(screen.getByText(/Покажи свій борщ/i)).toBeInTheDocument();
+    expect(screen.getByText('Покажи свій Борщ')).toBeInTheDocument();
     // and the taste questions have not started yet
     expect(screen.queryByText(/Скільки в ньому було мʼяса/i)).not.toBeInTheDocument();
   });
@@ -215,9 +215,9 @@ describe('RateFlow for a bowl (moment 2)', () => {
         </I18nProvider>
       </MemoryRouter>
     );
-    // the first screen is the first taste question, not «Покажи свій борщ»
+    // the first screen is the first taste question, not «Покажи свій Борщ»
     expect(screen.getByText('Скільки в ньому було мʼяса?')).toBeInTheDocument();
-    expect(screen.queryByText('Покажи свій борщ')).not.toBeInTheDocument();
+    expect(screen.queryByText('Покажи свій Борщ')).not.toBeInTheDocument();
   });
 
   it('counts its screens for a picker in front of it', () => {

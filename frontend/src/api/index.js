@@ -72,6 +72,34 @@ const fetchWithAuthRetry = async (makeRequest, authRequired) => {
   return response;
 };
 
+/**
+ * A public endpoint that answers differently to a signed-in person (a table
+ * shows its host everything). The token goes along when there is one; an
+ * expired one is refreshed, and a session that cannot be refreshed is dropped
+ * and the request is made again without it, because a public read must not
+ * fail just because an old sign-in did.
+ */
+const fetchWithOptionalAuth = async (makeRequest) => {
+  if (!getAccessToken() && !tokenStorage.getRefresh()) return makeRequest(false);
+  if (!getAccessToken()) {
+    try {
+      await refreshAccessToken();
+    } catch (error) {
+      clearExpiredSession();
+      return makeRequest(false);
+    }
+  }
+  const response = await makeRequest(true);
+  if (response.status !== 401) return response;
+  try {
+    await refreshAccessToken();
+  } catch (error) {
+    clearExpiredSession();
+    return makeRequest(false);
+  }
+  return makeRequest(true);
+};
+
 const getHeaders = (authRequired = false, hasBody = false) => {
   const headers = {};
   if (hasBody) {
@@ -91,6 +119,8 @@ const describeError = (body, status) => {
   if (!body || typeof body !== 'object') return `HTTP error! status: ${status}`;
   if (body.detail) return body.detail;
   if (body.message) return body.message;
+  // the table endpoints (and the API's generic errors) answer {error, code}
+  if (typeof body.error === 'string' && body.error) return body.error;
 
   const fields = Object.entries(body)
     .map(([field, messages]) => {
@@ -108,6 +138,8 @@ const handleResponse = async (response) => {
     const failure = new Error(describeError(error, response.status));
     // the code survives for callers that react to it (413 = too big)
     failure.status = response.status;
+    // and so does the API's own reason, where it gives one (table_closed, ...)
+    if (error && typeof error.code === 'string') failure.code = error.code;
     throw failure;
   }
   if (response.status === 204) {
@@ -121,8 +153,11 @@ const request = async (endpoint, options = {}) => {
     method = 'GET',
     body,
     authRequired = false,
+    // send the token when there is one, go on without it when there is not
+    authOptional = false,
     isFormData = false,
     query = {},
+    headers: extraHeaders = null,
   } = options;
 
   const params = new URLSearchParams();
@@ -143,14 +178,24 @@ const request = async (endpoint, options = {}) => {
     throw new Error(AUTH_REQUIRED_ERROR);
   }
 
-  const response = await fetchWithAuthRetry(() => fetch(url, {
+  const send = (withAuth) => fetch(url, {
     method,
-    headers: isFormData ? getHeaders(authRequired, false) : getHeaders(authRequired, hasBody),
+    headers: {
+      ...(isFormData ? getHeaders(withAuth, false) : getHeaders(withAuth, hasBody)),
+      ...(extraHeaders || {}),
+    },
     body: body === undefined || body === null ? undefined : (isFormData ? body : JSON.stringify(body)),
-  }), authRequired);
+  });
+
+  const response = authOptional && !authRequired
+    ? await fetchWithOptionalAuth(send)
+    : await fetchWithAuthRetry(() => send(authRequired), authRequired);
 
   return handleResponse(response);
 };
+
+/** The one request helper, for API modules that live in their own file (api/tables.js). */
+export const apiRequest = request;
 
 // Largest page the backend allows (CustomPageNumberPagination.max_page_size).
 // Requesting the max collapses the number of round-trips when walking every

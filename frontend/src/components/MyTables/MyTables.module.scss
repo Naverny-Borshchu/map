@@ -1,0 +1,95 @@
+@use "../../styles/mixin_font.scss" as *;
+@use "../../styles/brand.scss" as *;
+
+// The same card as «Мої миски» (MyBowls.module.scss), one row per table.
+.card {
+  @include card(16px);
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.title {
+  @include displayS;
+  margin: 0;
+  color: var(--nb-ink);
+}
+
+.lead {
+  margin: 4px 0 10px;
+  @include footnote;
+  color: var(--nb-ink-2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  li + li {
+    border-top: 1px solid var(--nb-line);
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "words status"
+    "words code";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 12px 0;
+  color: inherit;
+  text-decoration: none;
+
+  @media (hover: hover) {
+    &:hover .name { color: var(--nb-red-text); }
+  }
+}
+
+.words {
+  grid-area: words;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  @include displayS;
+  color: var(--nb-ink);
+  overflow-wrap: anywhere;
+  transition: color var(--transition-fast);
+}
+
+.meta {
+  @include footnote;
+  color: var(--nb-ink-2);
+}
+
+.status {
+  grid-area: status;
+  justify-self: end;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-main);
+  @include caption;
+  font-weight: 700;
+  color: var(--nb-ink-2);
+}
+
+.open {
+  background: var(--nb-borshch);
+  color: #FFFAF5;
+}
+
+.code {
+  grid-area: code;
+  justify-self: end;
+  @include numeric(14px, 700);
+  letter-spacing: 0.08em;
+  color: var(--nb-ink-2);
+}

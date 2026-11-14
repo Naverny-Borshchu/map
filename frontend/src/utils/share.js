@@ -20,27 +20,51 @@ const copyWithInput = (text) => {
  */
 export const shareBorsch = async (id, t) => {
   const url = `${window.location.origin}/borsch/${id}`;
-  const copied = () => showToast(t('card.shareCopied'));
+  await shareUrl({ url, title: t('card.shareTitle'), text: t('card.shareText') }, t);
+};
+
+/**
+ * Any link: the share sheet where there is one, the clipboard and a toast
+ * otherwise. Resolves to how it went: 'share', 'copy' or 'cancel' (the person
+ * closed the sheet), so a caller can count it.
+ */
+export const shareUrl = async ({ url, title = '', text = '' }, t, { copiedKey = 'card.shareCopied' } = {}) => {
+  const copied = () => showToast(t(copiedKey));
   const copy = async () => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(url);
         copied();
-        return;
+        return 'copy';
       } catch (e) { /* fall through */ }
     }
     copyWithInput(url);
     copied();
+    return 'copy';
   };
 
   if (navigator.share) {
     try {
-      await navigator.share({ title: t('card.shareTitle'), text: t('card.shareText'), url });
-      return;
+      await navigator.share({ title, text, url });
+      return 'share';
     } catch (err) {
       // the person closing the share sheet is not an error worth a fallback
-      if (err && err.name === 'AbortError') return;
+      if (err && err.name === 'AbortError') return 'cancel';
     }
   }
-  await copy();
+  return copy();
+};
+
+/** Copy only, no share sheet: the «Скопіювати» button next to «Поділитися». */
+export const copyUrl = async (url, t, copiedKey = 'card.shareCopied') => {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast(t(copiedKey));
+      return 'copy';
+    } catch (e) { /* fall through */ }
+  }
+  copyWithInput(url);
+  showToast(t(copiedKey));
+  return 'copy';
 };
