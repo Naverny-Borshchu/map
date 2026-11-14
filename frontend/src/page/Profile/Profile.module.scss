@@ -212,11 +212,12 @@ html[data-theme='dark'] .bugRow span[aria-hidden="true"] {
     min-width: 0;
 }
 
-// «Мої миски» for a guest, above the invitation to sign up.
-.guestBowls {
+// «Мої миски» for a guest, above the invitation to sign up. Two classes, so
+// the spacing wins over the card's own margin whatever order the CSS loads in.
+.guestPage .guestBowls {
     max-width: 560px;
-    margin: calc(20px + env(safe-area-inset-top, 0px)) auto -4px;
     width: calc(100% - 32px);
+    margin: calc(20px + env(safe-area-inset-top, 0px)) auto 0;
     @include respond(desktop) {
         margin-top: calc(var(--nb-topbar-h) + 32px);
     }

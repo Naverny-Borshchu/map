@@ -40,8 +40,10 @@ export const Profile = () => {
     if (!user) {
         // A bowl needs no account, so a guest can have some waiting: they stay
         // reachable above the invitation to sign up.
+        // One wrapper: the variant pads every direct child of the shell for the
+        // tab bar, and two children would each get that padding.
         return (
-            <>
+            <div className={style.guestPage}>
             <MyBowls className={style.guestBowls} />
             <ModalPleaseRegister
                 asPage
@@ -50,7 +52,7 @@ export const Profile = () => {
                 onLoginPage={() => navigate('/login')}
                 onGoToMap={() => navigate('/')}
             />
-            </>
+            </div>
         );
     }
 
