@@ -174,3 +174,27 @@ test('photos: the same file twice is one photo, and the cap holds', async () => 
   // and once full, the add button steps aside
   expect(screen.queryByRole('button', { name: /Додати/i })).not.toBeInTheDocument();
 });
+
+// 15.11.2026: points are test BorshchCoins (BRSH) instead of XP, with a line that
+// they are not money and a link to the joke coin's page.
+test('the closing screen counts test BorshchCoins, not XP', async () => {
+  render(
+    <I18nProvider>
+      <QuestFlow
+        steps={[{ type: 'done', key: 'done' }]}
+        values={{}}
+        onChange={() => {}}
+        onSubmit={() => {}}
+        onExit={() => {}}
+        initialStep={0}
+        xp={{ perStep: 10, multiplier: 3, total: 170 }}
+        status={{ saving: false, sent: true, error: '' }}
+        done={{ title: 'done', text: '', cta: 'ok' }}
+      />
+    </I18nProvider>
+  );
+  expect(screen.queryByText(/\bXP\b/)).not.toBeInTheDocument();
+  expect(screen.getByText('Разом у тебе: 170 BRSH')).toBeInTheDocument();
+  expect(screen.getByText(/Тестові БорщКоіни: їх не можна купити чи продати\./)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /^Що\sтаке\sБорщКоін$/ })).toHaveAttribute('href', 'https://navernyborshchu.com/crypto/');
+});

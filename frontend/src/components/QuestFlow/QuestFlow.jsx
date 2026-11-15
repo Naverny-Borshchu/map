@@ -8,6 +8,7 @@ import { tokenStorage } from '../../services/tokenStorage';
 import { IconCamera, IconClose } from '../Icons';
 import { useFlowTracking } from '../../hook/useFlowTracking';
 import style from './QuestFlow.module.scss';
+import { CoinIcon } from '../CoinIcon';
 
 /**
  * The gamified quest engine behind both journeys — rating a borsch and adding
@@ -324,8 +325,9 @@ export const QuestFlow = ({
           ))}
         </div>
 
-        <span className={style.xp} key={earnedXp}>
-          {earnedXp} XP
+        <span className={style.xp} key={earnedXp} aria-label={t('coin.aria', { n: earnedXp })}>
+          <CoinIcon size={16} className={style.coin} />
+          {earnedXp} {t('coin.ticker')}
           {xp.multiplier > 1 && <span className={style.xpMult}> ×{xp.multiplier}</span>}
         </span>
       </header>
@@ -564,12 +566,17 @@ export const QuestFlow = ({
                 <h2 className={style.question}>{done.title}</h2>
                 <p className={style.hint}>{done.text}</p>
                 <p className={style.xpBig}>
-                  +{earnedXp} XP
+                  <CoinIcon size={30} className={style.coinBig} />
+                  +{earnedXp} {t('coin.ticker')}
                   {xp.multiplier > 1 && <span className={style.xpMult}> ×{xp.multiplier}</span>}
                 </p>
                 {xp.total !== null && xp.total !== undefined && (
                   <p className={style.xpTotal}>{t('flow.xpTotal', { n: xp.total })}</p>
                 )}
+                <p className={style.coinNote}>
+                  {t('coin.testNote')}{' '}
+                  <a href={t('coin.whatUrl')} target="_blank" rel="noopener noreferrer">{t('coin.what')}</a>
+                </p>
                 {status.photosFailed > 0 && (
                   <div className={style.photoWarn} role="alert">
                     <p>
