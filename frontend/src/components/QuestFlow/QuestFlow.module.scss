@@ -128,14 +128,21 @@
 
 .xp {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
   @include caption;
   font-weight: 700;
   color: #FFFAF5;
   background: rgba(255, 250, 245, 0.18);
-  padding: 5px 10px;
+  padding: 5px 10px 5px 6px;
   border-radius: var(--radius-pill);
   animation: xpPop 0.34s ease;
 }
+
+// a test BorshchCoin (components/CoinIcon) in front of the number
+.coin { flex: none; }
 
 @keyframes xpPop {
   0%   { transform: scale(1); }
@@ -616,10 +623,29 @@
 
 .xpBig {
   margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font-size: 32px;
   font-weight: 800;
   color: #FFFAF5;
   animation: xpPop 0.5s ease;
+}
+
+.coinBig { flex: none; }
+
+// «Тестові БорщКоіни…»: small, under the total, never a promise of value
+.coinNote {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255, 250, 245, 0.8);
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 }
 
 .xpTotal {
