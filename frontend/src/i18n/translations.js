@@ -652,7 +652,7 @@ export const translations = {
     'add.city': 'Місто',
     'geo.hintDeniedMobile': 'Дозволь геодані для цього сайту: іконка замка біля адреси, далі «Дозволи», «Геодані». Якщо сайт відкрито всередині іншого застосунку (Telegram тощо), відкрий його в Chrome або Safari.',
     // abroad (11.2026): the app's own ask on load fails quietly, once per tab
-    'geo.autoHint': 'Не бачимо, де ти. Обери місто вгорі або натисни «Поруч», щоб дозволити геодані.',
+    'geo.autoHint': 'Не бачимо, де ти. Обери місто вгорі або натисни стрілку праворуч угорі, щоб дозволити геодані.',
     'add.street': 'Вулиця',
     'add.confirm': 'Підтвердити адресу',
     'add.confirmTitle': 'Це той заклад?',
@@ -1684,7 +1684,7 @@ export const translations = {
     'filter.priceUnder': 'under {max} {unit}',
     'add.city': 'City',
     'geo.hintDeniedMobile': 'Allow location for this site: the lock icon next to the address, then Permissions, Location. If the site is open inside another app (Telegram and the like), open it in Chrome or Safari.',
-    'geo.autoHint': 'We cannot see where you are. Pick a city at the top, or tap Nearby to allow location.',
+    'geo.autoHint': 'We cannot see where you are. Pick a city at the top, or tap the arrow at the top right to allow location.',
     'add.street': 'Street',
     'add.confirm': 'Confirm the address',
     'add.confirmTitle': 'Is this the place?',

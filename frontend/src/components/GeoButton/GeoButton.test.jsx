@@ -52,7 +52,7 @@ test('denied on load: no sheet over the map, a small hint once per tab, the code
   await waitFor(() => expect(toasts).toHaveLength(1));
   expect(ask).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole('heading', { name: 'Доступ до геолокації заблоковано.' })).not.toBeInTheDocument();
-  expect(toasts[0].message).toBe('Не бачимо, де ти. Обери місто вгорі або натисни «Поруч», щоб дозволити геодані.');
+  expect(toasts[0].message).toBe('Не бачимо, де ти. Обери місто вгорі або натисни стрілку праворуч угорі, щоб дозволити геодані.');
   expect(geoCalls()).toEqual([{ code: 1, permission: 'denied', auto: true, kind: 'denied' }]);
   expect(document.body.textContent).not.toMatch(/код|denied/);
   unmount();
