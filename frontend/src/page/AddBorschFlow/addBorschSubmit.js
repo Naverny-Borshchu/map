@@ -25,6 +25,7 @@ export const emptyProgress = () => ({
   reviewDone: false,
   photoDone: false,
   photosUploaded: [],   // indices into values.photos that already landed
+  photosPending: [],    // of those, the ones waiting for the AI check (202, NAV-218)
   photosFailed: 0,
 });
 
@@ -125,13 +126,16 @@ export async function submitAddBorsch({
 
 /** Step 4 on its own, for the "retry the photos" button on the closing screen. */
 export async function uploadPendingPhotos({ photos, progress, borschAPI }) {
-  const { uploaded, failed } = await uploadPhotos({
+  const { uploaded, failed, pending } = await uploadPhotos({
     borschId: progress.borschId,
     photos,
     uploaded: progress.photosUploaded,
+    pending: progress.photosPending,
     upload: borschAPI.uploadPhoto,
   });
   progress.photosUploaded = uploaded;
+  // sent, so never retried; the closing screen says they are being checked
+  progress.photosPending = pending;
   progress.photosFailed = failed;
   progress.photoDone = failed === 0;
   return progress;

@@ -68,3 +68,66 @@ test('a clean save says nothing about photos', () => {
   expect(screen.queryByRole('button', { name: 'Спробувати ще раз' })).not.toBeInTheDocument();
   expect(screen.queryByText('Фото завантажено ✅')).not.toBeInTheDocument();
 });
+
+// NAV-218: a photo the server took for the AI check (202 pending) is sent:
+// no alert, no retry, and not «Фото завантажено» either (it is not on the
+// card yet). The screen says it is being checked.
+describe('photos waiting for the AI check', () => {
+  test('one waiting: the words of the spec, no alert, no retry', () => {
+    renderDone({ photosFailed: 0, photosPending: 1, photosTotal: 1 });
+    expect(screen.getByTestId('photo-pending')).toHaveTextContent(
+      'Фото на перевірці: зʼявиться, щойно переконаємось, що на ньому Борщ.'
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Спробувати ще раз' })).not.toBeInTheDocument();
+  });
+
+  test('several waiting: the plural', () => {
+    renderDone({ photosFailed: 0, photosPending: 3, photosTotal: 3 });
+    expect(screen.getByTestId('photo-pending')).toHaveTextContent(
+      'Фото на перевірці: зʼявляться, щойно переконаємось, що на них Борщ.'
+    );
+  });
+
+  test('in English', () => {
+    localStorage.setItem('lang', 'en');
+    renderDone({ photosFailed: 0, photosPending: 1, photosTotal: 1 });
+    expect(screen.getByTestId('photo-pending')).toHaveTextContent(
+      'Your photo is being checked: it appears once we see borshch in it.'
+    );
+  });
+
+  test('one failed and one waiting: the retry is for the failed one, and the waiting one is said too', () => {
+    renderDone({ photosFailed: 1, photosPending: 1, photosTotal: 2 });
+    expect(screen.getByRole('alert')).toHaveTextContent('Оцінку збережено, але фото не завантажилось: 1 з 2.');
+    expect(screen.getByRole('button', { name: 'Спробувати ще раз' })).toBeInTheDocument();
+    expect(screen.getByTestId('photo-pending')).toBeInTheDocument();
+  });
+
+  test('a retry that lands into the check says the check, not «Фото завантажено»', () => {
+    const host = (status) => (
+      <I18nProvider>
+        <QuestFlow
+          steps={[{ type: 'done', key: 'done' }]}
+          values={{}}
+          onChange={() => {}}
+          onSubmit={() => {}}
+          onExit={() => {}}
+          onRetryPhotos={() => {}}
+          status={{ saving: false, sent: true, error: '', photosTotal: 1, ...status }}
+          done={{ title: 'ok', text: '', cta: 'ok' }}
+        />
+      </I18nProvider>
+    );
+    const { rerender } = render(host({ photosFailed: 1 }));
+    rerender(host({ photosFailed: 0, photosPending: 1 }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByTestId('photo-pending')).toBeInTheDocument();
+    expect(screen.queryByText('Фото завантажено')).not.toBeInTheDocument();
+  });
+
+  test('201 published photos say nothing about a check', () => {
+    renderDone({ photosFailed: 0, photosPending: 0, photosTotal: 2 });
+    expect(screen.queryByTestId('photo-pending')).not.toBeInTheDocument();
+  });
+});

@@ -237,6 +237,56 @@ test('retrying the photos sends only the ones that failed, and nothing else', as
   console.error.mockRestore();
 });
 
+// NAV-218: a regular user's photo waits for the AI check (202 pending). It
+// is sent: the step is done and nothing is retried; the closing screen hears
+// how many wait, so it can say so. Staff (201 photo_url) wait for nothing.
+test('202 pending photos are sent: the step is done, and they are kept as waiting', async () => {
+  const uploadPhoto = jest.fn().mockResolvedValue({ photo_id: 'ph-1', status: 'pending', message: '' });
+  const progress = await submitAddBorsch({
+    place, street: 's', city: 'c',
+    values: { ...values, photos: [photoFile('a.jpg'), photoFile('b.jpg')] },
+    progress: emptyProgress(), apis: makeApis({ borschAPI: { uploadPhoto } }),
+  });
+  expect(progress).toMatchObject({ photoDone: true, photosFailed: 0, photosUploaded: [0, 1], photosPending: [0, 1] });
+});
+
+test('201 published photos: the step is done and nothing waits', async () => {
+  const uploadPhoto = jest.fn().mockResolvedValue({ photo_url: '/media/a.jpg' });
+  const progress = await submitAddBorsch({
+    place, street: 's', city: 'c',
+    values: { ...values, photos: [photoFile('a.jpg')] },
+    progress: emptyProgress(), apis: makeApis({ borschAPI: { uploadPhoto } }),
+  });
+  expect(progress).toMatchObject({ photoDone: true, photosFailed: 0, photosPending: [] });
+});
+
+test('a retry into 202 keeps the earlier waiting photos and adds its own', async () => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  const photos = [photoFile('a.jpg'), photoFile('b.jpg')];
+  const pending = { photo_id: 'ph', status: 'pending', message: '' };
+  const first = makeApis({
+    borschAPI: { uploadPhoto: jest.fn().mockResolvedValueOnce(pending).mockRejectedValueOnce(new Error('502')) },
+  });
+  const progress = await submitAddBorsch({
+    place, street: 's', city: 'c', values: { ...values, photos }, progress: emptyProgress(), apis: first,
+  });
+  expect(progress).toMatchObject({ photoDone: false, photosFailed: 1, photosPending: [0] });
+
+  const retry = makeApis({ borschAPI: { uploadPhoto: jest.fn().mockResolvedValue(pending) } });
+  await uploadPendingPhotos({ photos, progress, borschAPI: retry.borschAPI });
+  expect(retry.borschAPI.uploadPhoto.mock.calls.map(([, f]) => f.name)).toEqual(['b.jpg']);
+  expect(progress).toMatchObject({ photoDone: true, photosFailed: 0, photosUploaded: [0, 1], photosPending: [0, 1] });
+  console.error.mockRestore();
+});
+
+test('a progress saved before NAV-218 (no photosPending) still retries', async () => {
+  const photos = [photoFile('a.jpg')];
+  const old = { placeId: 'place-1', borschId: 'borsch-1', reviewDone: true, photoDone: false, photosUploaded: [], photosFailed: 1 };
+  const retry = makeApis({ borschAPI: { uploadPhoto: jest.fn().mockResolvedValue({ status: 'pending' }) } });
+  await uploadPendingPhotos({ photos, progress: old, borschAPI: retry.borschAPI });
+  expect(old).toMatchObject({ photoDone: true, photosFailed: 0, photosPending: [0] });
+});
+
 test('no photos means no upload calls at all', async () => {
   const apis = makeApis();
   await submitAddBorsch({ place, street: 's', city: 'c', values: { ...values, photos: [] }, progress: emptyProgress(), apis });

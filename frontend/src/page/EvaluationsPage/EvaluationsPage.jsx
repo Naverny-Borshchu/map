@@ -72,6 +72,8 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const [withPhotoStep] = useState(() => !(bowl && (initialPhotos || []).length > 0));
     // which of `photos` already landed, and how the last attempt went
     const [photosUploaded, setPhotosUploaded] = useState([]);
+    // of those, the ones the server took for the AI check (202, NAV-218)
+    const [photosPending, setPhotosPending] = useState([]);
     const [photoStatus, setPhotoStatus] = useState(null);
     const navigate = useNavigate();
     const t = useT();
@@ -180,11 +182,14 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         let photosFailed = 0;
         if (photos.length) {
           const result = await uploadPhotos({
-            borschId: targetId, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
+            borschId: targetId, photos, uploaded: photosUploaded, pending: photosPending, upload: borschAPI.uploadPhoto,
           });
           photosFailed = result.failed;
           setPhotosUploaded(result.uploaded);
-          setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
+          setPhotosPending(result.pending);
+          setPhotoStatus({
+            failed: result.failed, pending: result.pending.length, total: photos.length, retrying: false,
+          });
         }
         if (bowl) settleBowl(photosFailed, targetId);
 
@@ -251,10 +256,13 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const retryPhotos = async () => {
       setPhotoStatus((s) => ({ ...(s || {}), retrying: true }));
       const result = await uploadPhotos({
-        borschId: id, photos, uploaded: photosUploaded, upload: borschAPI.uploadPhoto,
+        borschId: id, photos, uploaded: photosUploaded, pending: photosPending, upload: borschAPI.uploadPhoto,
       });
       setPhotosUploaded(result.uploaded);
-      setPhotoStatus({ failed: result.failed, total: photos.length, retrying: false });
+      setPhotosPending(result.pending);
+      setPhotoStatus({
+        failed: result.failed, pending: result.pending.length, total: photos.length, retrying: false,
+      });
       if (bowl) settleBowl(result.failed);
       // the new photo_urls only; a failed refresh must not undo the result above
       await loadBorschData().catch(() => {});

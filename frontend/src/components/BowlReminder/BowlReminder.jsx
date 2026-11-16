@@ -6,7 +6,7 @@ import { borschAPI } from '../../api';
 import { tokenStorage } from '../../services/tokenStorage';
 import { uploadPhotos } from '../../utils/uploadPhotos';
 import { track } from '../../analytics';
-import { showToast } from '../Toast';
+import { LONG_TOAST_MS, showToast } from '../Toast';
 import { IconBowl } from '../Icons';
 import { useT, useVenueLabel, useDishLabel } from '../../i18n';
 import style from './BowlReminder.module.scss';
@@ -125,6 +125,7 @@ export const BowlReminder = () => {
       borsch_id: due.borsch.id,
       photos: photos.length,
       failed: result.failed,
+      pending: result.pending.length,
     });
     setKeeping(false);
     if (photos.length && result.failed === photos.length) {
@@ -135,7 +136,10 @@ export const BowlReminder = () => {
     setAskKeep(null);
     await deleteDraft(due.id);
     window.dispatchEvent(new Event('borschDataUpdated'));
-    showToast(result.failed ? t('rev.photoFailed', { n: result.failed, total: photos.length }) : t('bowl.photoKept'));
+    // «Фото вже на картці» is not true for a photo waiting for its AI check (NAV-218)
+    if (result.failed) showToast(t('rev.photoFailed', { n: result.failed, total: photos.length }));
+    else if (result.pending.length) showToast(t('photo.pending', { count: result.pending.length }), { ms: LONG_TOAST_MS });
+    else showToast(t('bowl.photoKept'));
   };
 
   // «Ні»: the bowl goes with its photo, as before
