@@ -1,5 +1,6 @@
 import {
-  fetchVenueDetails, fetchVenueSuggestions, findOwnPlace, normalizeVenueName, pendingPlace, placesReady, venuePlacePayload,
+  abroadInCyrillic, fetchCityDetails, fetchCitySuggestions, fetchGoogleNearby, fetchVenueDetails, fetchVenueSuggestions,
+  findOwnPlace, normalizeVenueName, pendingPlace, placesReady, venuePlacePayload, wantsEnglish,
 } from './googlePlaces';
 
 /**
@@ -106,5 +107,145 @@ describe('the pick', () => {
     const lookup = jest.fn(async () => ({ id: 'g1', name: 'Криївка', address: 'пл. Ринок, 14, Львів', city: 'Львів', country: 'Україна', location: { lat: 49.8419, lng: 24.0322 } }));
     expect(await fetchVenueDetails({ placeId: 'g1' }, { lookup, language: 'en' })).toEqual(venue);
     expect(lookup).toHaveBeenCalledWith('g1', 'uk');
+  });
+});
+
+// --- abroad (11.2026): a co-founder in Tokyo, «пише локації не знайдено і Київ» ---
+
+describe('abroad: never a Russian form, English instead', () => {
+  const prediction = (placeId, main, secondary) => ({
+    placePrediction: { placeId, mainText: { text: main }, secondaryText: { text: secondary }, types: ['restaurant', 'establishment'] },
+  });
+
+  it('a suggestion that is not Ukrainian is swapped for its English twin; a Ukrainian one stays', async () => {
+    const fetchAutocompleteSuggestions = jest.fn(async ({ language }) => ({
+      suggestions: language === 'en'
+        ? [prediction('g-jp', 'Shin-Yokohama Ramen Museum', 'Shinyokohama, Kohoku Ward, Yokohama, Japan'), prediction('g-ua', 'Puzata Khata', 'Kyiv, Ukraine')]
+        : [prediction('g-jp', 'Musée du Rāmen de Shin-Yokohama', 'Синъёкохама, Иокогама, Префектура Канаґава, Японія'), prediction('g-ua', 'Пузата Хата', 'Вокзальна площа, Київ, Україна')], // lang-check: allow
+    }));
+    window.google = { maps: { places: { AutocompleteSuggestion: { fetchAutocompleteSuggestions } } } };
+    const list = await fetchVenueSuggestions('ramen', { language: 'uk' });
+    expect(list.map((s) => [s.main, s.secondary])).toEqual([
+      ['Shin-Yokohama Ramen Museum', 'Shinyokohama, Kohoku Ward, Yokohama, Japan'],
+      ['Пузата Хата', 'Вокзальна площа, Київ, Україна'],
+    ]);
+    expect(fetchAutocompleteSuggestions.mock.calls.map(([r]) => r.language)).toEqual(['uk', 'en']);
+  });
+
+  it('only Ukrainian suggestions: one request, in the language of the UI', async () => {
+    const fetchAutocompleteSuggestions = jest.fn(async () => ({
+      suggestions: [prediction('g1', 'Криївка', 'площа Ринок, Львів, Львівська область, Україна')],
+    }));
+    window.google = { maps: { places: { AutocompleteSuggestion: { fetchAutocompleteSuggestions } } } };
+    expect((await fetchVenueSuggestions('Крив', { language: 'uk' })).map((s) => s.main)).toEqual(['Криївка']);
+    expect(fetchAutocompleteSuggestions).toHaveBeenCalledTimes(1);
+  });
+
+  it('near a point outside Ukraine it asks in English at once', async () => {
+    const fetchAutocompleteSuggestions = jest.fn(async () => ({
+      suggestions: [prediction('g-jp', 'ICHIRAN Shibuya', 'Jinnan, Shibuya, Tokyo, Japan')],
+    }));
+    window.google = { maps: { places: { AutocompleteSuggestion: { fetchAutocompleteSuggestions } } } };
+    await fetchVenueSuggestions('Ichiran', { near: { lat: 35.6617, lng: 139.7041 }, language: 'uk' });
+    expect(fetchAutocompleteSuggestions).toHaveBeenCalledTimes(1);
+    expect(fetchAutocompleteSuggestions.mock.calls[0][0].language).toBe('en');
+  });
+
+  it('a Russian letter in a Ukrainian-looking line is a reason too', () => {
+    expect(wantsEnglish({ main: 'Пузата Хата', secondary: 'Київ, Україна' })).toBe(false);
+    expect(wantsEnglish({ main: 'Синъёкохама', secondary: 'Україна' })).toBe(true); // lang-check: allow
+    expect(wantsEnglish({ main: 'ICHIRAN', secondary: 'Tokyo, Japan' })).toBe(true);
+    expect(abroadInCyrillic({ main: 'ICHIRAN', secondary: 'Tokyo, Japan' })).toBe(false);
+    expect(abroadInCyrillic({ main: 'Краков', secondary: 'Польща' })).toBe(true); // lang-check: allow
+  });
+
+  const jsJapan = (lang) => ({
+    id: 'g-jp',
+    displayName: 'ICHIRAN Shibuya',
+    formattedAddress: `${lang === 'en' ? 'Japan' : 'Японія'}, 〒150-0041 Tokyo, Shibuya, Jinnan, 1-chōme−22−７`,
+    addressComponents: [
+      { longText: 'Shibuya', shortText: 'Shibuya', types: ['locality', 'political'] },
+      { longText: 'Tokyo', shortText: 'Tokyo', types: ['administrative_area_level_1', 'political'] },
+      { longText: lang === 'en' ? 'Japan' : 'Японія', shortText: 'JP', types: ['country', 'political'] },
+    ],
+    location: { lat: () => 35.6617, lng: () => 139.7041 },
+    fetchFields: jest.fn(async () => {}),
+  });
+
+  it('a venue abroad is filed in English, Tokyo as its city, not the ward', async () => {
+    const made = [];
+    window.google = { maps: { places: { Place: function Place(opts) { made.push(opts); return jsJapan(opts.requestedLanguage); } } } };
+    const v = await fetchVenueDetails({ placeId: 'g-jp' }, { language: 'en' });
+    expect(made.map((o) => o.requestedLanguage)).toEqual(['uk', 'en']);
+    expect(v).toEqual({
+      googlePlaceId: 'g-jp',
+      name: 'ICHIRAN Shibuya',
+      address: 'Japan, 〒150-0041 Tokyo, Shibuya, Jinnan, 1-chōme−22−７',
+      city: 'Tokyo',
+      country: 'Japan',
+      location: { lat: 35.6617, lng: 139.7041 },
+    });
+    expect(venuePlacePayload(v)).toMatchObject({ city: 'Tokyo', country: 'Japan', google_place_id: 'g-jp' });
+  });
+
+  it('a Ukrainian venue is asked once, in Ukrainian', async () => {
+    const made = [];
+    const ua = () => ({
+      id: 'g1', displayName: 'Криївка', formattedAddress: 'пл. Ринок, 14, Львів',
+      addressComponents: [{ longText: 'Львів', types: ['locality'] }, { longText: 'Україна', shortText: 'UA', types: ['country'] }],
+      location: { lat: () => 49.8419, lng: () => 24.0322 }, fetchFields: jest.fn(async () => {}),
+    });
+    window.google = { maps: { places: { Place: function Place(opts) { made.push(opts); return ua(); } } } };
+    expect((await fetchVenueDetails({ placeId: 'g1' }, { language: 'en' })).city).toBe('Львів');
+    expect(made).toEqual([{ id: 'g1', requestedLanguage: 'uk' }]);
+  });
+
+  it('cities: Google types for a city, Tokyo included, and the city in English abroad', async () => {
+    const fetchAutocompleteSuggestions = jest.fn(async () => ({
+      suggestions: [{ placePrediction: { placeId: 'c-tokyo', mainText: { text: 'Tokyo' }, secondaryText: { text: 'Japan' }, types: ['administrative_area_level_1'] } }],
+    }));
+    window.google = { maps: { places: { AutocompleteSuggestion: { fetchAutocompleteSuggestions } } } };
+    const list = await fetchCitySuggestions('Tokyo', { language: 'en' });
+    expect(list.map((s) => s.main)).toEqual(['Tokyo']);
+    expect(fetchAutocompleteSuggestions.mock.calls[0][0].includedPrimaryTypes)
+      .toEqual(['locality', 'administrative_area_level_1', 'colloquial_area', 'postal_town']);
+
+    const made = [];
+    const city = (lang) => ({
+      id: 'c-tokyo', displayName: lang === 'en' ? 'Tokyo' : 'Токіо',
+      addressComponents: [{ longText: lang === 'en' ? 'Japan' : 'Японія', shortText: 'JP', types: ['country'] }],
+      location: { lat: () => 35.6764, lng: () => 139.65 }, fetchFields: jest.fn(async () => {}),
+    });
+    window.google = { maps: { places: { Place: function Place(opts) { made.push(opts.requestedLanguage); return city(opts.requestedLanguage); } } } };
+    expect(await fetchCityDetails({ placeId: 'c-tokyo' })).toEqual({ name: 'Tokyo', location: { lat: 35.6764, lng: 139.65 }, countryCode: 'JP' });
+    expect(made).toEqual(['uk', 'en']);
+  });
+
+  it('a Ukrainian city keeps its Ukrainian name', async () => {
+    const city = { id: 'c-br', displayName: 'Бровари', addressComponents: [{ longText: 'Україна', shortText: 'UA', types: ['country'] }], location: { lat: () => 50.51, lng: () => 30.79 }, fetchFields: jest.fn(async () => {}) };
+    window.google = { maps: { places: { Place: function Place() { return city; } } } };
+    expect(await fetchCityDetails({ placeId: 'c-br' })).toEqual({ name: 'Бровари', location: { lat: 50.51, lng: 30.79 }, countryCode: 'UA' });
+  });
+
+  it('Google nearby: in English outside Ukraine, as venues, nearest first', async () => {
+    const searchNearby = jest.fn(async () => ({ places: [jsJapan('en')] }));
+    window.google = { maps: { places: { Place: { searchNearby } } } };
+    const venues = await fetchGoogleNearby({ lat: 35.6617, lng: 139.7041 });
+    expect(venues).toEqual([expect.objectContaining({ googlePlaceId: 'g-jp', city: 'Tokyo', country: 'Japan' })]);
+    expect(searchNearby).toHaveBeenCalledWith(expect.objectContaining({
+      language: 'en',
+      locationRestriction: { center: { lat: 35.6617, lng: 139.7041 }, radius: 500 },
+      includedPrimaryTypes: ['restaurant', 'cafe', 'bar', 'meal_takeaway', 'food_court'],
+    }));
+  });
+
+  it('Google nearby inside Ukraine: Ukrainian; nothing at all without Google', async () => {
+    const searchNearby = jest.fn(async () => ({ places: [] }));
+    window.google = { maps: { places: { Place: { searchNearby } } } };
+    await fetchGoogleNearby({ lat: 50.45, lng: 30.52 });
+    expect(searchNearby.mock.calls[0][0].language).toBe('uk');
+    delete window.google;
+    expect(await fetchGoogleNearby({ lat: 35.66, lng: 139.7 })).toEqual([]);
+    expect(await fetchGoogleNearby(null)).toEqual([]);
   });
 });

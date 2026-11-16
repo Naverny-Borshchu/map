@@ -161,3 +161,67 @@
   background-color: var(--color-header-border);
   color: var(--color-text);
 }
+
+// --- search: our cities that fit, then any city from Google (11.2026) -------
+.loaderRow {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  color: var(--nb-red-text);
+}
+
+.googleCities {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.googleCity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 52px;
+  padding: 9px 16px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  background-color: var(--color-text-btn-active);
+  color: var(--color-text-btn);
+  text-align: left;
+  cursor: pointer;
+}
+
+.googleCityName {
+  @include footnote;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.googleCityWhere {
+  @include caption;
+  color: var(--color-text-grey);
+  overflow-wrap: anywhere;
+}
+
+.attribution {
+  margin: 8px 0 0;
+  @include caption;
+  color: var(--color-text-grey);
+}
+
+.nothing {
+  margin: 14px 0 0;
+  @include footnote;
+  color: var(--color-text-grey);
+}
+
+.problem {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--nb-smetana);
+  color: var(--nb-ink);
+  @include footnote;
+  font-weight: 700;
+}

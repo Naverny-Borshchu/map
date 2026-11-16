@@ -43,8 +43,32 @@ const componentText = (components, type) => {
   return hit ? (hit.longText || hit.shortText || '') : '';
 };
 
-export const cityOf = (components) =>
-  componentText(components, 'locality') || componentText(components, 'postal_town');
+const componentCode = (components, type) => {
+  const hit = (components || []).find((c) => (c.types || []).includes(type));
+  return hit ? String(hit.shortText || hit.short_name || '').toUpperCase() : '';
+};
+
+/** «UA», «JP», … as Google labels the country; '' when it does not. */
+export const countryCodeOf = (components) => componentCode(components, 'country');
+
+/**
+ * Outside Ukraine a venue's data is taken in English (abroad, 11.2026): in
+ * Ukrainian Google names much of the world with Russian forms (Yokohama,
+ * Shin-Yokohama and Krakow spelt the Russian way), and the map must never
+ * show Russian. A venue
+ * whose country Google did not label is not called abroad.
+ */
+export const isAbroadCode = (code) => Boolean(code) && code !== 'UA';
+
+// Tokyo's 23 wards are Google's localities («Shibuya»), and the city menu
+// would split one city into 23. The metropolis is the city people mean.
+const METROPOLIS_AS_CITY = { JP: ['Tokyo', 'Токіо', '東京都'] };
+
+export const cityOf = (components) => {
+  const region = componentText(components, 'administrative_area_level_1');
+  if ((METROPOLIS_AS_CITY[countryCodeOf(components)] || []).includes(region)) return region;
+  return componentText(components, 'locality') || componentText(components, 'postal_town');
+};
 
 export const countryOf = (components) => componentText(components, 'country');
 
@@ -61,6 +85,7 @@ export const toPlace = (raw) =>
     // parsing and then to the city being browsed, exactly as before.
     city: cityOf(raw.addressComponents),
     country: countryOf(raw.addressComponents),
+    countryCode: countryCodeOf(raw.addressComponents),
     location: { lat: raw.location?.latitude, lng: raw.location?.longitude },
     type: raw.primaryType || null,
     types: raw.types || [],
@@ -68,46 +93,74 @@ export const toPlace = (raw) =>
     hours: raw.regularOpeningHours || null,
   };
 
-/** Exactly the venue that was tapped or picked — no proximity guessing. */
+const fetchOne = async (placeId, language) => {
+  const res = await fetch(
+    `https://places.googleapis.com/v1/places/${placeId}?languageCode=${language}`,
+    { headers: { 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': FIELDS } }
+  );
+  if (!res.ok) return null;
+  return toPlace(await res.json());
+};
+
+/**
+ * Exactly the venue that was tapped or picked — no proximity guessing.
+ * A venue abroad comes back in English whatever was asked (see isAbroadCode).
+ */
 export const fetchPlaceById = async (placeId, language = placeLanguage()) => {
   if (!placeId) return null;
   try {
-    const res = await fetch(
-      `https://places.googleapis.com/v1/places/${placeId}?languageCode=${language}`,
-      { headers: { 'X-Goog-Api-Key': KEY, 'X-Goog-FieldMask': FIELDS } }
-    );
-    if (!res.ok) return null;
-    return toPlace(await res.json());
+    const place = await fetchOne(placeId, language);
+    if (place && language !== 'en' && isAbroadCode(place.countryCode)) {
+      return (await fetchOne(placeId, 'en')) || place;
+    }
+    return place;
   } catch (err) {
     console.error('❌ fetchPlaceById:', err);
     return null;
   }
 };
 
+// Roughly Ukraine: a point outside it is certainly abroad, so its venues are
+// asked in English at once. Inside, Google's own country label decides.
+const UA_BOX = { south: 44.3, north: 52.4, west: 22.1, east: 40.3 };
+export const inUkraineBox = (point) => Boolean(point)
+  && Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lng))
+  && point.lat >= UA_BOX.south && point.lat <= UA_BOX.north
+  && point.lng >= UA_BOX.west && point.lng <= UA_BOX.east;
+
+/** One Places API v1 nearby search in one language. */
+const searchNearby = async (lat, lng, radius, language) => {
+  const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': KEY,
+      'X-Goog-FieldMask': FIELDS.split(',').map((f) => `places.${f}`).join(','),
+    },
+    body: JSON.stringify({
+      languageCode: language,
+      includedTypes: ['restaurant', 'cafe', 'bar', 'meal_takeaway', 'food_court'],
+      rankPreference: 'DISTANCE',
+      maxResultCount: 8,
+      locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius } },
+    }),
+  });
+  const data = await res.json();
+  return (data.places || []).map(toPlace).filter((p) => p && p.name);
+};
+
 /**
  * Everything eatable within `radius` metres of a point, nearest first.
  * Returns a list on purpose: the caller shows it, instead of presenting the
- * first hit as the answer.
+ * first hit as the answer. Abroad, in English (see isAbroadCode).
  */
 export const fetchNearbyVenues = async (lat, lng, radius = 60) => {
   try {
-    const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': KEY,
-        'X-Goog-FieldMask': FIELDS.split(',').map((f) => `places.${f}`).join(','),
-      },
-      body: JSON.stringify({
-        languageCode: placeLanguage(),
-        includedTypes: ['restaurant', 'cafe', 'bar', 'meal_takeaway', 'food_court'],
-        rankPreference: 'DISTANCE',
-        maxResultCount: 8,
-        locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius } },
-      }),
-    });
-    const data = await res.json();
-    return (data.places || []).map(toPlace).filter((p) => p && p.name);
+    const language = inUkraineBox({ lat, lng }) ? placeLanguage() : 'en';
+    const list = await searchNearby(lat, lng, radius, language);
+    if (language === 'en' || !list.some((p) => isAbroadCode(p.countryCode))) return list;
+    const english = new Map((await searchNearby(lat, lng, radius, 'en')).map((p) => [p.id, p]));
+    return list.map((p) => (isAbroadCode(p.countryCode) && english.get(p.id)) || p);
   } catch (err) {
     console.error('❌ fetchNearbyVenues:', err);
     return [];

@@ -1,4 +1,6 @@
-import { resolveVenueAtTap, toPlace, placeLanguage } from './placesLookup';
+import {
+  cityOf, countryCodeOf, fetchNearbyVenues, fetchPlaceById, inUkraineBox, isAbroadCode, resolveVenueAtTap, toPlace, placeLanguage,
+} from './placesLookup';
 
 const venue = (id, name) => ({ id, name, address: `${name} st`, location: { lat: 50, lng: 30 } });
 
@@ -123,5 +125,84 @@ describe('city and country come from Google labels, not from string position', (
     });
     expect(place.city).toBe('');
     expect(place.country).toBe('Deutschland');
+  });
+});
+
+// --- abroad (11.2026) -------------------------------------------------------
+describe('abroad: English data, Tokyo as one city', () => {
+  const raw = (lang) => ({
+    id: 'g-jp',
+    displayName: { text: 'ICHIRAN Shibuya' },
+    formattedAddress: `${lang === 'en' ? 'Japan' : 'Японія'}, 〒150-0041 Tokyo, Shibuya, Jinnan`,
+    addressComponents: [
+      { longText: 'Shibuya', shortText: 'Shibuya', types: ['locality', 'political'] },
+      { longText: 'Tokyo', shortText: 'Tokyo', types: ['administrative_area_level_1', 'political'] },
+      { longText: lang === 'en' ? 'Japan' : 'Японія', shortText: 'JP', types: ['country', 'political'] },
+    ],
+    location: { latitude: 35.6617, longitude: 139.7041 },
+  });
+  const ok = (body) => ({ ok: true, json: async () => body });
+  const langOf = (url) => new URL(String(url)).searchParams.get('languageCode');
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it('the country code travels with the place, and a Tokyo ward is Tokyo', () => {
+    const place = toPlace(raw('en'));
+    expect(place.countryCode).toBe('JP');
+    expect(place.city).toBe('Tokyo');
+    expect(countryCodeOf(raw('en').addressComponents)).toBe('JP');
+    // another Japanese city keeps its own name
+    expect(cityOf([
+      { longText: 'Yokohama', types: ['locality'] },
+      { longText: 'Kanagawa', types: ['administrative_area_level_1'] },
+      { longText: 'Japan', shortText: 'JP', types: ['country'] },
+    ])).toBe('Yokohama');
+    expect(isAbroadCode('JP')).toBe(true);
+    expect(isAbroadCode('UA')).toBe(false);
+    expect(isAbroadCode('')).toBe(false);
+  });
+
+  it('a venue abroad asked in Ukrainian comes back in English', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(async (url) => ok(raw(langOf(url))));
+    const place = await fetchPlaceById('g-jp', 'uk');
+    expect(fetchMock.mock.calls.map(([url]) => langOf(url))).toEqual(['uk', 'en']);
+    expect(place).toMatchObject({ country: 'Japan', city: 'Tokyo', address: 'Japan, 〒150-0041 Tokyo, Shibuya, Jinnan' });
+  });
+
+  it('a Ukrainian venue is asked once', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(ok({
+      id: 'g1', displayName: { text: 'Канапа' }, formattedAddress: 'Андріївський узвіз, 19, Київ',
+      addressComponents: [{ longText: 'Київ', types: ['locality'] }, { longText: 'Україна', shortText: 'UA', types: ['country'] }],
+      location: { latitude: 50.46, longitude: 30.51 },
+    }));
+    expect((await fetchPlaceById('g1', 'uk')).city).toBe('Київ');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('what is around a point outside Ukraine is asked in English', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(async () => ok({ places: [raw('en')] }));
+    const list = await fetchNearbyVenues(35.6617, 139.7041, 60);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).languageCode).toBe('en');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(list[0]).toMatchObject({ name: 'ICHIRAN Shibuya', country: 'Japan' });
+  });
+
+  it('inside the box but abroad by Google (Moldova, say): swapped for English', async () => {
+    localStorage.setItem('lang', 'uk');
+    const md = (lang) => ({
+      id: 'g-md', displayName: { text: 'Cafe' }, formattedAddress: lang === 'en' ? 'Chisinau, Moldova' : 'Кишинев, Молдова', // lang-check: allow
+      addressComponents: [{ longText: lang === 'en' ? 'Moldova' : 'Молдова', shortText: 'MD', types: ['country'] }],
+      location: { latitude: 47.0, longitude: 28.86 },
+    });
+    jest.spyOn(global, 'fetch').mockImplementation(async (url, init) => ok({ places: [md(JSON.parse(init.body).languageCode)] }));
+    const [place] = await fetchNearbyVenues(47.0, 28.86, 60);
+    expect(place.address).toBe('Chisinau, Moldova');
+  });
+
+  it('the rough box of Ukraine', () => {
+    expect(inUkraineBox({ lat: 50.45, lng: 30.52 })).toBe(true);
+    expect(inUkraineBox({ lat: 35.66, lng: 139.7 })).toBe(false);
+    expect(inUkraineBox({ lat: 52.52, lng: 13.4 })).toBe(false);
+    expect(inUkraineBox(null)).toBe(false);
   });
 });

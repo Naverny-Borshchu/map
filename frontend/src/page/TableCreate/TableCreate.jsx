@@ -258,6 +258,7 @@ export const TableCreate = () => {
         kicker={kicker}
         headingRef={headingRef}
         onPick={pickPlace}
+        google={{ near: nearby.geo.point, onPick: pickGoogle }}
       />
     );
     foot = (
