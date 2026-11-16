@@ -37,7 +37,7 @@ export const RateFlow = ({
   saving,
   isSent,
   error,
-  photoStatus = null,     // { failed, total, retrying } once the photos were tried
+  photoStatus = null,     // { failed, pending, total, retrying } once the photos were tried
   onRetryPhotos,
   borschName,
   placeName = '',
@@ -119,6 +119,8 @@ export const RateFlow = ({
         error,
         photosFailed: photoStatus?.failed || 0,
         photosTotal: photoStatus?.total || 0,
+        // sent, waiting for the AI check (NAV-218): said, never retried
+        photosPending: photoStatus?.pending || 0,
         photoRetrying: Boolean(photoStatus?.retrying),
       }}
       done={{ ...doneCopy, cta: t('flow.toBorsch') }}

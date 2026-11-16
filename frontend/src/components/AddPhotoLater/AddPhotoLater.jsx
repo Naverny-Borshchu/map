@@ -3,7 +3,7 @@ import { borschAPI } from '../../api';
 import { track } from '../../analytics';
 import { uploadPhotos } from '../../utils/uploadPhotos';
 import { MAX_PHOTOS } from '../QuestFlow';
-import { showToast } from '../Toast';
+import { LONG_TOAST_MS, showToast } from '../Toast';
 import { IconCamera } from '../Icons';
 import { useT } from '../../i18n';
 import style from './AddPhotoLater.module.scss';
@@ -27,9 +27,13 @@ export const AddPhotoLater = ({ borschId, upload = borschAPI.uploadPhoto, onUplo
     setBusy(true);
     const result = await uploadPhotos({ borschId, photos, upload });
     setBusy(false);
-    track('photo_added_later', { borsch_id: borschId, count: photos.length, failed: result.failed });
+    track('photo_added_later', {
+      borsch_id: borschId, count: photos.length, failed: result.failed, pending: result.pending.length,
+    });
     if (result.failed === 0) {
-      showToast(t('rev.photoAdded'));
+      // NAV-218: sent, but on the card only once the AI check passes
+      if (result.pending.length) showToast(t('photo.pending', { count: result.pending.length }), { ms: LONG_TOAST_MS });
+      else showToast(t('rev.photoAdded'));
       window.dispatchEvent(new Event('borschDataUpdated'));
       onUploaded?.(photos.length);
     } else {

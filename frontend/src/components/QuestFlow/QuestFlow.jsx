@@ -628,7 +628,15 @@ export const QuestFlow = ({
                     )}
                   </div>
                 )}
-                {!status.photosFailed && hadPhotoFailure.current && (
+                {/* NAV-218: a photo the server took for the AI check (202) is
+                    sent, but not on the card yet; saying «завантажено» would
+                    send the person to look for it there */}
+                {status.photosPending > 0 && (
+                  <p className={style.photoWarn} role="status" data-testid="photo-pending">
+                    {t('photo.pending', { count: status.photosPending })}
+                  </p>
+                )}
+                {!status.photosFailed && !(status.photosPending > 0) && hadPhotoFailure.current && (
                   <p className={style.photoWarn} role="status">{t('flow.photoRetryOk')}</p>
                 )}
                 {rates && (

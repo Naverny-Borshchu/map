@@ -4,7 +4,7 @@ import { useBowlDrafts } from '../../hook/useBowlDrafts';
 import { deleteDraft, loadDraftPhotos, saveDraftPhotos } from '../../services/bowlDrafts';
 import { borschAPI } from '../../api';
 import { uploadPhotos } from '../../utils/uploadPhotos';
-import { showToast } from '../Toast';
+import { LONG_TOAST_MS, showToast } from '../Toast';
 import { MAX_PHOTOS } from '../QuestFlow';
 import { IconBowl } from '../Icons';
 import { useI18n, useVenueLabel, useDishLabel } from '../../i18n';
@@ -72,7 +72,9 @@ const BowlRow = ({ bowl }) => {
     if (result.failed === 0) {
       await deleteDraft(bowl.id);
       window.dispatchEvent(new Event('borschDataUpdated'));
-      showToast(t('rev.photoAdded'));
+      // NAV-218: a 202 is sent all the same, it only waits for the AI check
+      if (result.pending.length) showToast(t('photo.pending', { count: result.pending.length }), { ms: LONG_TOAST_MS });
+      else showToast(t('rev.photoAdded'));
     } else {
       showToast(t('rev.photoFailed', { n: result.failed, total: photos.length }));
     }

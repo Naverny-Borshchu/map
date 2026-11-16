@@ -148,6 +148,11 @@ const handleResponse = async (response) => {
   if (response.status === 204) {
     return null;
   }
+  // 202 = accepted, not done yet (a photo waiting for its check, NAV-218).
+  // A body that does not parse must not turn an accepted upload into a failure.
+  if (response.status === 202) {
+    return response.json().catch(() => ({ status: 'pending' }));
+  }
   return response.json();
 };
 
@@ -621,7 +626,13 @@ export const borschAPI = {
       track('borsch_photo_upload_failed', { borsch_id: borschId, status: e?.status || null, ...sizes });
       throw e;
     }
-    track('borsch_photo_uploaded', { borsch_id: borschId, ...sizes });
+    // 202 pending (NAV-218): on the server, but not public until the AI check
+    // passes; 201 with photo_url: staff, or a backend without the check
+    track('borsch_photo_uploaded', {
+      borsch_id: borschId,
+      status: uploaded?.status === 'pending' ? 'pending' : 'published',
+      ...sizes,
+    });
     return uploaded;
   }
 };

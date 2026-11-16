@@ -114,3 +114,35 @@ describe('«Не оцінюватиму» with a photo', () => {
     expect(listDrafts()).toEqual([]);
   });
 });
+
+// NAV-218: «Фото вже на картці Борщу» is true for 201 only; a 202 photo waits
+// for the AI check, and the toast says so. Either way the bowl goes.
+describe('«Так, лишити»: 202 pending or 201 published', () => {
+  const keep = async (reply) => {
+    signIn();
+    reply(borschAPI.uploadPhoto);
+    await dueBowl([photo()]);
+    const toast = jest.fn();
+    window.addEventListener('nb:toast', toast);
+    const user = userEvent.setup();
+    renderBanner();
+    await user.click(await screen.findByRole('button', { name: 'Не оцінюватиму' }));
+    await user.click(screen.getByRole('button', { name: 'Так, лишити' }));
+    await waitFor(() => expect(listDrafts()).toEqual([]));
+    await waitFor(() => expect(toast).toHaveBeenCalled());
+    window.removeEventListener('nb:toast', toast);
+    return toast.mock.calls[toast.mock.calls.length - 1][0].detail.message;
+  };
+
+  it('202 pending: the bowl goes and the photo is said to be checked', async () => {
+    const message = await keep((u) => u.mockResolvedValue({ photo_id: 'ph-1', status: 'pending', message: '' }));
+    expect(message).toBe('Фото на перевірці: зʼявиться, щойно переконаємось, що на ньому Борщ.');
+    expect(track).toHaveBeenCalledWith('bowl_photo_kept', expect.objectContaining({ failed: 0, pending: 1 }));
+  });
+
+  it('201 photo_url: «Фото вже на картці Борщу», as before', async () => {
+    const message = await keep((u) => u.mockResolvedValue({ photo_url: '/media/x.jpg' }));
+    expect(message).toBe('Фото вже на картці Борщу, миску прибрано');
+    expect(track).toHaveBeenCalledWith('bowl_photo_kept', expect.objectContaining({ failed: 0, pending: 0 }));
+  });
+});

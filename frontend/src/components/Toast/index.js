@@ -1,1 +1,1 @@
-export { Toaster, showToast } from './Toast';
+export { Toaster, showToast, LONG_TOAST_MS } from './Toast';

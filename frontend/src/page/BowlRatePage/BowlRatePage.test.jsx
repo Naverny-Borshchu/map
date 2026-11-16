@@ -186,3 +186,71 @@ test('a draft of the old seven scores is dropped: the rating starts again at its
   expect(stored.values.comment).toBe('');
   expect(stored.values).not.toHaveProperty('grades');
 });
+
+// NAV-218: a photo from a regular user waits for the AI check. The server
+// answers 202 pending: the photo is sent (no retry, no «не вдалося»), the
+// closing screen says it is being checked, and the bowl is done with it.
+describe('the photo of a rated bowl, 202 pending or 201 published', () => {
+  const rateWithPhoto = async (uploadReply) => {
+    signIn();
+    // CRA resets mock implementations between tests; the context's is async
+    mockBorsch.loadBorschData.mockImplementation(async () => {});
+    const photo = new File([new Uint8Array([0xff, 0xd8, 1])], 'bowl.jpg', { type: 'image/jpeg' });
+    const bowl = await createDraft({
+      place: { id: 'p1', name: 'Криївка' },
+      borsch: { id: 'b1', name: 'Борщ дня' },
+      photoMode: 'now',
+      photos: [photo],
+    });
+    sessionStorage.setItem(`nb:quest-draft:bowl:${bowl.id}`, JSON.stringify({ version: 2, step: 7, values: { answers: ANSWERS, comment: '' } }));
+    borschAPI.getById.mockResolvedValue({ id_borsch: 'b1', name: 'Борщ дня', type_meat: 'pork', price: '', weight: '', photo_urls: [] });
+    commentsAPI.createByBorschId.mockResolvedValue({ id: 'r1' });
+    uploadReply(borschAPI.uploadPhoto);
+
+    const user = userEvent.setup();
+    renderRate(bowl.id);
+    expect(await screen.findByRole('heading', { name: 'Коментар' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Надіслати' }));
+    await waitFor(() => expect(borschAPI.uploadPhoto).toHaveBeenCalledWith('b1', expect.any(File)));
+    return { bowl, user };
+  };
+
+  test('202 pending: sent, said to be checked, no retry, and the bowl is done', async () => {
+    const { bowl } = await rateWithPhoto((upload) => upload.mockResolvedValue({
+      photo_id: 'ph-1', status: 'pending', message: 'Фото на перевірці: зʼявиться, щойно переконаємось, що на ньому Борщ.',
+    }));
+    expect(await screen.findByTestId('photo-pending')).toHaveTextContent(
+      'Фото на перевірці: зʼявиться, щойно переконаємось, що на ньому Борщ.'
+    );
+    expect(screen.queryByText(/фото не завантажилось/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Спробувати ще раз' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Фото завантажено')).not.toBeInTheDocument();
+    await waitFor(() => expect(getDraft(bowl.id)).toBeNull());
+    expect(borschAPI.uploadPhoto).toHaveBeenCalledTimes(1);
+  });
+
+  test('201 photo_url (staff, an older backend): published, nothing about a check', async () => {
+    const { bowl } = await rateWithPhoto((upload) => upload.mockResolvedValue({ photo_url: '/media/borsches/b1/photos/x.jpg' }));
+    await waitFor(() => expect(getDraft(bowl.id)).toBeNull());
+    expect(await screen.findByText('Скільки грамів була порція?')).toBeInTheDocument();
+    expect(screen.queryByTestId('photo-pending')).not.toBeInTheDocument();
+    expect(screen.queryByText(/фото не завантажилось/i)).not.toBeInTheDocument();
+  });
+
+  test('a failed photo retried into 202: the failure goes, the check is said instead of «Фото завантажено»', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { bowl, user } = await rateWithPhoto((upload) => upload
+      .mockRejectedValueOnce(Object.assign(new Error('HTTP error! status: 502'), { status: 502 }))
+      .mockResolvedValue({ photo_id: 'ph-2', status: 'pending', message: '' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Оцінку збережено, але фото не завантажилось: 1 з 1.');
+    // the photo exists nowhere else: the bowl keeps it until it is sent
+    expect(getDraft(bowl.id)).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
+    expect(await screen.findByTestId('photo-pending')).toHaveTextContent('Фото на перевірці');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByText('Фото завантажено')).not.toBeInTheDocument();
+    await waitFor(() => expect(getDraft(bowl.id)).toBeNull());
+    expect(borschAPI.uploadPhoto).toHaveBeenCalledTimes(2);
+    console.error.mockRestore();
+  });
+});
