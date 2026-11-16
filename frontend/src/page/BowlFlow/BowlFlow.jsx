@@ -619,7 +619,7 @@ export const BowlFlow = () => {
     const isNew = !draft.place?.id || !draft.borsch?.id;
     body = (
       <>
-        <div className={q.mascotBox}><img src={illustration('done')} alt="" width="112" height="112" /></div>
+        <div className={q.mascotBox}><img src={illustration('overall')} alt="" width="112" height="112" /></div>
         {photoUrls[0] && <img className={style.donePhoto} src={photoUrls[0]} alt="" />}
         <h2 className={q.question} ref={headingRef} tabIndex={-1}>{t('bowl.doneTitle')}</h2>
         <p className={style.doneText}>{t('bowl.doneText')}</p>
