@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import usePlacesAutocomplete, {getGeocode,getLatLng} from "use-places-autocomplete";
 import useOnclickOutside from "react-cool-onclickoutside";
 import { fetchPlaceById } from "../../services/placesLookup";
+import { abroadInCyrillic, fetchVenueSuggestions } from "../../services/googlePlaces";
 import style from './Autocomplete.module.css';
 import { useT } from '../../i18n';
 
@@ -43,6 +44,26 @@ export const Autocomplete =({isLoaded,onSelect,onPickPlace,center})=>{
       const ref = useOnclickOutside(() => {        
         clearSuggestions();
       });
+
+      // The Maps script speaks the browser's language, and in Ukrainian Google
+      // names much of the world with Russian forms (Yokohama spelt the Russian way).
+      // A suggestion abroad written in Cyrillic is shown in English instead.
+      const [english, setEnglish] = useState({ text: '', byId: {} });
+      const asked = status === 'OK' ? data.filter((s) => abroadInCyrillic({
+        main: s.structured_formatting?.main_text, secondary: s.structured_formatting?.secondary_text,
+      })).length : 0;
+      useEffect(() => {
+        if (!asked || english.text === value) return undefined;
+        let cancelled = false;
+        fetchVenueSuggestions(value, { language: 'en', kind: 'any', near: center?.lat ? center : null })
+          .then((list) => {
+            if (cancelled) return;
+            setEnglish({ text: value, byId: Object.fromEntries(list.map((s) => [s.placeId, s])) });
+          })
+          .catch(() => { if (!cancelled) setEnglish({ text: value, byId: {} }); });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [asked, value]);
     
       const handleInput = (e) => {        
         setValue(e.target.value);
@@ -80,10 +101,14 @@ export const Autocomplete =({isLoaded,onSelect,onPickPlace,center})=>{
             place_id,
             structured_formatting: { main_text, secondary_text },
           } = suggestion;
-    
+          const russianRisk = abroadInCyrillic({ main: main_text, secondary: secondary_text });
+          const twin = russianRisk && english.text === value ? english.byId[place_id] : null;
+          // until its English twin is here, a line that may be Russian is not shown
+          if (russianRisk && !twin) return null;
+
           return (
             <li  key={place_id} onClick={handleSelect(suggestion)}>
-              <strong>{main_text}</strong> <small>{secondary_text}</small>
+              <strong>{twin ? twin.main : main_text}</strong> <small>{twin ? twin.secondary : secondary_text}</small>
             </li>
           );
         });

@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { I18nProvider } from '../../i18n';
@@ -209,6 +209,62 @@ test('a venue from Google goes as new_place', async () => {
       newPlace: {
         name: 'Криївка', address: 'пл. Ринок, 14, Львів', city: 'Львів', country: 'Україна',
         location_lat: 49.8419, location_lng: 24.0322, google_place_id: 'g-new',
+      },
+      note: '',
+    }, { from: 'chooser' }));
+  } finally {
+    delete window.google;
+  }
+});
+
+// abroad (11.2026): our map has no such venue, Google's is picked in the list
+const japanGoogle = () => {
+  const ichiran = {
+    id: 'g-ichiran',
+    displayName: 'ICHIRAN Shibuya',
+    formattedAddress: 'Japan, 〒150-0041 Tokyo, Shibuya, Jinnan, 1-chōme−22−７',
+    addressComponents: [
+      { longText: 'Shibuya', types: ['locality'] },
+      { longText: 'Tokyo', types: ['administrative_area_level_1'] },
+      { longText: 'Japan', shortText: 'JP', types: ['country'] },
+    ],
+    location: { lat: () => 35.6618, lng: () => 139.7042 },
+    fetchFields: async () => {},
+  };
+  window.google = {
+    maps: {
+      places: {
+        AutocompleteSuggestion: {
+          fetchAutocompleteSuggestions: jest.fn(async () => ({
+            suggestions: [{
+              placePrediction: {
+                placeId: 'g-ichiran', mainText: { text: 'ICHIRAN Shibuya' }, secondaryText: { text: 'Jinnan, Shibuya, Tokyo, Japan' },
+                types: ['restaurant'], toPlace: () => ichiran,
+              },
+            }],
+          })),
+        },
+        Place: function Place() { return ichiran; },
+      },
+    },
+  };
+};
+
+test('abroad: a venue from Google inline in the list goes as new_place, in English, Tokyo as its city', async () => {
+  signIn();
+  tipsAPI.create.mockResolvedValue(created({ place: { id: 'p-new', name: 'ICHIRAN Shibuya', latitude: 35.66, longitude: 139.7 } }));
+  japanGoogle();
+  try {
+    const user = userEvent.setup();
+    renderTip();
+    await user.type(await screen.findByRole('searchbox'), 'Ichiran');
+    const block = await screen.findByTestId('google-inline');
+    await user.click(within(block).getByRole('button', { name: /ICHIRAN Shibuya/ }));
+    await user.click(await screen.findByRole('button', { name: 'Тут є Борщ' }));
+    await waitFor(() => expect(tipsAPI.create).toHaveBeenCalledWith({
+      newPlace: {
+        name: 'ICHIRAN Shibuya', address: 'Japan, 〒150-0041 Tokyo, Shibuya, Jinnan, 1-chōme−22−７', city: 'Tokyo', country: 'Japan',
+        location_lat: 35.6618, location_lng: 139.7042, google_place_id: 'g-ichiran',
       },
       note: '',
     }, { from: 'chooser' }));

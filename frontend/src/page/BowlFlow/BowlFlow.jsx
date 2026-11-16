@@ -423,6 +423,7 @@ export const BowlFlow = () => {
           kicker={stepCount}
           headingRef={headingRef}
           onPick={pickPlace}
+          google={{ near: meta?.gps || nearby.geo.point, onPick: pickGoogle }}
         />
       </>
     );

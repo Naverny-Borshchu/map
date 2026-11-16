@@ -242,3 +242,65 @@ describe('stage 3', () => {
     expect(screen.queryByRole('group', { name: /Мʼясо/ })).not.toBeInTheDocument();
   });
 });
+
+// abroad (11.2026): the tasting's venue from Google, picked in the list itself
+const japanGoogle = () => {
+  const ichiran = {
+    id: 'g-ichiran',
+    displayName: 'ICHIRAN Shibuya',
+    formattedAddress: 'Japan, 〒150-0041 Tokyo, Shibuya, Jinnan, 1-chōme−22−７',
+    addressComponents: [
+      { longText: 'Shibuya', types: ['locality'] },
+      { longText: 'Tokyo', types: ['administrative_area_level_1'] },
+      { longText: 'Japan', shortText: 'JP', types: ['country'] },
+    ],
+    location: { lat: () => 35.6618, lng: () => 139.7042 },
+    fetchFields: async () => {},
+  };
+  window.google = {
+    maps: {
+      places: {
+        AutocompleteSuggestion: {
+          fetchAutocompleteSuggestions: jest.fn(async () => ({
+            suggestions: [{
+              placePrediction: {
+                placeId: 'g-ichiran', mainText: { text: 'ICHIRAN Shibuya' }, secondaryText: { text: 'Jinnan, Shibuya, Tokyo, Japan' },
+                types: ['restaurant'], toPlace: () => ichiran,
+              },
+            }],
+          })),
+        },
+        Place: function Place() { return ichiran; },
+      },
+    },
+  };
+};
+
+describe('abroad', () => {
+  afterEach(() => {
+    delete window.google;
+    jest.restoreAllMocks();
+  });
+
+  it('a venue from Google inline is created on «Створити», in English, Tokyo as its city', async () => {
+    signIn();
+    const createPlace = jest.spyOn(placesAPI, 'create').mockResolvedValue({ id: 'p-new', reused: false });
+    tablesAPI.create.mockResolvedValue({ code: 'P4RT9Z' });
+    japanGoogle();
+    const user = userEvent.setup();
+    renderCreate();
+    await user.type(await screen.findByRole('searchbox'), 'Ichiran');
+    const block = await screen.findByTestId('google-inline');
+    await user.click(within(block).getByRole('button', { name: /ICHIRAN Shibuya/ }));
+    await user.type(await screen.findByLabelText('Іншого Борщу нема в списку? Впиши назву'), 'Борщ{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    const meat = screen.getByRole('group', { name: 'Мʼясо в «Борщ»' });
+    await user.click(within(meat).getByRole('button', { name: 'Свинина' }));
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
+    await user.click(screen.getByRole('button', { name: 'Створити дегустацію' }));
+    await waitFor(() => expect(tablesAPI.create).toHaveBeenCalled());
+    expect(createPlace).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'ICHIRAN Shibuya', city: 'Tokyo', country: 'Japan', google_place_id: 'g-ichiran',
+    }));
+  });
+});

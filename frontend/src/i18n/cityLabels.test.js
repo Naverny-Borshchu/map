@@ -1,3 +1,5 @@
+import { render, screen } from '@testing-library/react';
+import { I18nProvider, useCityLabel } from './index';
 import { CITY_LABELS } from './translations';
 
 // Every city the database had on 14.11.2026 once its names were unified
@@ -29,3 +31,17 @@ test.each([['the database', DB_CITIES], ['the backend dictionary', GEO_CITIES]])
     expect(missing).toEqual([]);
   }
 );
+
+// abroad (11.2026): a city from Google abroad is stored in English («Tokyo»);
+// with no label of ours it shows as stored, in both languages
+describe('a foreign city without a label of ours', () => {
+  const Show = ({ city }) => <span data-testid="city">{useCityLabel()(city)}</span>;
+  it.each([['uk'], ['en']])('shows its stored name (%s)', (lang) => {
+    localStorage.setItem('lang', lang);
+    const { unmount } = render(<I18nProvider><Show city="Tokyo" /></I18nProvider>);
+    expect(screen.getByTestId('city')).toHaveTextContent(/^Tokyo$/);
+    unmount();
+    render(<I18nProvider><Show city="Київ" /></I18nProvider>);
+    expect(screen.getByTestId('city')).toHaveTextContent(lang === 'en' ? 'Kyiv' : 'Київ');
+  });
+});
