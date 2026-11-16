@@ -61,18 +61,58 @@ const AmountRow = ({ kicker, dist, words, draw, offset, tail }) => {
   );
 };
 
+const TASTES = [
+  { key: 'meat_taste', label: 'taste.meatTaste' },
+  { key: 'aftertaste', label: 'taste.aftertaste' },
+  { key: 'serving_taste', label: 'taste.servingTaste' },
+];
+
+/** «Оцінки»: the three tastes, a mean of 1..5 with five small bowls each. */
+const Scores = ({ profile }) => {
+  const { t, lang } = useI18n();
+  if (!hasTastes(profile)) return null;
+  const tastes = TASTES.filter((x) => tasteAvailable(profile[x.key]));
+  return (
+    <section className={style.sec} aria-labelledby="taste-scores">
+      <h2 className={style.title} id="taste-scores">{t('taste.tastesTitle')}</h2>
+      <p className={style.sub}>{t('taste.tastesSub')}</p>
+      <div className={style.panel}>
+        {tastes.map(({ key, label }) => {
+          const m = profile[key].mean;
+          const step = roundedStep(m, 5);
+          return (
+            <div className={style.trow} key={key}>
+              <div className={style.tname}>
+                <p className={style.tn}>{t(label)}</p>
+                <p className={style.tw}>{t(`r3.${key}.${step}`).toLocaleLowerCase(lang)}</p>
+              </div>
+              <span role="img" aria-label={t('taste.bowls', { value: formatMean(m, lang) })}>
+                <RatingIconsSvg overall_rating={step} max={5} size={18} />
+              </span>
+              <p className={style.tavg} aria-hidden="true">{formatMean(m, lang)}</p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
 export const TasteProfile = ({ profile, rateTo }) => {
   const { t, lang } = useI18n();
 
   if (!hasDescription(profile)) {
     return (
-      <section className={style.sec} aria-labelledby="taste-desc">
-        <div className={style.empty}>
-          <h2 className={style.title} id="taste-desc">{t('taste.title')}</h2>
-          <p>{t('taste.empty')}</p>
-          <Link to={rateTo} className={style.btn}>{t('taste.rateCta')}</Link>
-        </div>
-      </section>
+      <>
+        <section className={style.sec} aria-labelledby="taste-desc">
+          <div className={style.empty}>
+            <h2 className={style.title} id="taste-desc">{t('taste.title')}</h2>
+            <p>{t('taste.empty')}</p>
+            <Link to={rateTo} className={style.btn}>{t('taste.rateCta')}</Link>
+          </div>
+        </section>
+        <Scores profile={profile} />
+      </>
     );
   }
 
@@ -88,12 +128,6 @@ export const TasteProfile = ({ profile, rateTo }) => {
   const saltNotes = [];
   if (salt.low) saltNotes.push(t('taste.saltLow', { n: salt.low, total: saltTotal }));
   if (salt.high) saltNotes.push(t('taste.saltHigh', { n: salt.high, total: saltTotal }));
-
-  const tastes = [
-    { key: 'meat_taste', label: 'taste.meatTaste' },
-    { key: 'aftertaste', label: 'taste.aftertaste' },
-    { key: 'serving_taste', label: 'taste.servingTaste' },
-  ].filter((x) => tasteAvailable(profile[x.key]));
 
   return (
     <>
@@ -214,30 +248,7 @@ export const TasteProfile = ({ profile, rateTo }) => {
         )}
       </section>
 
-      {hasTastes(profile) && tastes.length > 0 && (
-        <section className={style.sec} aria-labelledby="taste-scores">
-          <h2 className={style.title} id="taste-scores">{t('taste.tastesTitle')}</h2>
-          <p className={style.sub}>{t('taste.tastesSub')}</p>
-          <div className={style.panel}>
-            {tastes.map(({ key, label }) => {
-              const m = profile[key].mean;
-              const step = roundedStep(m, 5);
-              return (
-                <div className={style.trow} key={key}>
-                  <div className={style.tname}>
-                    <p className={style.tn}>{t(label)}</p>
-                    <p className={style.tw}>{t(`r3.${key}.${step}`).toLocaleLowerCase(lang)}</p>
-                  </div>
-                  <span role="img" aria-label={t('taste.bowls', { value: formatMean(m, lang) })}>
-                    <RatingIconsSvg overall_rating={step} max={5} size={18} />
-                  </span>
-                  <p className={style.tavg} aria-hidden="true">{formatMean(m, lang)}</p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <Scores profile={profile} />
     </>
   );
 };

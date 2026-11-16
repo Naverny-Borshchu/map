@@ -96,3 +96,11 @@ test('English: borshch words and a point for decimals', () => {
   expect(screen.getByText('In every spoonful')).toBeInTheDocument();
   expect(screen.getByText('also mentioned: garlic, bread, greens')).toBeInTheDocument();
 });
+
+test('tastes answered but nothing described yet: the invitation, and the scores still show', () => {
+  renderCard(normalizeProfile({ reviews: 2, aftertaste: { mean: 4.5, n: 2 } }));
+  expect(screen.getByText('Опис ще збираємо. Оціни першим за складниками')).toBeInTheDocument();
+  const scores = screen.getByRole('region', { name: 'Оцінки' });
+  expect(within(scores).getByText('Післясмак')).toBeInTheDocument();
+  expect(within(scores).queryByText('Подача')).not.toBeInTheDocument();
+});
