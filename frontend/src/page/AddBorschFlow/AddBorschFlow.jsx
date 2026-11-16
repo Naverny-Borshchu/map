@@ -202,6 +202,7 @@ export const AddBorschFlow = () => {
       setStatus({
         saving: false, sent: true, error: '', stage: '',
         photosFailed: progress.current.photosFailed || 0,
+        photosPending: (progress.current.photosPending || []).length,
         photosTotal: (values.photos || []).length,
       });
     } catch (err) {
@@ -229,6 +230,7 @@ export const AddBorschFlow = () => {
       ...s,
       photoRetrying: false,
       photosFailed: progress.current.photosFailed || 0,
+      photosPending: (progress.current.photosPending || []).length,
     }));
   }, [values.photos]);
 

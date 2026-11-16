@@ -741,6 +741,9 @@ export const translations = {
     'rev.photoUploading': 'Завантажую фото…',
     'rev.photoAdded': 'Фото додано до Борщу',
     'rev.photoFailed': 'Фото не завантажилось: {n} з {total}. Спробуй ще раз.',
+    // NAV-218: a new photo is public only after the AI check (202 pending)
+    'photo.pending_one': 'Фото на перевірці: зʼявиться, щойно переконаємось, що на ньому Борщ.',
+    'photo.pending': 'Фото на перевірці: зʼявляться, щойно переконаємось, що на них Борщ.',
     // --- «Стіл» (Оцінка Борщу 2.0, stage 2)
     'bowl.optTable': 'Ми зібрались компанією',
     'bowl.optTableHint': 'Дегустація: один QR для всіх, кожен оцінює лише смак',
@@ -1759,6 +1762,8 @@ export const translations = {
     'rev.photoUploading': 'Uploading the photo…',
     'rev.photoAdded': 'Photo added to the borshch',
     'rev.photoFailed': 'The photo did not upload: {n} of {total}. Try again.',
+    'photo.pending_one': 'Your photo is being checked: it appears once we see borshch in it.',
+    'photo.pending': 'Your photos are being checked: they appear once we see borshch in them.',
     // --- «Стіл» (Оцінка Борщу 2.0, stage 2)
     'bowl.optTable': 'We came as a group',
     'bowl.optTableHint': 'A tasting: one QR for everyone, each rates only the taste',

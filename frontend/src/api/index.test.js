@@ -470,3 +470,45 @@ describe('Оцінювання 3.0 on the wire', () => {
     expect(without.profile).toBeNull();
   });
 });
+
+describe('a photo upload: 202 waits for the AI check, 201 is public at once (NAV-218)', () => {
+  // a GIF goes as is (no canvas in jsdom), the same multipart the server gets
+  const gif = () => new File([new Uint8Array([0x47, 0x49, 0x46])], 'b.gif', { type: 'image/gif' });
+  const reply = (status, body) => ({
+    ok: true,
+    status,
+    json: body === undefined ? async () => { throw new SyntaxError('Unexpected end of JSON input'); } : async () => body,
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('access', 'photo-access-token');
+  });
+  afterEach(() => {
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  it('202 pending resolves with the pending body, so the photo counts as sent', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(reply(202, {
+      photo_id: 'ph-1', status: 'pending', message: 'Фото на перевірці',
+    }));
+    await expect(borschAPI.uploadPhoto('b1', gif())).resolves.toEqual({
+      photo_id: 'ph-1', status: 'pending', message: 'Фото на перевірці',
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/borsches/b1/upload_photo/');
+    expect(init.method).toBe('POST');
+    expect(init.body.get('photo').name).toBe('b.gif');
+  });
+
+  it('a 202 whose body does not parse is still accepted, as pending', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(reply(202));
+    await expect(borschAPI.uploadPhoto('b1', gif())).resolves.toEqual({ status: 'pending' });
+  });
+
+  it('201 with photo_url (staff, or a backend without the check) works as before', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(reply(201, { photo_url: '/media/borsches/b1/photos/x.jpg' }));
+    await expect(borschAPI.uploadPhoto('b1', gif())).resolves.toEqual({ photo_url: '/media/borsches/b1/photos/x.jpg' });
+  });
+});

@@ -3,6 +3,8 @@ import style from './Toast.module.scss';
 
 const EVENT = 'nb:toast';
 const SHOW_MS = 3200;
+// a sentence to read, not a confirmation to glance at (the photo check, NAV-218)
+export const LONG_TOAST_MS = 6500;
 
 /**
  * One short confirmation at a time, e.g. «link copied».
@@ -12,9 +14,9 @@ const SHOW_MS = 3200;
  * call showToast(); the single <Toaster/> in Layout draws it in a polite live
  * region, so screen readers announce it without moving focus.
  */
-export const showToast = (message) => {
+export const showToast = (message, { ms } = {}) => {
   if (!message) return;
-  window.dispatchEvent(new CustomEvent(EVENT, { detail: { message: String(message) } }));
+  window.dispatchEvent(new CustomEvent(EVENT, { detail: { message: String(message), ...(ms ? { ms } : {}) } }));
 };
 
 export const Toaster = () => {
@@ -25,7 +27,7 @@ export const Toaster = () => {
     const onToast = (e) => {
       clearTimeout(timer.current);
       setToast({ message: e.detail?.message, key: Date.now() });
-      timer.current = setTimeout(() => setToast(null), SHOW_MS);
+      timer.current = setTimeout(() => setToast(null), e.detail?.ms || SHOW_MS);
     };
     window.addEventListener(EVENT, onToast);
     return () => {
