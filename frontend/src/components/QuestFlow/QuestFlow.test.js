@@ -148,6 +148,12 @@ test('the density scale: a finger that swipes up the track scrolls, a sideways d
   pointer('pointerUp', 200, 42);
   expect(screen.getByRole('radio', { name: '7, густий' })).toHaveAttribute('aria-checked', 'true');
   expect(screen.getByText('густий')).toBeInTheDocument();
+
+  // a tap (down and up in place) picks the stop under the finger on lift
+  pointer('pointerDown', 25, 40);
+  expect(screen.getByRole('radio', { name: '7, густий' })).toHaveAttribute('aria-checked', 'true');
+  pointer('pointerUp', 25, 40);
+  expect(screen.getByRole('radio', { name: '1, як вода' })).toHaveAttribute('aria-checked', 'true');
   window.PointerEvent = had;
 });
 
