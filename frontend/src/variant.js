@@ -30,7 +30,7 @@ export const FULLSCREEN_MAP_VARIANTS = ['map1'];
  */
 export const hasWideNav = (process.env.REACT_APP_NAV || '').trim() === 'wide';
 
-// REACT_APP_RATE_SCALE (the 1–10 strip against five worded answers) is
+// REACT_APP_RATE_SCALE (the 1..10 strip against five worded answers) is
 // retired: Оцінювання 3.0 (NAV-216) asks every part of the borshch its own
 // way (QuestFlow/answers.js), so a build ignores the variable.
 
