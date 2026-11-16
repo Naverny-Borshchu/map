@@ -100,7 +100,7 @@ CI=true npx react-scripts test --watchAll=false
 ```bash
 cd frontend
 CI=true REACT_APP_API_URL=/api REACT_APP_VARIANT=map1 \
-  REACT_APP_NAV=wide REACT_APP_RATE_SCALE=10 \
+  REACT_APP_NAV=wide \
   REACT_APP_API_KEY_MAP=<ключ> REACT_APP_API_KEY_AUTH=<client id> \
   npm run build
 ```
@@ -120,7 +120,7 @@ CI=true REACT_APP_API_URL=/api REACT_APP_VARIANT=map1 \
 | `REACT_APP_API_URL` | база API, дефолт — бойовий `https://api.navernyborshchu.com/api` |
 | `REACT_APP_VARIANT` | дизайн-варіант, у проді `map1` |
 | `REACT_APP_NAV` | арм нижньої навігації (`wide` / `compact`) |
-| `REACT_APP_RATE_SCALE` | шкала оцінювання (`10` / `5`) |
+| `REACT_APP_RATE_SCALE` | більше не читається: з Оцінювання 3.0 (NAV-216) у кожного складника своє питання |
 | `REACT_APP_POSTHOG_KEY` | токен проєкту PostHog; порожній = аналітика вимкнена |
 | `REACT_APP_POSTHOG_HOST` | свій хост PostHog, якщо не хмара за замовчуванням |
 | `REACT_APP_SITE` | `map` / `map1` — яким сайтом підписані події |

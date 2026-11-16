@@ -1,158 +1,193 @@
 @use "../../styles/mixin_font.scss" as *;
 
-/* Each step owns a colour and a soft moving backdrop, so moving forward is
-   *felt* — the screen visibly changes even before you read the question. */
+/* The quest frame in the identity of Оцінювання 3.0 (NAV-216, the approved
+   prototype nb-rating-v3/dist/proto): a cream page, white cards with a warm
+   shadow, MAK for words only, Roboto for text and every number, crimson pills
+   standing on a dark underside. Night is borshch-night #170B0B.
+
+   Every flow that runs full screen over the map shares it (the rating, the
+   bowl, the tasting, the tip, the venue pickers), so they read as one app.
+   Their own modules use the --q-* tokens below instead of restating colours. */
+
 .flow {
+  --q-bg: var(--color-bg-grey);
+  --q-surface: var(--surface);
+  --q-ink: var(--nb-ink);
+  --q-ink-2: var(--nb-ink-2);
+  --q-muted: #6E5753;
+  --q-red: var(--nb-borshch);
+  --q-red-dark: var(--nb-borshch-dark);
+  --q-red-text: var(--nb-red-text);
+  --q-border: #E8CFC6;
+  --q-border-strong: #C9AEA6;
+  --q-hair: #F0DFD3;
+  --q-track: #F4E4D8;
+  --q-track-on: #F2C4CD;
+  --q-smetana: #FDE5CE;
+  --q-smetana-ink: #7A2B12;
+  --q-sel-bg: #FFF1F3;
+  --q-disabled: #E9B8C2;
+  --q-shadow-sm: 0 1px 0 rgba(26, 26, 26, 0.1), 0 6px 16px rgba(134, 1, 48, 0.08);
+  --q-shadow-md: 0 1px 0 rgba(26, 26, 26, 0.1), 0 14px 32px rgba(134, 1, 48, 0.12);
+
   position: fixed;
   inset: 0;
   z-index: 1200;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background:
-    radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--hue) 78%, #FFFAF5 22%) 0%, transparent 60%),
-    linear-gradient(168deg,
-      color-mix(in srgb, var(--hue) 94%, #000 6%) 0%,
-      color-mix(in srgb, var(--hue) 64%, #000 36%) 100%);
-  color: #FFFAF5;
-  transition: background 0.5s ease;
+  // map1 gives every page under .nb-main room for the floating tab bar; the
+  // frame covers the tab bar, so that room was an empty band under the footer
+  padding-bottom: 0 !important;
+  background: var(--q-bg);
+  color: var(--q-ink);
+  font-family: var(--font-family-main);
 }
 
-/* --- moving backdrop ----------------------------------------------------- */
-.bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
+:global(html[data-theme='dark']) .flow {
+  --q-muted: #C9A79D;
+  --q-border: #5A3A38;
+  --q-border-strong: #8A6460;
+  --q-hair: #45292A;
+  --q-track: #45292A;
+  --q-track-on: #6B3640;
+  --q-smetana: #4A2A1E;
+  --q-smetana-ink: #FDE5CE;
+  --q-sel-bg: #4A1F25;
+  --q-disabled: #6B3640;
+  --q-shadow-sm: 0 1px 0 rgba(255, 250, 245, 0.06), 0 6px 16px rgba(0, 0, 0, 0.35);
+  --q-shadow-md: 0 1px 0 rgba(255, 250, 245, 0.06), 0 14px 32px rgba(0, 0, 0, 0.45);
 }
 
-.blob1, .blob2, .blob3 {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(2px);
-  opacity: 0.16;
-  background: #FFFAF5;
-}
+/* the old moving backdrop of the red stage: kept as a hook, not drawn */
+.bg, .blob1, .blob2, .blob3 { display: none; }
 
-.blob1 {
-  width: 62vw; height: 62vw;
-  top: -16vw; right: -18vw;
-  animation: drift1 18s ease-in-out infinite;
-}
-
-.blob2 {
-  width: 48vw; height: 48vw;
-  bottom: -14vw; left: -16vw;
-  opacity: 0.12;
-  animation: drift2 22s ease-in-out infinite;
-}
-
-.blob3 {
-  width: 26vw; height: 26vw;
-  top: 38%; left: 62%;
-  opacity: 0.09;
-  animation: drift1 26s ease-in-out infinite reverse;
-}
-
-/* the closing screen earns a brighter stage */
-.flow[data-type='done'] .blob1,
-.flow[data-type='done'] .blob2 { opacity: 0.24; }
-
-/* the two "chore" steps stay calmer, so typing does not fight the motion */
-.flow[data-type='text'] .blob1,
-.flow[data-type='number'] .blob1,
-.flow[data-type='comment'] .blob1 { opacity: 0.1; }
-
-@keyframes drift1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(calc(-6vw * var(--nb-move, 1)), calc(5vh * var(--nb-move, 1))) scale(calc(1 + 0.08 * var(--nb-move, 1))); }
-}
-@keyframes drift2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(calc(7vw * var(--nb-move, 1)), calc(-4vh * var(--nb-move, 1))) scale(calc(1 + 0.06 * var(--nb-move, 1))); }
-}
-
-/* --- header: quit, segmented progress, XP -------------------------------- */
+/* --- header: quit, segmented progress, test БорщКоіни ---------------------- */
 .head {
   position: relative;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 10px;
+  min-height: 48px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 0;
 }
 
 .quit {
   width: 44px;
   height: 44px;
+  min-width: 44px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
+  padding: 0;
   border: none;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.18);
-  color: #FFFAF5;
+  border-radius: 50%;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: var(--q-shadow-sm);
   cursor: pointer;
-  transition: background-color var(--transition-fast);
-  &:hover { background: rgba(255, 250, 245, 0.28); }
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  &:active { transform: scale(calc(1 - 0.05 * var(--nb-move, 1))); }
+  @media (hover: hover) { &:hover { color: var(--q-red-text); } }
 }
 
 .segments {
   flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   gap: 4px;
-  height: 10px;
+  /* the add flow has fourteen screens: tighter gaps keep each one a segment, not a dot */
+  &[data-many] { gap: 3px; }
 }
 
 .segment {
+  position: relative;
   flex: 1 1 0;
+  height: 8px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.25);
-  transition: background 0.3s ease, transform 0.3s ease;
+  background: var(--q-track);
+  overflow: hidden;
+  transition: background-color 200ms var(--ease-standard);
+
+  i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--f, 0) * 100%);
+    border-radius: inherit;
+    background: var(--q-red);
+    transition: width 260ms var(--ease-out);
+  }
 }
 
-.segOn {
-  background: #FFFAF5;
-}
-
-/* the step you are on pulses gently, so the eye finds "you are here" */
-.segNow {
-  background: rgba(255, 250, 245, 0.6);
-  animation: segPulse 1.6s ease-in-out infinite;
-}
-
-@keyframes segPulse {
-  0%, 100% { opacity: 0.6; }
-  50%      { opacity: 1; }
-}
+/* a screen already reached: its track warms up, its answers fill it */
+.segSeen { background: var(--q-track-on); }
+/* the flows that only count screens (bowl, table): done = full */
+.segOn { background: var(--q-red); }
+.segNow { background: var(--q-track-on); }
 
 .xp {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  @include caption;
-  font-weight: 700;
-  color: #FFFAF5;
-  background: rgba(255, 250, 245, 0.18);
-  padding: 5px 10px 5px 6px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px 0 4px;
   border-radius: var(--radius-pill);
-  animation: xpPop 0.34s ease;
+  background: var(--q-smetana);
+  color: var(--q-red-dark);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 32px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  animation: xpPop 0.36s var(--ease-out);
 }
+:global(html[data-theme='dark']) .xp { color: var(--q-smetana-ink); }
 
 // a test BorshchCoin (components/CoinIcon) in front of the number
-.coin { flex: none; }
+.coin {
+  flex: none;
+  filter: drop-shadow(0 1px 0 rgba(138, 90, 6, 0.35));
+}
 
 @keyframes xpPop {
-  0%   { transform: scale(1); }
-  45%  { transform: scale(1.22); }
-  100% { transform: scale(1); }
+  40% { transform: scale(calc(1 + 0.14 * var(--nb-move, 1))); }
 }
 
 .xpMult {
-  font-weight: 700;
-  color: #ffd166;
+  margin-left: 2px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--q-red);
+  color: #FFFAF5;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+/* the borshch being rated, small, under the progress */
+.ctx {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 8px 16px 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--q-ink-2);
+
+  img {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px var(--q-surface), var(--q-shadow-sm);
+  }
+  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  b { font-weight: 600; color: var(--q-ink); }
 }
 
 /* --- stage --------------------------------------------------------------- */
@@ -161,84 +196,587 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   gap: 8px;
-  padding: 6px 20px 16px;
-  text-align: center;
-  animation: enter 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 14px 16px 24px;
+  text-align: left;
+  animation: enter 0.26s var(--ease-out);
 }
 
 .leaving { animation: leave 0.15s ease forwards; }
-.back.leaving { animation: leaveBack 0.15s ease forwards; }
+.backward { animation-name: enterBack; }
+.backward.leaving { animation: leaveBack 0.15s ease forwards; }
 
 @keyframes enter {
-  from { opacity: 0; transform: translateX(calc(30px * var(--nb-move, 1))) scale(calc(1 - 0.02 * var(--nb-move, 1))); }
-  to   { opacity: 1; transform: translateX(0) scale(1); }
+  from { opacity: 0; transform: translateX(calc(28px * var(--nb-move, 1))); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes enterBack {
+  from { opacity: 0; transform: translateX(calc(-28px * var(--nb-move, 1))); }
+  to   { opacity: 1; transform: none; }
 }
 @keyframes leave     { to { opacity: 0; transform: translateX(calc(-22px * var(--nb-move, 1))); } }
 @keyframes leaveBack { to { opacity: 0; transform: translateX(calc(22px * var(--nb-move, 1))); } }
 
+/* kicker + MAK title + an illustration on the right */
+.headRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 84px;
+}
+
+.headTxt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kicker,
 .stepCount {
-  font-family: var(--font-family-main);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: rgba(255, 250, 245, 0.85);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin: 2px 0 0;
+  margin: 0;
+  @include kicker;
+  color: var(--q-red-text);
 }
 
 .question {
-  @include display(30px, 1.08);
-  color: #FFFAF5;
-  margin: 0;
-  max-width: 460px;
+  @include display(28px, 1.08);
+  color: var(--q-ink);
+  margin: 4px 0 0;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
+
+.titleBig { font-size: 36px; line-height: 1.06; }
 
 /* Focused only so screen readers land on the new question. index.scss gives
    every [tabindex] a focus ring for keyboard users; here that ring would flash
    on every single screen for everyone, so this one heading opts out. The
    [tabindex] in the selector is what outranks the global rule. */
 .question[tabindex]:focus,
-.question[tabindex]:focus-visible { outline: none; }
+.question[tabindex]:focus-visible,
+.doneTitle[tabindex]:focus,
+.doneTitle[tabindex]:focus-visible { outline: none; }
 
+.illu {
+  width: 88px;
+  height: 88px;
+  flex: none;
+  object-fit: contain;
+  margin: -4px -6px -4px 0;
+}
+
+/* the photo step's picture is a scene, not a cut-out: it stands as a card */
+.flow[data-type='photo'] .illu,
+.flow[data-type='signin'] .illu {
+  object-fit: cover;
+  border-radius: 18px;
+  margin: 0;
+  box-shadow: var(--q-shadow-sm);
+}
+
+/* other flows' centred art (bowl, tip, table) */
 .mascotBox {
   flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  transform-origin: center bottom;
+  /* a scene (the photo step's) stands as a rounded picture; cut-outs are unaffected */
+  img { width: 112px; height: 112px; object-fit: contain; border-radius: 18px; }
 }
 
 .cover {
   width: 72px;
   height: 72px;
-  margin-left: -6px;
   object-fit: cover;
-  border: 3px solid #FFFAF5;
+  border: 3px solid var(--q-surface);
   border-radius: var(--radius-md);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-  transform: rotate(calc(5deg * var(--nb-move, 1)));
+  box-shadow: var(--q-shadow-sm);
 }
 
 .hint {
   @include footnote;
-  color: rgba(255, 250, 245, 0.85);
-  max-width: 380px;
+  margin: 0;
+  color: var(--q-ink-2);
 }
 
-/* --- big answer cards ---------------------------------------------------- */
+/* --- the questions of a screen ------------------------------------------- */
+.q { margin-top: 16px; }
+
+.qLabel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.qHint {
+  flex: none;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--q-muted);
+}
+
+.note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
+  font-size: 14px;
+  line-height: 20px;
+  animation: fadeIn 220ms var(--ease-standard) both;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* «скільки»: big option cards with a bowl drawn from above */
+.amount {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+  gap: 8px;
+}
+
+.opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 132px;
+  padding: 8px 4px 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-border);
+  font-family: var(--font-family-main);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 17px;
+  text-align: center;
+  cursor: pointer;
+  transition: box-shadow 140ms var(--ease-standard), background-color 140ms var(--ease-standard),
+    color 140ms var(--ease-standard), transform 140ms var(--ease-standard);
+
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+  @media (hover: hover) { &:hover { box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-red); } }
+
+  &[aria-checked='true'] {
+    background: var(--q-sel-bg);
+    color: var(--q-red-text);
+    font-weight: 700;
+    box-shadow: 0 3px 0 var(--q-red-dark), inset 0 0 0 2.5px var(--q-red);
+  }
+}
+
+.picto {
+  display: block;
+  width: min(80px, 96%);
+  flex: none;
+  svg { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+}
+.amount[data-n='3'] .picto { width: min(88px, 84%); }
+
+.optT { display: block; padding: 0 2px; }
+
+.tick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--q-red);
+  color: #FFFAF5;
+  opacity: 0;
+  transform: scale(calc(1 - 0.4 * var(--nb-move, 1)));
+  transition: opacity 140ms var(--ease-standard), transform 180ms var(--ease-out);
+}
+[aria-checked='true'] > .tick { opacity: 1; transform: none; }
+
+/* «смак»: five word pills, 3 + 2, no numbers, no icons */
+.taste {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pill {
+  grid-column: span 2;
+  min-height: 48px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: inset 0 0 0 1.5px var(--q-border);
+  font-family: var(--font-family-main);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 18px;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-standard), color 140ms var(--ease-standard),
+    box-shadow 140ms var(--ease-standard), transform 140ms var(--ease-standard);
+
+  &:nth-child(n + 4) { grid-column: span 3; }
+  @media (hover: hover) { &:hover { box-shadow: inset 0 0 0 1.5px var(--q-red); } }
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+  &[aria-checked='true'] {
+    background: var(--q-red);
+    color: #FFFAF5;
+    font-weight: 700;
+    box-shadow: 0 3px 0 var(--q-red-dark);
+  }
+}
+
+/* descriptive fives (beet flavour, aftertaste): two per row, the last alone */
+.pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pairs .pill { grid-column: auto; }
+.pairs .pill:last-child { grid-column: 1 / -1; }
+
+/* --- density and salt: one scale each, a slider of stops ----------------- */
+.scale { position: relative; }
+
+.readout {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 104px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
+}
+.scaleSalt .readout { justify-content: center; text-align: center; }
+
+.roPic {
+  flex: none;
+  :global(svg) { display: block; width: 80px; height: 80px; }
+}
+
+.roPh { margin: 0; font-size: 15px; line-height: 21px; color: var(--q-muted); }
+.roTxt { margin: 0; animation: fadeIn 180ms var(--ease-standard) both; }
+
+.roN {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--q-muted);
+  font-variant-numeric: tabular-nums;
+}
+.scaleSalt .roN { justify-content: center; }
+
+.roW {
+  display: block;
+  margin-top: 4px;
+  @include display(30px, 1.1);
+  color: var(--q-red-text);
+}
+
+.roBest,
+.bestTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  &::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--nb-dill);
+  }
+}
+
+.roBest {
+  padding: 2px 9px 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.scaleTrack {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--max, 10), minmax(0, 1fr));
+  height: 84px;
+  margin-top: 18px;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+.scaleSalt .scaleTrack { margin-top: 40px; }
+
+.rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 44px;
+  pointer-events: none;
+  :global(svg) { display: block; width: 100%; height: 100%; }
+}
+
+.railSalt {
+  border-radius: var(--radius-pill);
+  background: var(--q-smetana);
+  box-shadow: inset 0 3px 0 rgba(134, 1, 48, 0.07), inset 0 0 0 1.5px var(--q-border);
+
+  /* the two marks around «саме те», exactly in the middle of nine stops */
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 9px;
+    bottom: 9px;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--q-ink);
+    opacity: 0.4;
+  }
+  &::before { left: calc(var(--best) - 20px); }
+  &::after { left: calc(var(--best) + 18px); }
+}
+
+.zone {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: calc(var(--best) - 18px);
+  width: 36px;
+  border-radius: 8px;
+  background: rgba(64, 208, 95, 0.16);
+}
+
+.bestTag {
+  position: absolute;
+  top: -26px;
+  left: var(--best);
+  transform: translateX(-50%);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--q-ink-2);
+  pointer-events: none;
+}
+
+.thumb {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  left: var(--pos);
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--q-red);
+  color: #FFFAF5;
+  @include numeric(17px, 800);
+  box-shadow: 0 3px 0 var(--q-red-dark), 0 6px 14px rgba(134, 1, 48, 0.28), 0 0 0 3px var(--q-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: left calc(170ms * var(--nb-move, 1)) var(--ease-out), opacity 140ms var(--ease-standard);
+}
+.scaleSalt .thumb { background: radial-gradient(circle at 34% 30%, #FF8DA0 0 14%, var(--q-red) 46%, var(--q-red-dark) 100%); }
+.scale[data-v] .thumb { opacity: 1; }
+.dragging .thumb { transition: opacity 140ms var(--ease-standard); }
+
+.stop {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 2px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  cursor: pointer;
+  &:focus-visible { outline: 3px solid var(--nb-focus); outline-offset: -3px; }
+}
+
+.tickN {
+  @include numeric(14px, 600);
+  line-height: 22px;
+  color: var(--q-muted);
+}
+.stop[aria-checked='true'] .tickN { color: var(--q-red-text); font-weight: 800; }
+
+.scaleEnds {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--q-muted);
+}
+
+/* --- serving: check chips, several at once; «Нічого» clears -------------- */
+.sides {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sideChip {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 46px;
+  padding: 0 14px 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: inset 0 0 0 1.5px var(--q-border);
+  font-family: var(--font-family-main);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-standard), color 140ms var(--ease-standard),
+    box-shadow 140ms var(--ease-standard), transform 140ms var(--ease-standard);
+
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+  @media (hover: hover) { &:hover { box-shadow: inset 0 0 0 1.5px var(--q-red); } }
+  &[aria-checked='true'] {
+    background: var(--q-red);
+    color: #FFFAF5;
+    font-weight: 700;
+    box-shadow: 0 3px 0 var(--q-red-dark);
+  }
+}
+
+.box {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1.5px var(--q-border-strong);
+  color: var(--q-red);
+  svg { opacity: 0; }
+}
+.sideChip[aria-checked='true'] .box {
+  background: #FFFAF5;
+  box-shadow: none;
+  svg { opacity: 1; }
+}
+
+.sideNone {
+  flex-basis: 100%;
+  background: transparent;
+  box-shadow: none;
+  border: 1.5px dashed var(--q-border-strong);
+  &[aria-checked='true'] { border-color: var(--q-red); }
+}
+
+/* --- overall: ten big Roboto digits, Pasha's word under ------------------ */
+.edge {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--q-muted);
+}
+.edgeR { margin: 8px 0 0; text-align: right; }
+
+.digits {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.digit {
+  height: 62px;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-border);
+  @include numeric(28px, 700);
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-standard), color 140ms var(--ease-standard),
+    box-shadow 140ms var(--ease-standard), transform 140ms var(--ease-standard);
+
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+  @media (hover: hover) { &:hover { box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-red); } }
+  &[aria-checked='true'] {
+    background: var(--q-red);
+    color: #FFFAF5;
+    box-shadow: 0 4px 0 var(--q-red-dark);
+  }
+}
+
+.word {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 20px;
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
+  text-align: center;
+}
+
+.wordW {
+  margin: 0;
+  @include display(32px, 1.1);
+  color: var(--q-red-text);
+  animation: fadeIn 200ms var(--ease-standard) both;
+}
+
+.wordN {
+  display: block;
+  margin-bottom: 4px;
+  @include numeric(14px, 600);
+  line-height: 18px;
+  color: var(--q-muted);
+}
+
+.wordPh { margin: 0; font-size: 15px; color: var(--q-muted); }
+
+.req {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--q-muted);
+}
+
+/* --- choices (the add flow's meat type) ---------------------------------- */
 .answers {
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
-  max-width: 460px;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .card {
@@ -247,189 +785,87 @@
   align-items: center;
   gap: 14px;
   width: 100%;
-  min-height: 64px;
-  padding: 12px 52px 12px 16px;
-  border: 2px solid rgba(255, 250, 245, 0.38);
+  min-height: 60px;
+  padding: 12px 52px 12px 18px;
+  border: 0;
   border-radius: 20px;
-  background: rgba(255, 250, 245, 0.12);
-  color: #FFFAF5;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-border);
+  font-family: var(--font-family-main);
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.14);
-  transition: transform 0.14s ease, background 0.18s ease, border-color 0.18s ease,
-              box-shadow 0.14s ease, color 0.18s ease;
-}
+  transition: box-shadow 140ms var(--ease-standard), background-color 140ms var(--ease-standard),
+    color 140ms var(--ease-standard), transform 140ms var(--ease-standard);
 
-.card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.14); }
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+  @media (hover: hover) { &:hover { box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-red); } }
+}
 
 .cardOn {
-  background: #FFFAF5;
-  border-color: #FFFAF5;
-  color: color-mix(in srgb, var(--hue) 72%, #000 28%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
-  animation: cardPick 0.28s ease;
-}
-
-@keyframes cardPick {
-  0%   { transform: translateY(0) scale(1); }
-  50%  { transform: translateY(-3px) scale(1.03); }
-  100% { transform: translateY(-2px) scale(1); }
-}
-
-.cardEmoji {
-  flex: 0 0 auto;
-  font-size: 26px;
-  line-height: 1;
-  /* holds a drawn icon now, not a font glyph */
-  display: inline-flex;
-  align-items: center;
+  background: var(--q-sel-bg);
+  color: var(--q-red-text);
+  font-weight: 700;
+  box-shadow: 0 3px 0 var(--q-red-dark), inset 0 0 0 2.5px var(--q-red);
 }
 
 .cardLabel { flex: 1 1 auto; }
 
-/* keyboard hint — only useful with a keyboard, so it hides on touch widths */
-.cardKey {
-  position: absolute;
-  right: 46px;
-  @include caption;
-  opacity: 0.5;
-  font-weight: 600;
-  display: none;
-}
-
 .cardTick {
   position: absolute;
-  right: 14px;
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(255, 250, 245, 0.55);
+  right: 16px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  box-shadow: inset 0 0 0 1.5px var(--q-border-strong);
+  transition: background-color 140ms var(--ease-standard);
 }
 
 .cardOn .cardTick {
-  border-color: currentColor;
-  background: currentColor;
+  background: var(--q-red);
+  box-shadow: none;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 11px;
+    border: solid #FFFAF5;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+  }
 }
 
-.cardOn .cardTick::after {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 2px;
-  width: 7px;
-  height: 12px;
-  border: solid #FFFAF5;
-  border-width: 0 2.5px 2.5px 0;
-  transform: rotate(45deg);
-}
-
-.praise {
-  min-height: 22px;
-  @include footnote;
-  font-weight: 700;
-  color: #FFFAF5;
-  animation: praiseIn 0.3s ease;
-}
-
-@keyframes praiseIn {
-  from { opacity: 0; transform: translateY(calc(6px * var(--nb-move, 1))); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* --- the 1–10 strip: tapped, not dragged --------------------------------- */
-/* The ten-point arm. Two rows of five keep every number a real tap target on a
-   phone, and the anchors underneath say what 1 and 10 actually mean. */
-.scale {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  width: 100%;
-  max-width: 340px;
-  margin-top: 6px;
-}
-
-.dot {
-  /* taller than the old 52px square: each tap now carries the bowl icon above
-     its number, so the level is readable without counting along the row */
-  height: 64px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  border: 2px solid rgba(255, 250, 245, 0.45);
-  border-radius: var(--radius-md);
-  background: rgba(255, 250, 245, 0.12);
-  color: #FFFAF5;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
-
-  svg { display: block; }
-}
-
-.dotNum {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  opacity: 0.85;
-}
-
-.dot:active { transform: scale(0.94); }
-
-.dotOn .dotNum { opacity: 1; }
-
-.dotOn {
-  background: #FFFAF5;
-  border-color: #FFFAF5;
-  color: color-mix(in srgb, var(--hue) 72%, #000 28%);
-  transform: scale(1.06);
-  animation: cardPick 0.28s ease;
-}
-
-.ends {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  max-width: 340px;
-  @include caption;
-  color: rgba(255, 250, 245, 0.85);
-}
-
-/* --- fields: text, number, chips ---------------------------------------- */
+/* --- fields: text, number, chips ----------------------------------------- */
 .field {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
   width: 100%;
-  max-width: 460px;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .input {
   width: 100%;
-  height: 58px;
+  height: 56px;
   padding: 0 16px;
-  border: 2px solid rgba(255, 250, 245, 0.5);
+  border: 1.5px solid var(--q-border);
   border-radius: var(--radius-md);
-  background: rgba(255, 250, 245, 0.95);
-  color: #1A1A1A;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  font-family: var(--font-family-main);
   font-size: 18px;
   font-weight: 600;
-  text-align: center;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #FFFAF5;
-  box-shadow: 0 0 0 4px rgba(255, 250, 245, 0.25);
+  &::placeholder { color: var(--q-muted); font-weight: 500; }
+  &:focus {
+    outline: none;
+    border-color: var(--q-red);
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.14);
+  }
 }
 
 .numberWrap {
@@ -441,6 +877,7 @@
 
 .number {
   padding-right: 54px;
+  @include numeric(20px, 700);
   /* the spinner arrows are useless at this size and steal the tap target */
   appearance: textfield;
   -moz-appearance: textfield;
@@ -452,7 +889,7 @@
 .unit {
   position: absolute;
   right: 18px;
-  color: #5C4744;
+  color: var(--q-ink-2);
   font-size: 17px;
   font-weight: 700;
   pointer-events: none;
@@ -461,42 +898,48 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 8px;
 }
 
 .chip {
   min-height: 44px;
   padding: 10px 16px;
-  border: 2px solid rgba(255, 250, 245, 0.45);
+  border: 0;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.14);
-  color: #FFFAF5;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: inset 0 0 0 1.5px var(--q-border);
+  font-family: var(--font-family-main);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.16s ease;
+  transition: background-color 140ms var(--ease-standard), box-shadow 140ms var(--ease-standard);
+  &:active { transform: translateY(calc(2px * var(--nb-move, 1))); }
+  @media (hover: hover) { &:hover { box-shadow: inset 0 0 0 1.5px var(--q-red); } }
 }
-
-.chip:active { transform: scale(0.95); }
 
 .chipOn {
-  background: #FFFAF5;
-  border-color: #FFFAF5;
-  color: color-mix(in srgb, var(--hue) 72%, #000 28%);
+  background: var(--q-red);
+  color: #FFFAF5;
+  font-weight: 700;
+  box-shadow: 0 3px 0 var(--q-red-dark);
 }
 
-/* --- photo / comment / sign-in ------------------------------------------ */
+/* --- photo / comment / sign-in ------------------------------------------- */
 .bigGhost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 20px 28px;
-  border: 2px dashed rgba(255, 250, 245, 0.6);
+  min-height: 72px;
+  padding: 18px 24px;
+  border: 2px dashed var(--q-border-strong);
   border-radius: var(--radius-lg);
-  background: rgba(255, 250, 245, 0.1);
-  color: #FFFAF5;
+  background: var(--q-surface);
+  color: var(--q-red-text);
   @include button;
+  font-size: 17px;
   cursor: pointer;
 }
 
@@ -514,7 +957,7 @@
   aspect-ratio: 1 / 1;
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  box-shadow: var(--q-shadow-sm);
 
   img {
     width: 100%;
@@ -538,109 +981,161 @@
   background: rgba(23, 11, 11, 0.7);
   color: #FFFAF5;
   cursor: pointer;
-  /* the circle is 28px but the tap target is a thumb's worth */
+  /* the circle is 30px but the tap target is a thumb's worth */
   box-shadow: 0 0 0 6px transparent;
 }
 
 .addMore {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 48px;
   padding: 12px 20px;
-  border: 2px dashed rgba(255, 250, 245, 0.6);
-  border-radius: var(--radius-md);
-  background: rgba(255, 250, 245, 0.1);
-  color: #FFFAF5;
+  border: 2px dashed var(--q-border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--q-red-text);
   @include footnote;
   font-weight: 700;
   cursor: pointer;
 }
 
-.preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-
-  img {
-    width: min(70vw, 240px);
-    height: min(70vw, 240px);
-    object-fit: cover;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
-  }
-}
-
-.retake {
-  border: none;
-  background: rgba(255, 250, 245, 0.18);
-  color: #FFFAF5;
-  padding: 10px 16px;
-  min-height: 44px;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  @include caption;
-}
-
 .textarea {
+  display: block;
   width: 100%;
-  padding: 14px;
-  border: 2px solid rgba(255, 250, 245, 0.5);
-  border-radius: var(--radius-md);
-  background: rgba(255, 250, 245, 0.95);
-  color: #1A1A1A;
-  @include body;
+  min-height: 150px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--q-border);
+  border-radius: 18px;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  font: 400 16px/1.45 var(--font-family-main);
   resize: vertical;
+  outline: 0;
+  transition: border-color 140ms var(--ease-standard), box-shadow 140ms var(--ease-standard);
+  &::placeholder { color: var(--q-muted); }
+  &:focus { border-color: var(--q-red); box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.14); }
+  &:focus-visible { outline: none; }
 }
+
+.textarea + .hint { margin-top: 10px; }
 
 .signinBox {
   display: flex;
   justify-content: center;
   width: 100%;
-  padding: 14px;
+  padding: 18px 14px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 250, 245, 0.14);
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
 }
 
 .signedIn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   @include body;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
-/* --- closing screen ----------------------------------------------------- */
+/* the photo types the server takes (HEIC, JPG, PNG) */
+.photoLimit {
+  margin: -2px 0 0;
+  font-size: 13px;
+  color: var(--q-muted);
+}
+
+/* --- closing screen ------------------------------------------------------ */
+.done { padding-top: 4px; }
+
+.doneTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.doneIllu {
+  width: 104px;
+  height: 104px;
+  flex: none;
+  margin: -6px 0 -6px -6px;
+  object-fit: contain;
+}
+
+.doneWords { min-width: 0; }
+
+.doneTitle {
+  margin: 0;
+  @include display(30px, 1.06);
+  color: var(--q-ink);
+  overflow-wrap: anywhere;
+}
+
+.doneSub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 19px;
+  color: var(--q-ink-2);
+}
+
 .spinner {
   width: 34px;
   height: 34px;
-  border: 3px solid rgba(255, 250, 245, 0.35);
-  border-top-color: #FFFAF5;
+  margin: 24px auto 0;
+  border: 3px solid var(--q-track-on);
+  border-top-color: var(--q-red);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.xpBig {
-  margin-top: 4px;
-  display: inline-flex;
+.coinRow {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 32px;
-  font-weight: 800;
-  color: #FFFAF5;
-  animation: xpPop 0.5s ease;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  background: var(--q-smetana);
 }
 
-.coinBig { flex: none; }
+.coinBig {
+  flex: none;
+  animation: coinFlip 900ms var(--ease-out) 1 both;
+}
+@keyframes coinFlip {
+  from { transform: perspective(300px) rotateY(calc(-180deg * var(--nb-move, 1))); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.xpBig {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  @include numeric(32px, 800);
+  line-height: 1.05;
+  color: var(--q-red-text);
+}
+:global(html[data-theme='dark']) .xpBig { color: #FFFAF5; }
+
+.xpTotal {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--q-smetana-ink);
+  font-variant-numeric: tabular-nums;
+}
 
 // «Тестові БорщКоіни…»: small, under the total, never a promise of value
 .coinNote {
-  margin-top: 6px;
+  margin: 8px 4px 0;
   font-size: 13px;
-  line-height: 1.35;
-  color: rgba(255, 250, 245, 0.8);
+  line-height: 18px;
+  color: var(--q-muted);
   a {
     color: inherit;
     text-decoration: underline;
@@ -648,98 +1143,161 @@
   }
 }
 
-.xpTotal {
-  font-size: 15px;
-  color: rgba(255, 250, 245, 0.85);
-}
-
-/* Фото не доїхало, а оцінка збережена: тихий, але помітний рядок під XP,
-   не червона тривога на весь екран, бо головне вже вдалось. */
+/* A photo did not land while the rating did: a quiet, visible line, not a
+   red alarm across the screen, because the main thing worked. */
 .photoWarn {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  max-width: 380px;
-  margin-top: 6px;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.22);
-  color: #FFFAF5;
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
   @include footnote;
 
   p { margin: 0; }
 }
 
-.confetti {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
+.inlineBtn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--q-red-text);
+  box-shadow: inset 0 0 0 2px currentColor;
+  font-family: var(--font-family-main);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  &:disabled { opacity: 0.55; cursor: default; }
 }
 
-.piece {
-  position: absolute;
-  top: -14px;
-  left: calc(var(--i) * 6.5%);
-  width: 9px;
-  height: 14px;
-  border-radius: 2px;
-  background: #FFFAF5;
-  opacity: 0.9;
-  animation: fall 2.6s linear infinite;
-  animation-delay: calc(var(--i) * 0.11s);
+/* «Твій Борщ у двох словах» */
+.sum {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 24px;
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
 }
 
-.piece:nth-child(3n)   { background: #F7D774; }
-.piece:nth-child(3n+1) { background: #FDE5CE; }
-.piece:nth-child(5n)   { background: #40D05F; }
-
-@keyframes fall {
-  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(105vh) rotate(420deg); opacity: 0.2; }
+.sumTitle {
+  margin: 0;
+  @include display(22px, 1.12);
+  color: var(--q-ink);
 }
 
-/* --- footer -------------------------------------------------------------- */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 13px;
+  border-radius: var(--radius-pill);
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.sumNote {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--q-muted);
+}
+
+.sumOverall,
+.sumAfter {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+  span:last-child { font-weight: 600; font-size: 15px; }
+}
+
+.sumOverall {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--q-hair);
+  b { @include numeric(24px, 800); color: var(--q-red-text); }
+}
+
+.sumK { font-size: 14px; color: var(--q-ink-2); }
+
+/* --- footer: back, skip, the pill ---------------------------------------- */
 .foot {
   position: relative;
   flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  gap: 10px;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--q-bg);
+
+  /* the content fades under the footer instead of being cut */
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 18px;
+    background: linear-gradient(to top, var(--q-bg), transparent);
+    pointer-events: none;
+  }
+}
+
+/* stacked: the closing screen, and the flows that put several buttons there */
+.footCol {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  .cta { flex: none; width: 100%; }
 }
 
 .cta {
-  /* The landing's pill on a coloured section: cream with red type, standing
-     on a deep underside. */
-  width: 100%;
-  max-width: 460px;
-  height: 56px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 54px;
+  padding: 0 22px;
   border: none;
   border-radius: var(--radius-pill);
-  background: #FFFAF5;
-  color: var(--nb-borshch);
+  background: var(--q-red);
+  color: #FFFAF5;
   font-family: var(--font-family-main);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 20px;
   cursor: pointer;
-  box-shadow: 0 5px 0 rgba(60, 0, 18, 0.45);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
-}
+  box-shadow: 0 5px 0 var(--q-red-dark);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    background-color var(--transition-fast), opacity var(--transition-fast);
 
-.cta:active:not(:disabled) {
-  transform: translateY(calc(4px * var(--nb-move, 1)));
-  box-shadow: 0 1px 0 rgba(60, 0, 18, 0.45);
+  @media (hover: hover) { &:hover:not(:disabled) { background: #E5244A; } }
+  &:active:not(:disabled) {
+    transform: translateY(calc(4px * var(--nb-move, 1)));
+    box-shadow: 0 1px 0 var(--q-red-dark);
+  }
+  &:disabled {
+    background: var(--q-disabled);
+    box-shadow: 0 5px 0 rgba(160, 3, 34, 0.22);
+    cursor: default;
+  }
 }
-
-.cta:disabled {
-  opacity: 0.4;
-  cursor: default;
-  box-shadow: none;
-}
+:global(html[data-theme='dark']) .cta:disabled { color: rgba(255, 250, 245, 0.7); }
 
 /* the button nudges itself the moment an answer makes it usable */
 .ctaReady { animation: ctaReady 0.42s ease; }
@@ -751,73 +1309,124 @@
   100% { transform: translateY(0); }
 }
 
+.backBtn {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--q-surface);
+  color: var(--q-ink);
+  box-shadow: var(--q-shadow-sm);
+  cursor: pointer;
+  &:active { transform: scale(calc(1 - 0.05 * var(--nb-move, 1))); }
+}
+
 .footLinks {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 18px;
 }
 
-.skip, .back {
+/* quiet text buttons: «Пропустити», «Назад» in the other flows */
+.skip,
+.back {
+  flex: none;
+  min-height: 48px;
+  padding: 0 14px;
   border: none;
+  border-radius: var(--radius-pill);
   background: transparent;
-  color: rgba(255, 250, 245, 0.9);
-  min-height: 44px;
-  padding: 6px 12px;
+  color: var(--q-ink-2);
+  font-family: var(--font-family-main);
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  @include footnote;
-  text-decoration: underline;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  @media (hover: hover) {
+    &:hover { color: var(--q-red-text); background: rgba(220, 20, 60, 0.06); }
+  }
+  &:disabled { opacity: 0.5; cursor: default; }
 }
 
-/* --- short screens: give the cards the room ------------------------------ */
+.ghostBtn {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--q-red-text);
+  box-shadow: inset 0 0 0 2px currentColor;
+  font-family: var(--font-family-main);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --- «Вийти з оцінки?» --------------------------------------------------- */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(23, 11, 11, 0.45);
+  animation: fadeIn 180ms var(--ease-standard) both;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 620px;
+  padding: 22px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-radius: 26px 26px 0 0;
+  background: var(--q-bg);
+  box-shadow: 0 -10px 40px rgba(23, 11, 11, 0.2);
+  animation: sheetUp 260ms var(--ease-out) both;
+  .cta { width: 100%; }
+  .ghostBtn { margin-top: 12px; }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(calc(40px * var(--nb-move, 1))); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.sheetTitle {
+  margin: 0;
+  @include display(26px, 1.1);
+  color: var(--q-ink);
+}
+
+.sheetText {
+  margin: 8px 0 18px;
+  font-size: 15px;
+  line-height: 21px;
+  color: var(--q-ink-2);
+}
+
+/* --- short screens -------------------------------------------------------- */
 @media (max-height: 720px) {
-  .stage { gap: 6px; }
-  .mascotBox { transform: scale(0.72); margin: -6px 0 -6px; }
-  .dot { height: 44px; font-size: 16px; }
-  .scale { gap: 8px; }
-  .card { min-height: 54px; padding: 10px 48px 10px 14px; font-size: 16px; }
-  .answers { gap: 8px; }
-  .cardEmoji { font-size: 22px; }
-  .input { height: 52px; }
+  .headRow { min-height: 72px; }
+  .illu { width: 72px; height: 72px; }
+  .opt { min-height: 118px; }
+  .readout { min-height: 92px; }
 }
 
-/* --- desktop: keep the content in a readable column --------------------- */
+/* --- desktop: keep the content in a readable column ----------------------- */
 @media (min-width: 1024px) {
-  .head, .stage, .foot { width: min(100%, 620px); margin: 0 auto; }
-  .cardKey { display: block; }
-  .card { min-height: 68px; }
+  .head, .stage, .foot { width: min(100%, 620px); margin-left: auto; margin-right: auto; }
+  .ctx { width: min(calc(100% - 32px), 588px); margin-left: auto; margin-right: auto; }
 }
 
 /* Gentle mode (reduced motion, rule of 13.11.2026): steps still fade in and
    out (their slide distance is --nb-move, 0 here), colours still change, the
-   spinner still turns. Only the bounces go. Switching everything off read as
-   a dead screen on Andrii's desktop, where «reduce motion» is on. */
+   spinner still turns. Only the bounces go. */
 @media (prefers-reduced-motion: reduce) {
-  .cardOn, .dotOn, .xp, .xpBig, .ctaReady { animation: none; }
-}
-
-/* the photo types the server takes (HEIC, JPG, PNG) */
-.photoLimit {
-  margin: -2px 0 0;
-  font-size: 13px;
-  color: rgba(255, 250, 245, 0.75);
-}
-
-.signedIn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Gentle mode (reduced motion): the confetti fades in place instead of
-   falling across the screen. */
-@media (prefers-reduced-motion: reduce) {
-  .piece {
-    top: calc(8% + (var(--i) * 5%));
-    animation: confettiFade 2.4s ease-in-out infinite;
-    animation-delay: calc(var(--i) * 0.12s);
-  }
-}
-@keyframes confettiFade {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 0.85; }
+  .xp, .ctaReady { animation: none; }
 }

@@ -18,7 +18,7 @@ const signIn = () => {
   localStorage.setItem('refresh', 'host-refresh');
 };
 
-const GRADES = { meat: 8, beetroot: 10, density: 6, salt: 6, aftertaste: 8, serving: 4, overall: 8 };
+const GRADES = { meat_amount: 0, beet_amount: 3, beet_flavor: 4, density: 6, salt: 5, sides: [], serving_taste: 2, aftertaste: 4, overall: 8 };
 
 beforeEach(() => {
   localStorage.clear();
@@ -102,9 +102,9 @@ describe('reading a table', () => {
 });
 
 describe('rating at a table', () => {
-  it('a new guest sends the name and the seven scores by position, no token, no sign-in', async () => {
+  it('a new guest sends the name and the scheme-3 answers by position, no token, no sign-in', async () => {
     const spy = jest.spyOn(global, 'fetch').mockResolvedValue(ok({ created: true, rated_positions: [1], guest_token: 'new-token-xxxxxxxxxxxxxxxx' }, 201));
-    const res = await tablesAPI.rate('K7M2QX', { position: 1, grades: GRADES, as: 'guest', guestName: '  Оля ' });
+    const res = await tablesAPI.rate('K7M2QX', { position: 1, answers: GRADES, as: 'guest', guestName: '  Оля ' });
     const { url, options, headers, body } = lastCall(spy);
     expect(url).toMatch(/\/tables\/K7M2QX\/reviews\/$/);
     expect(options.method).toBe('POST');
@@ -113,22 +113,34 @@ describe('rating at a table', () => {
     expect(body).toEqual({
       position: 1,
       guest_name: 'Оля',
-      rating_meat: 8,
-      rating_beet: 10,
-      rating_density: 6,
-      rating_salt: 6,
-      rating_aftertaste: 8,
-      rating_serving: 4,
+      scheme: 3,
+      // «Нема» мʼяса, so no taste; parts not answered are null
+      meat_amount: 0,
+      meat_taste: null,
+      beet_amount: 3,
+      beet_flavor: 4,
+      density: 6,
+      salt: 5,
+      sides: [],
+      serving_taste: 2,
+      aftertaste: 4,
       overall_rating: 8,
       message: '',
+      // the old fields as the server would fill them («Як це стає рейтингом»)
+      rating_meat: null,
+      rating_beet: 9,
+      rating_density: 6,
+      rating_salt: 5,
+      rating_serving: 4,
+      rating_aftertaste: 8,
     });
     expect(res.guest_token).toBe('new-token-xxxxxxxxxxxxxxxx');
-    expect(track).toHaveBeenCalledWith('table_review', expect.objectContaining({ code: 'K7M2QX', position: 1, as: 'guest', created: true }));
+    expect(track).toHaveBeenCalledWith('table_review', expect.objectContaining({ code: 'K7M2QX', position: 1, as: 'guest', created: true, scheme: 3 }));
   });
 
   it('a returning guest sends the token in the header; the name rides along for a token the table lost', async () => {
     const spy = jest.spyOn(global, 'fetch').mockResolvedValue(ok({ created: true, rated_positions: [1, 2] }, 201));
-    await tablesAPI.rate('K7M2QX', { position: 2, grades: GRADES, as: 'guest', guestName: 'Оля', guestToken: 'guest-token-123456789012345' });
+    await tablesAPI.rate('K7M2QX', { position: 2, answers: GRADES, as: 'guest', guestName: 'Оля', guestToken: 'guest-token-123456789012345' });
     const { headers, body } = lastCall(spy);
     expect(headers[GUEST_TOKEN_HEADER]).toBe('guest-token-123456789012345');
     expect(headers.Authorization).toBeUndefined();
@@ -139,7 +151,7 @@ describe('rating at a table', () => {
   it('a signed-in person rates as themselves: a Bearer token, no guest fields', async () => {
     signIn();
     const spy = jest.spyOn(global, 'fetch').mockResolvedValue(ok({ created: true, rated_positions: [1], guest_token: null }, 201));
-    await tablesAPI.rate('K7M2QX', { position: 1, grades: GRADES, as: 'user', guestName: 'Оля' });
+    await tablesAPI.rate('K7M2QX', { position: 1, answers: GRADES, as: 'user', guestName: 'Оля' });
     const { headers, body } = lastCall(spy);
     expect(headers.Authorization).toBe('Bearer host-access');
     expect(headers[GUEST_TOKEN_HEADER]).toBeUndefined();
@@ -148,7 +160,7 @@ describe('rating at a table', () => {
 
   it('keeps the API reason, so the screen can react to a closed table or a full one', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue(fail(409, { error: 'Стіл уже закрито, оцінки більше не приймаються.', code: 'table_closed' }));
-    await expect(tablesAPI.rate('K7M2QX', { position: 1, grades: GRADES, guestName: 'Оля' }))
+    await expect(tablesAPI.rate('K7M2QX', { position: 1, answers: GRADES, guestName: 'Оля' }))
       .rejects.toMatchObject({ status: 409, code: 'table_closed', message: 'Стіл уже закрито, оцінки більше не приймаються.' });
   });
 });

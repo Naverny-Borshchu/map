@@ -9,13 +9,16 @@ import {
   MEAT_TYPES,
   PLACE_TYPES,
   PRICE_BUCKETS,
-  RATING_CRITERIA,
+  EXCLUSIVE_TRAITS,
   countActiveFilters,
   filterBorsches,
 } from '../../utils/filtering';
 import style from './CardFilters.module.scss';
 
 const OVERALL_STEPS = [0, 7, 8, 9];
+
+// «Мʼяса багато» sits with the meat types; the rest of «Який він» together
+const DESCRIBE_TRAITS = ['beety', 'thick', 'thin', 'pampushky', 'salo'];
 
 const MEAT_I18N = {
   "без м'яса": 'filter.meatNone',
@@ -39,8 +42,9 @@ const TYPE_I18N = {
  *    so "filtering" meant deselecting, and a default was indistinguishable
  *    from a deliberate choice);
  *  - the primary button carries the live result count, so nobody applies blind;
- *  - taste criteria are collapsed by default, keeping the common case
- *    (score / meat / price) short.
+ *  - «Який він» (Оцінювання 3.0) describes instead of setting minimums:
+ *    «Буряковий», «Густий», «З пампушками». The old «мінімум за критерієм»
+ *    allowed «солоність від 7», which is «oversalted».
  */
 export const CardFilters = ({ onClose }) => {
   const t = useT();
@@ -49,9 +53,6 @@ export const CardFilters = ({ onClose }) => {
   const { borsch } = useBorsch();
 
   const [draft, setDraft] = useState(() => ({ ...EMPTY_FILTERS, ...filters }));
-  const [showCriteria, setShowCriteria] = useState(() =>
-    Object.values(filters.criteria || {}).some((v) => v > 0)
-  );
 
   const placeById = useMemo(() => {
     const m = new Map((allPlaces || []).map((p) => [String(p.id), p]));
@@ -75,8 +76,27 @@ export const CardFilters = ({ onClose }) => {
       };
     });
 
-  const setCriterion = (key, value) =>
-    setDraft((d) => ({ ...d, criteria: { ...d.criteria, [key]: value } }));
+  const toggleTrait = (key) =>
+    setDraft((d) => {
+      const list = d.traits || [];
+      if (list.includes(key)) return { ...d, traits: list.filter((x) => x !== key) };
+      return { ...d, traits: [...list.filter((x) => x !== EXCLUSIVE_TRAITS[key]), key] };
+    });
+
+  const traitChip = (key) => {
+    const on = (draft.traits || []).includes(key);
+    return (
+      <button
+        key={key}
+        type="button"
+        className={`${style.chip} ${on ? style.chipOn : ''}`}
+        aria-pressed={on}
+        onClick={() => toggleTrait(key)}
+      >
+        {t(`filter.trait.${key}`)}
+      </button>
+    );
+  };
 
   const apply = (e) => {
     e?.preventDefault?.();
@@ -88,7 +108,6 @@ export const CardFilters = ({ onClose }) => {
   const reset = () => {
     const cleared = { ...EMPTY_FILTERS, search: draft.search };
     setDraft(cleared);
-    setShowCriteria(false);
     // apply at once — the old reset left the map on the previous filter
     updateFilters(cleared);
     applyFilters({ filters: cleared, borsch });
@@ -133,49 +152,6 @@ export const CardFilters = ({ onClose }) => {
           </div>
         </section>
 
-        {/* ---- taste criteria (collapsed by default) ---- */}
-        <section className={style.section}>
-          <button
-            type="button"
-            className={style.disclosure}
-            onClick={() => setShowCriteria((v) => !v)}
-            aria-expanded={showCriteria}
-          >
-            <span className={style.legend}>{t('filter.taste')}</span>
-            <span className={style.caret}>{showCriteria ? '▾' : '▸'}</span>
-          </button>
-
-          {showCriteria && (
-            <div className={style.criteria}>
-              {RATING_CRITERIA.map((c) => {
-                const value = draft.criteria?.[c.key] || 0;
-                return (
-                  <div className={style.criterion} key={c.key}>
-                    <div className={style.criterionHead}>
-                      <span className={style.criterionName}>{t(c.i18n)}</span>
-                      <span
-                        className={`${style.criterionValue} ${value ? style.criterionOn : ''}`}
-                      >
-                        {value ? `${value}+` : t('filter.any')}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      step="1"
-                      value={value}
-                      onChange={(e) => setCriterion(c.key, Number(e.target.value))}
-                      className={style.slider}
-                      aria-label={t(c.i18n)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
         {/* ---- meat ---- */}
         <section className={style.section}>
           <h3 className={style.legend}>{t('filter.meat')}</h3>
@@ -190,7 +166,18 @@ export const CardFilters = ({ onClose }) => {
                 {t(MEAT_I18N[m])}
               </button>
             ))}
+            {traitChip('meaty')}
           </div>
+        </section>
+
+        {/* ---- what it is like (Оцінювання 3.0) ---- */}
+        <section className={style.section}>
+          <h3 className={style.legend}>
+            {t('filter.describe')}
+            <span className={style.newTag}>{t('filter.new')}</span>
+          </h3>
+          <div className={style.chips}>{DESCRIBE_TRAITS.map(traitChip)}</div>
+          <p className={style.note}>{t('filter.traitHint')}</p>
         </section>
 
         {/* ---- venue type ---- */}

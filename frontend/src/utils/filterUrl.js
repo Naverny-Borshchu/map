@@ -7,13 +7,15 @@
  * and the browser's Back button starts meaning something on the map.
  *
  * The encoding is deliberately short and human-legible:
- *   ?q=борщ&city=Львів&score=8&meat=курка,свинина&type=Кафе&price=p1&c=meat:9&sort=near
+ *   ?q=борщ&city=Львів&score=8&meat=курка,свинина&type=Кафе&price=p1&trait=thick,pampushky&sort=near
+ *
+ * `c=meat:9` (the minimum per criterion before Оцінювання 3.0) is no longer
+ * written, and an old link that carries it opens without it.
  */
-import { EMPTY_FILTERS, MEAT_TYPES, PLACE_TYPES, PRICE_BUCKETS, RATING_CRITERIA } from './filtering';
+import { EMPTY_FILTERS, EXCLUSIVE_TRAITS, MEAT_TYPES, PLACE_TYPES, PRICE_BUCKETS, TRAITS } from './filtering';
 
 export const SORTS = ['best', 'near', 'cheapest', 'expensive'];
 
-const CRIT_KEYS = RATING_CRITERIA.map((c) => c.key);
 const BUCKET_KEYS = PRICE_BUCKETS.map((b) => b.key);
 
 const list = (v) => (v || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -30,10 +32,8 @@ export const filtersToParams = (filters = {}, { city, sort } = {}) => {
   if (f.types?.length) p.set('type', f.types.join(','));
   if (f.price) p.set('price', f.price);
 
-  const crit = Object.entries(f.criteria || {})
-    .filter(([k, v]) => CRIT_KEYS.includes(k) && v > 0)
-    .map(([k, v]) => `${k}:${v}`);
-  if (crit.length) p.set('c', crit.join(','));
+  const traits = TRAITS.filter((k) => (f.traits || []).includes(k));
+  if (traits.length) p.set('trait', traits.join(','));
 
   if (sort && sort !== 'best' && SORTS.includes(sort)) p.set('sort', sort);
 
@@ -66,13 +66,12 @@ export const paramsToFilters = (params) => {
   const price = p.get('price');
   if (price && BUCKET_KEYS.includes(price)) { filters.price = price; mark(true); }
 
-  const criteria = {};
-  list(p.get('c')).forEach((pair) => {
-    const [k, raw] = pair.split(':');
-    const v = Number(raw);
-    if (CRIT_KEYS.includes(k) && Number.isFinite(v) && v >= 1 && v <= 10) criteria[k] = v;
+  const traits = [];
+  list(p.get('trait')).forEach((k) => {
+    // «густий» and «рідкий» together match nothing: the first one wins
+    if (TRAITS.includes(k) && !traits.includes(k) && !traits.includes(EXCLUSIVE_TRAITS[k])) traits.push(k);
   });
-  if (Object.keys(criteria).length) { filters.criteria = criteria; mark(true); }
+  if (traits.length) { filters.traits = TRAITS.filter((k) => traits.includes(k)); mark(true); }
 
   const city = p.get('city') || null;
   const sortRaw = p.get('sort');

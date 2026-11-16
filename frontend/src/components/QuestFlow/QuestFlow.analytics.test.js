@@ -5,7 +5,7 @@ import { I18nProvider } from '../../i18n';
 import { track } from '../../analytics';
 import { markFlowHandover } from '../../services/flowAnalytics';
 import { QuestFlow } from './QuestFlow';
-import { SCALE_ANSWERS } from './answers';
+import { ratingSteps } from './answers';
 
 jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), track: jest.fn() }));
 
@@ -26,8 +26,8 @@ afterEach(async () => {
   await new Promise((r) => setTimeout(r, 5));
 });
 
-const scaleStep = (key) => ({ type: 'scale', key, i18n: `flow.q.${key}`, options: SCALE_ANSWERS[key] });
-const STEPS = [scaleStep('meat'), scaleStep('salt'), { type: 'done', key: 'done' }];
+const step = (key) => ratingSteps().find((s) => s.key === key);
+const STEPS = [step('meat'), step('salt'), { type: 'done', key: 'done' }];
 
 const Host = ({ analytics, sent = true, onExit = () => {} }) => {
   const [values, setValues] = useState({});
@@ -60,7 +60,7 @@ test('reports each screen once, with its place in the whole journey', async () =
     { flow: 'rate', step: 'meat', index: 2, total: 5, entry: 'chooser' },
   ]);
 
-  await user.click(screen.getByRole('button', { name: /Щедро/ }));
+  await user.click(screen.getByRole('radio', { name: /У кожній ложці/ }));
   await user.click(screen.getByRole('button', { name: /Далі/i }));
   await waitFor(() => expect(calls('flow_step')).toHaveLength(2));
   expect(calls('flow_step')[1]).toEqual({ flow: 'rate', step: 'salt', index: 3, total: 5, entry: 'chooser' });
@@ -90,11 +90,11 @@ test('the cross reports a deliberate close', async () => {
 test('a finished flow is not an exit', async () => {
   const user = userEvent.setup();
   const { unmount } = render(<Host analytics={{ flow: 'rate' }} />);
-  await user.click(screen.getByRole('button', { name: /Щедро/ }));
+  await user.click(screen.getByRole('radio', { name: /У кожній ложці/ }));
   await user.click(screen.getByRole('button', { name: /Далі/i }));
-  await waitFor(() => expect(screen.getByText('Як там із сіллю?')).toBeInTheDocument());
-  await user.click(screen.getByRole('button', { name: /Саме як треба/ }));
-  await user.click(screen.getByRole('button', { name: /Готово|Далі/i }));
+  await waitFor(() => expect(screen.getByText('Як із сіллю?')).toBeInTheDocument());
+  await user.click(screen.getByRole('radio', { name: '5, саме те, найкраще' }));
+  await user.click(screen.getByRole('button', { name: /Надіслати/i }));
   await waitFor(() => expect(calls('flow_step').map((p) => p.step)).toEqual(['meat', 'salt', 'done']));
   unmount();
   await flushExit();

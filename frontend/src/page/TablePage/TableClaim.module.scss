@@ -14,17 +14,10 @@
   text-align: center;
 }
 
-// on the red frame of the thank-you
+// on the cream frame of the thank-you (QuestFlow.module.scss)
 .stage {
-  background: rgba(255, 250, 245, 0.14);
-  border: 1.5px solid rgba(255, 250, 245, 0.35);
-  color: #FFFAF5;
-
-  .cta {
-    background: #FFFAF5;
-    color: var(--nb-borshch);
-    box-shadow: 0 4px 0 rgba(60, 0, 18, 0.45);
-  }
+  @include card(16px);
+  color: var(--nb-ink);
 }
 
 // on the results page

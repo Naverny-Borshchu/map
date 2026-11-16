@@ -39,9 +39,8 @@ test('uses the auth response contract and persists JWTs before resuming', async 
     <I18nProvider>
       <UserProvider>
         <RateFlow
-          criteria={[]}
-          grades={{}}
-          onGrade={() => {}}
+          answers={{}}
+          onAnswer={() => {}}
           comment=""
           onComment={() => {}}
           photos={[]}

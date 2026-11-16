@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mascot } from '../../components/Mascot';
+import { illustration } from '../../components/QuestFlow/illustrations';
 import { BowlLoader } from '../../components/EmptyState';
 import { GoogleAuth } from '../../components/GoogleAuth';
 import { VenuePicker } from '../../components/VenuePicker';
@@ -275,7 +275,7 @@ export const TipFlow = () => {
     const b = rated?.borsch;
     body = (
       <>
-        <div className={q.mascotBox}><Mascot mood="happy" size={96} /></div>
+        <div className={q.mascotBox}><img src={illustration('find')} alt="" width="112" height="112" /></div>
         <h2 className={q.question} ref={headingRef} tabIndex={-1}>{t('tip.ratedTitle')}</h2>
         <p className={q.hint}>{t('tip.ratedText')}</p>
         {venueCard}
@@ -334,7 +334,7 @@ export const TipFlow = () => {
   if (step === 'signin' && place) {
     body = (
       <>
-        <div className={q.mascotBox}><Mascot mood="happy" size={96} /></div>
+        <div className={q.mascotBox}><img src={illustration('hero')} alt="" width="112" height="112" /></div>
         <h2 className={q.question} ref={headingRef} tabIndex={-1}>{t('tip.signinTitle')}</h2>
         <p className={q.hint}>{t('tip.signinHint')}</p>
         {venueCard}
@@ -352,7 +352,7 @@ export const TipFlow = () => {
       : t('tip.doneText');
     body = (
       <>
-        <div className={q.mascotBox}><Mascot mood="party" size={112} /></div>
+        <div className={q.mascotBox}><img src={illustration('letter')} alt="" width="112" height="112" /></div>
         <h2 className={q.question} ref={headingRef} tabIndex={-1}>{t('tip.doneTitle')}</h2>
         <p className={bowl.doneText}>{text}</p>
         {venueCard}

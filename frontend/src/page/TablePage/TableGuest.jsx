@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QuestFlow } from '../../components/QuestFlow';
-import { tasteSteps } from '../../components/QuestFlow/answers';
+import { emptyAnswers, ratingSteps, restoreAnswers } from '../../components/QuestFlow/answers';
+import { illustration } from '../../components/QuestFlow/illustrations';
 import { GoogleAuth } from '../../components/GoogleAuth';
-import { Mascot } from '../../components/Mascot';
 import { IconMapPin } from '../../components/Icons';
 import { AUTH_REQUIRED_ERROR } from '../../api';
 import { GUEST_NAME_MAX, tablesAPI } from '../../api/tables';
@@ -13,7 +13,6 @@ import { useUser } from '../../context/UserContext';
 import { useVisiblePolling } from '../../hook/useVisiblePolling';
 import { useFlowTracking } from '../../hook/useFlowTracking';
 import { track } from '../../analytics';
-import { hasTenPointScale } from '../../variant';
 import { addressLine, borschTitle, formatAverage, nextUnrated } from '../../utils/tableView';
 import { useI18n, useDishLabel, useVenueLabel, useCityLabel } from '../../i18n';
 import { TableFrame } from './TableFrame';
@@ -25,8 +24,12 @@ import style from './Table.module.scss';
 /** A guest who has rated everything checks for the results every 30 seconds. */
 export const GUEST_POLL_MS = 30000;
 
-const EMPTY_GRADES = { meat: null, beetroot: null, density: null, salt: null, aftertaste: null, serving: null, overall: null };
-const STEPS = [...tasteSteps(), { type: 'done', key: 'done' }];
+const STEPS = [...ratingSteps(), { type: 'done', key: 'done' }];
+// The draft of a borshch half rated carries the scheme of its answers: one of
+// the seven old scores (before Оцінювання 3.0) is dropped, not reopened on a
+// screen it was never made for.
+const DRAFT_SCHEME = 3;
+const draftFits = (draft, position) => Boolean(draft && draft.scheme === DRAFT_SCHEME && draft.position === position);
 // a restored draft opens at the last question at most: arriving on the closing
 // screen would send the rating again before the person has seen anything
 const LAST_QUESTION = STEPS.length - 2;
@@ -43,8 +46,8 @@ const nameProblem = (name) => {
 
 /**
  * Everyone at an open table who is not its host: the door (venue, the borshch
- * on the table, a name or Google), then ONLY the seven taste questions for each
- * borshch in order. No photo, no price, no weight, no venue: the host gave
+ * on the table, a name or Google), then ONLY the rating (six parts and
+ * «Загалом», answers.js) for each borshch in order. No photo, no price, no weight, no venue: the host gave
  * those once for everybody.
  *
  * Who you are at this table is fixed by the first rating: a guest gets a token
@@ -69,17 +72,17 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
 
   const [phase, setPhase] = useState(() => {
     if (firstOpen === null && rated.length) return 'done';
-    if (draft && draft.position === firstOpen && (identity !== 'new' || guest.name)) return 'rate';
+    if (draftFits(draft, firstOpen) && (identity !== 'new' || guest.name)) return 'rate';
     if (rated.length && (identity === 'guest' || identity === 'user')) return 'rate';
     return 'join';
   });
   const [position, setPosition] = useState(firstOpen);
   const [grades, setGrades] = useState(() => (
-    draft && draft.position === firstOpen ? { ...EMPTY_GRADES, ...(draft.grades || {}) } : EMPTY_GRADES
+    draftFits(draft, firstOpen) ? restoreAnswers(draft.answers) : emptyAnswers()
   ));
   // where a half-rated borshch was left: only that borshch reopens there
   const [restore, setRestore] = useState(() => (
-    draft && draft.position === firstOpen
+    draftFits(draft, firstOpen)
       ? { position: firstOpen, step: Math.min(Math.max(0, Number(draft.step) || 0), LAST_QUESTION) }
       : null
   ));
@@ -152,15 +155,20 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
   gradesRef.current = grades;
 
   const onChange = useCallback((key, value) => {
-    const next = { ...gradesRef.current, [key]: value };
+    const next = {
+      ...gradesRef.current,
+      [key]: value,
+      // «Нема» мʼяса: its taste is not asked, and not kept either
+      ...(key === 'meat_amount' && value === 0 ? { meat_taste: null } : {}),
+    };
     gradesRef.current = next;
     setGrades(next);
-    saveTableGuest(code, { draft: { position, grades: next, step: stepRef.current } });
+    saveTableGuest(code, { draft: { scheme: DRAFT_SCHEME, position, answers: next, step: stepRef.current } });
   }, [code, position]);
 
   const onStepChange = useCallback((step) => {
     stepRef.current = step;
-    saveTableGuest(code, { draft: { position, grades: gradesRef.current, step } });
+    saveTableGuest(code, { draft: { scheme: DRAFT_SCHEME, position, answers: gradesRef.current, step } });
   }, [code, position]);
 
   const backToDoor = (message) => {
@@ -174,7 +182,7 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
     try {
       const res = await tablesAPI.rate(code, {
         position,
-        grades,
+        answers: grades,
         as: asKind,
         guestName: cleanName(name || guest.name),
         guestToken: guest.token,
@@ -221,7 +229,7 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
     }
     if (nextPosition !== null) {
       setPosition(nextPosition);
-      setGrades(EMPTY_GRADES);
+      setGrades(emptyAnswers());
       stepRef.current = 0;
       setStatus({ saving: false, sent: false, error: '' });
       return;
@@ -246,8 +254,8 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
         steps={STEPS}
         values={grades}
         onChange={onChange}
-        scale10={hasTenPointScale}
         title={label}
+        subtitle={venue}
         status={status}
         done={{
           title: t('table.ratedTitle', { borsch: label }),
@@ -257,6 +265,7 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
         onSubmit={submit}
         onRetry={submit}
         onExit={afterRated}
+        confirmExit
         initialStep={restore && restore.position === position ? restore.step : 0}
         onStepChange={onStepChange}
         analytics={{
@@ -279,7 +288,7 @@ export const TableGuest = ({ code, table, guest, onGuest, onTable, reload, onBac
           </>
         )}
       >
-        <div className={q.mascotBox}><Mascot mood="party" size={112} /></div>
+        <div className={q.mascotBox}><img src={illustration('done')} alt="" width="112" height="112" /></div>
         <h2 className={q.question}>{t('table.thanksTitle')}</h2>
         <p className={bowl.doneText}>{t('table.thanksText')}</p>
         {mine.length > 0 && (

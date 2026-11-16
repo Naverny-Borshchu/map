@@ -9,15 +9,25 @@
  * no way to tell a default from a choice.
  */
 import { hasRating } from './rating';
+import { TRAIT_KEYS, hasTrait } from './tasteProfile';
 
-export const RATING_CRITERIA = [
-  { key: 'meat', field: 'rating_meat', i18n: 'rate.meat' },
-  { key: 'beetroot', field: 'rating_beet', i18n: 'rate.beetroot' },
-  { key: 'density', field: 'rating_density', i18n: 'rate.density' },
-  { key: 'salt', field: 'rating_salt', i18n: 'rate.salt' },
-  { key: 'aftertaste', field: 'rating_aftertaste', i18n: 'rate.aftertaste' },
-  { key: 'serving', field: 'rating_serving', i18n: 'rate.serving' },
-];
+/**
+ * «Який він» (Оцінювання 3.0, NAV-216): descriptions, not minimums. The old
+ * «мінімум за критерієм» is gone: «солоність від 7» meant «oversalted», and
+ * the criteria bars it filtered on were ambiguous (SPEC, «Замір»).
+ *
+ *   meaty      «Мʼяса багато»: at least half say «у кожній ложці»
+ *   beety      «Буряковий»: at least half say «багато», or its taste is bright
+ *   thick      «Густий»: density from 7
+ *   thin       «Рідкий»: density up to 4
+ *   pampushky  «З пампушками», salo «З салом»: at least half bring them
+ *
+ * A borshch nobody described has no traits, so these never let it through.
+ */
+export const TRAITS = TRAIT_KEYS;
+
+/** «Густий» and «Рідкий» exclude each other: choosing one drops the other. */
+export const EXCLUSIVE_TRAITS = { thick: 'thin', thin: 'thick' };
 
 export const PLACE_TYPES = ['Ресторан', 'Кафе', 'Бістро', 'Паб'];
 export const MEAT_TYPES = ["без м'яса", 'курка', 'свинина', 'телятина', 'інше'];
@@ -36,7 +46,7 @@ export const EMPTY_FILTERS = {
   meats: [],
   price: null, // bucket key
   minOverall: 0,
-  criteria: {}, // { meat: 7, … } — only values > 0 constrain
+  traits: [], // TRAITS: every chosen one must hold
 };
 
 // Prices are stored as strings like "≈290 ₴"; 0/empty means unknown.
@@ -85,7 +95,7 @@ export const countActiveFilters = (f = EMPTY_FILTERS) => {
   if (f.meats?.length) n += 1;
   if (f.price) n += 1;
   if (f.minOverall > 0) n += 1;
-  n += Object.values(f.criteria || {}).filter((v) => v > 0).length;
+  n += (f.traits || []).filter((k) => TRAITS.includes(k)).length;
   return n;
 };
 
@@ -121,13 +131,9 @@ export const borschMatches = (borsch, place, f = EMPTY_FILTERS) => {
     if (Number(borsch.overall_rating) < f.minOverall) return false;
   }
 
-  // taste criteria
-  for (const c of RATING_CRITERIA) {
-    const min = f.criteria?.[c.key] || 0;
-    if (min > 0) {
-      const v = borsch[c.field];
-      if (!hasRating(v) || Number(v) < min) return false;
-    }
+  // what it is like: every chosen trait must hold
+  for (const key of f.traits || []) {
+    if (TRAITS.includes(key) && !hasTrait(borsch.profile, key)) return false;
   }
 
   // venue type — unknown type never excludes
