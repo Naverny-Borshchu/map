@@ -55,6 +55,19 @@
 }
 
 // --- venue and borshch cards ------------------------------------------------
+// Google's venues inline, under our own list (abroad, 11.2026): the same cards
+// under a small heading, so it is clear where they come from.
+.googleBlock {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.googleTitle {
+  margin: 0;
+  @include kicker;
+  color: var(--q-muted);
+}
+
 .venues {
   display: flex;
   flex-direction: column;

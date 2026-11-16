@@ -455,3 +455,59 @@ describe('a venue given in the link (a tip\'s «Оцінити першим»)',
     expect(screen.getByText('У цьому закладі ще нема Борщу на мапі.')).toBeInTheDocument();
   });
 });
+
+// --- abroad (11.2026) ---------------------------------------------------------
+// Tokyo with location refused (Threads, Telegram): «Ichiran Shibuya» is not on
+// our map, and Google's answer used to wait behind «Закладу нема в списку».
+describe('abroad: Google venues inline in the venue list', () => {
+  afterEach(() => { delete window.google; });
+
+  const japan = (id, name) => ({
+    id,
+    displayName: name,
+    formattedAddress: `Japan, 〒150-0041 Tokyo, Shibuya, ${name}`,
+    addressComponents: [
+      { longText: 'Shibuya', types: ['locality'] },
+      { longText: 'Tokyo', types: ['administrative_area_level_1'] },
+      { longText: 'Japan', shortText: 'JP', types: ['country'] },
+    ],
+    location: { lat: () => 35.6618, lng: () => 139.7042 },
+    fetchFields: jest.fn(async () => {}),
+  });
+
+  it('a typed venue our map lacks is picked from Google right there, and the bowl goes on with it', async () => {
+    geo('denied');
+    const ichiran = japan('g-ichiran', 'ICHIRAN Shibuya');
+    window.google = {
+      maps: {
+        places: {
+          AutocompleteSessionToken: function Token() {},
+          AutocompleteSuggestion: {
+            fetchAutocompleteSuggestions: jest.fn(async () => ({
+              suggestions: [{
+                placePrediction: {
+                  placeId: 'g-ichiran', mainText: { text: 'ICHIRAN Shibuya' }, secondaryText: { text: 'Jinnan, Shibuya, Tokyo, Japan' },
+                  types: ['ramen_restaurant', 'restaurant'], toPlace: () => ichiran,
+                },
+              }],
+            })),
+          },
+          Place: function Place() { return ichiran; },
+        },
+      },
+    };
+    const user = userEvent.setup();
+    renderFlow();
+    await user.type(await screen.findByRole('searchbox'), 'Ichiran Shibuya');
+    const block = await screen.findByTestId('google-inline');
+    expect(within(block).getByRole('heading', { name: 'Знайшли в Google' })).toBeInTheDocument();
+    // «Закладу нема в списку» stays, the last resort
+    expect(screen.getByRole('button', { name: 'Закладу нема в списку' })).toBeInTheDocument();
+    await user.click(within(block).getByRole('button', { name: /ICHIRAN Shibuya/ }));
+
+    // a venue new to the map: the borshch is typed in by its name, as from «Закладу нема в списку»
+    expect(await screen.findByRole('heading', { name: 'Який Борщ тобі принесли?' })).toBeInTheDocument();
+    expect(screen.getByText('Закладу ще нема на мапі. Додамо його разом з Борщем, коли оціниш.')).toBeInTheDocument();
+    expect(calls('venue_google_picked')).toEqual([expect.objectContaining({ own: false })]);
+  });
+});

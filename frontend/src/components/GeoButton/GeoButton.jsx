@@ -13,6 +13,32 @@ import { useT } from '../../i18n';
 import { publishLocation } from '../../utils/distance';
 import { zoomToShowNearest } from '../../utils/mapZoom';
 import { reverseGeocodeCity } from '../../services/geocode';
+import { track } from '../../analytics';
+import { LONG_TOAST_MS, showToast } from '../Toast';
+
+// once per tab: the quiet hint after a location that did not come by itself
+const HINT_KEY = 'nb:geo-hint-shown';
+
+/**
+ * A location that could not be had. Asked by the person (the button): the
+ * full explanation, in a sheet. Asked by the app itself on load (or by the
+ * intro): no sheet in the way of the map, at most a small hint once per tab.
+ * Threads, Telegram and other in-app browsers deny location without a word,
+ * and the sheet that met everyone there (Tokyo, 11.2026) blocked the map with
+ * «(код: 1, дозвіл: denied)». The code and the permission state go to
+ * analytics, never on screen.
+ */
+export const geoFailure = ({ code, permission, auto, isMobile }) => {
+  const denied = code === 1 || permission === 'denied';
+  const kind = denied ? 'denied' : code === 3 ? 'timeout' : code === 2 ? 'unavailable' : 'failed';
+  const copy = {
+    denied: { title: 'geo.blockedTitle', sub: isMobile ? 'geo.hintDeniedMobile' : 'geo.hintDenied' },
+    timeout: { title: 'geo.failedTimeout', sub: 'geo.hintTimeout' },
+    unavailable: { title: 'geo.unavailable', sub: 'geo.hintUnavailable' },
+    failed: { title: 'geo.failedTitle', sub: 'geo.hintBrowser' },
+  }[kind];
+  return { kind, ...copy, sheet: !auto };
+};
 
 /**
  * The box the zoom has to fit a venue into: the rendered map, not the window.
@@ -62,7 +88,7 @@ export const GeoButton = () => {
     const ask = () => {
       const hasCoords = !!localStorage.getItem("user_location");
       const refusal = !!localStorage.getItem("refusal");
-      if (!hasCoords && !refusal) runGeolocation(isMobile);
+      if (!hasCoords && !refusal) runGeolocation(isMobile, { auto: true });
     };
 
     if (hasSeenIntro()) ask();
@@ -72,14 +98,25 @@ export const GeoButton = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const runGeolocation = (useNative = false) => {
+  // the app asked by itself: a hint at most, once per tab, never a sheet
+  const quietHint = () => {
+    try {
+      if (sessionStorage.getItem(HINT_KEY)) return;
+      sessionStorage.setItem(HINT_KEY, '1');
+    } catch (e) { /* private mode: one hint is still fine */ }
+    showToast(t('geo.autoHint'), { ms: LONG_TOAST_MS });
+  };
+
+  const runGeolocation = (useNative = false, { auto = false } = {}) => {
     if (!navigator.geolocation) {
+      track('geo_failed', { code: null, permission: null, auto, reason: 'no_api' });
+      localStorage.setItem("refusal", "true");
+      if (auto) { quietHint(); return; }
       setGeoMessage({
         title: t('geo.failedTitle'),
         sub_title: t('geo.hintBrowser'),
         type: "error",
       });
-      localStorage.setItem("refusal", "true");
       return;
     }
 
@@ -114,7 +151,8 @@ export const GeoButton = () => {
     };
 
     const onFinalError = async (error) => {
-      console.error("Геолокація не визначена:", error);
+      // a refusal is a choice, not a fault of the app: a warning, not an error
+      console.warn("Геолокація не визначена:", error);
 
       // Зʼясовуємо реальний стан дозволу, щоб показати влучну підказку
       let permissionState = null;
@@ -126,26 +164,16 @@ export const GeoButton = () => {
       } catch (_) { /* Permissions API недоступний — ігноруємо */ }
 
       const code = error && error.code;
-      let title = t('geo.failedTitle');
-      let sub_title = t('geo.hintBrowser');
+      const failure = geoFailure({ code, permission: permissionState, auto, isMobile });
+      // the code and the permission state are what a bug report needs: they
+      // go to analytics, not to the person
+      track('geo_failed', { code: code != null ? code : null, permission: permissionState, auto, kind: failure.kind });
 
-      if (code === 1 || permissionState === "denied") {
-        title = t('geo.blockedTitle');
-        sub_title = isMobile ? t('geo.hintDeniedMobile') : t('geo.hintDenied');
-      } else if (code === 3) {
-        title = t('geo.failedTimeout');
-        sub_title = t('geo.hintTimeout');
-      } else if (code === 2) {
-        title = t('geo.unavailable');
-        sub_title = t('geo.hintUnavailable');
+      if (failure.sheet) {
+        setGeoMessage({ title: t(failure.title), sub_title: t(failure.sub), type: "error" });
+      } else {
+        quietHint();
       }
-
-      setGeoMessage({
-        title,
-        // the code and permission state stay: they are what a bug report needs
-        sub_title: `${sub_title} (${t('geo.code')}: ${code != null ? code : "?"}${permissionState ? `, ${t('geo.permission')}: ${permissionState}` : ""})`,
-        type: "error",
-      });
       localStorage.removeItem("user_location");
       // Запамʼятовуємо відмову лише коли юзер реально заборонив доступ,
       // інакше (немає сигналу GPS / таймаут) пробуємо знову при наступному запуску
