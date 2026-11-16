@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QuestFlow, XP_PER_STEP } from '../../components/QuestFlow';
 import { EmptyState } from '../../components/EmptyState';
+import { DailyLimitStop } from '../../components/DailyLimit';
+import { isDailyLimitError, useDailyLimit } from '../../hook/useDailyLimit';
 import { coinsEarned, emptyAnswers, ratingSteps, restoreAnswers } from '../../components/QuestFlow/answers';
 import { placesAPI, borschAPI, commentsAPI } from '../../api';
 import { googleAuth } from '../../services/googleAuth';
@@ -106,6 +108,10 @@ export const AddBorschFlow = () => {
     return null;
   });
   const flowContext = state?.place ? state : restoredDraft?.context;
+  // Two new borshch ratings a day (11.2026): asked before the flow, which
+  // opens with the rating; a borshch new to the map has no id to ask about.
+  const dailyLimit = useDailyLimit({ borschId: null, enabled: Boolean(flowContext?.place), where: 'add' });
+  const blockForToday = dailyLimit.block;
 
   // Decide once at mount so the step list stays stable until the successful
   // callback. A real token, not the legacy auth flag, is the contract.
@@ -186,7 +192,9 @@ export const AddBorschFlow = () => {
       });
 
       // БорщКоіни and the "already rated" mark, same bookkeeping the rating flow does
-      const earned = coinsEarned(steps, values, XP_PER_STEP) * XP_MULTIPLIER;
+      // a second rating of the same borshch updates the first and pays nothing
+      const updated = progress.current.reviewUpdated === true;
+      const earned = updated ? 0 : coinsEarned(steps, values, XP_PER_STEP) * XP_MULTIPLIER;
       try {
         const total = (Number(localStorage.getItem('nb_xp')) || 0) + earned;
         localStorage.setItem('nb_xp', String(total));
@@ -204,9 +212,17 @@ export const AddBorschFlow = () => {
         photosFailed: progress.current.photosFailed || 0,
         photosPending: (progress.current.photosPending || []).length,
         photosTotal: (values.photos || []).length,
+        updated,
       });
     } catch (err) {
       releaseSessionDraftSubmission(DRAFT_KEY);
+      // the third new borshch of the day (raced the check at the start): the
+      // draft and what was already created stay, nothing «не вдалося»
+      if (isDailyLimitError(err)) {
+        setStatus({ saving: false, sent: false, error: '', stage: '' });
+        blockForToday(err.data || null);
+        return;
+      }
       // 401 here means the token expired between signing in and saving; say so
       // instead of showing a bare "failed".
       const unauthorized = /AUTH_REQUIRED|401|credentials|unauthor|temp_user_id|Device ID/i.test(err?.message || '');
@@ -217,7 +233,7 @@ export const AddBorschFlow = () => {
         stage: '',
       });
     }
-  }, [flowContext, values, steps, t]);
+  }, [flowContext, values, steps, t, blockForToday]);
 
   // Only the photos that did not land; the borsch and the rating are already
   // saved, so this must not run the whole submit (and its XP) a second time.
@@ -242,6 +258,17 @@ export const AddBorschFlow = () => {
       navigate(status.sent && progress.current.borschId ? `/borsch/${progress.current.borschId}` : '/');
     }
   }, [values, status.sent, navigate, t]);
+
+  if (dailyLimit.state === 'blocked' && !status.sent) {
+    return <DailyLimitStop keeps={restoredDraft ? 'draft' : null} />;
+  }
+  if (flowContext?.place && dailyLimit.state === 'checking') {
+    return (
+      <div className={style.fallback}>
+        <EmptyState loading title={t('rate.loading')} />
+      </div>
+    );
+  }
 
   // Deep-linked or reloaded: the picked place lives in router state, so without
   // it there is nothing to attach a borsch to.

@@ -157,8 +157,11 @@ export const QuestFlow = ({
   });
 
   const perStep = xp.perStep ?? XP_PER_STEP;
-  const multiplier = xp.multiplier || 1;
-  const earnedXp = coinsEarned(steps, values, perStep) * multiplier;
+  // One rating per person per borshch (11.2026): a second one updates the
+  // first and pays nothing; the total stays as it was.
+  const updatedRating = Boolean(status.sent && status.updated);
+  const multiplier = updatedRating ? 1 : (xp.multiplier || 1);
+  const earnedXp = updatedRating ? 0 : coinsEarned(steps, values, perStep) * multiplier;
 
   const anyAnswer = taskSteps.some((s) => RATING_TYPES.has(s.type) && segmentShare(s, values) > 0)
     || !!(values.comment || '').trim();
@@ -611,6 +614,9 @@ export const QuestFlow = ({
                   {t('coin.testNote')}{' '}
                   <a href={t('coin.whatUrl')} target="_blank" rel="noopener noreferrer">{t('coin.what')}</a>
                 </p>
+                {updatedRating && (
+                  <p className={style.photoWarn} role="status" data-testid="review-updated">{t('flow.reviewUpdated')}</p>
+                )}
                 {status.photosFailed > 0 && (
                   <div className={style.photoWarn} role="alert">
                     <p>

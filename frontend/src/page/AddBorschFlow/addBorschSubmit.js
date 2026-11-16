@@ -27,6 +27,7 @@ export const emptyProgress = () => ({
   photosUploaded: [],   // indices into values.photos that already landed
   photosPending: [],    // of those, the ones waiting for the AI check (202, NAV-218)
   photosFailed: 0,
+  reviewUpdated: false, // the save replaced an earlier rating of this borshch
 });
 
 export async function submitAddBorsch({
@@ -105,8 +106,11 @@ export async function submitAddBorsch({
   // 3. the rating the person came here to leave
   if (!progress.reviewDone) {
     onStage(STAGES.review);
-    await commentsAPI.createByBorschId(progress.borschId, answersToReview(values, values.comment));
+    const saved = await commentsAPI.createByBorschId(progress.borschId, answersToReview(values, values.comment));
     progress.reviewDone = true;
+    // one rating per person per borshch: the server may have updated an
+    // earlier one (a borshch the backend matched to one already on the map)
+    progress.reviewUpdated = saved?.updated === true;
     onProgress({ ...progress });
   }
 

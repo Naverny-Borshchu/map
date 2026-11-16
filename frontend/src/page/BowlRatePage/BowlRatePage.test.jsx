@@ -15,7 +15,7 @@ jest.mock('../../api', () => {
   const actual = jest.requireActual('../../api');
   return {
     ...actual,
-    commentsAPI: { createByBorschId: jest.fn() },
+    commentsAPI: { createByBorschId: jest.fn(), today: jest.fn() },
     borschAPI: { getById: jest.fn(), getByPlaceId: jest.fn(), create: jest.fn(), uploadPhoto: jest.fn(), confirmFacts: jest.fn(), update: jest.fn() },
     placesAPI: { create: jest.fn() },
   };
@@ -252,5 +252,53 @@ describe('the photo of a rated bowl, 202 pending or 201 published', () => {
     await waitFor(() => expect(getDraft(bowl.id)).toBeNull());
     expect(borschAPI.uploadPhoto).toHaveBeenCalledTimes(2);
     console.error.mockRestore();
+  });
+});
+
+// Two new borshch ratings a day (11.2026): moment 2 of a bowl is a rating
+// and can be stopped; the bowl itself waits (its photo is safe in it).
+describe('the day\'s limit at moment 2', () => {
+  const bowlOf = async () => {
+    signIn();
+    const photo = new File([new Uint8Array([0xff, 0xd8, 1])], 'bowl.jpg', { type: 'image/jpeg' });
+    const bowl = await createDraft({ place: { id: 'p1', name: 'Криївка' }, borsch: { id: 'b1', name: 'Борщ дня' }, photoMode: 'now', photos: [photo] });
+    sessionStorage.setItem(`nb:quest-draft:bowl:${bowl.id}`, JSON.stringify({ version: 2, step: 7, values: { answers: ANSWERS, comment: '' } }));
+    borschAPI.getById.mockResolvedValue({ id_borsch: 'b1', name: 'Борщ дня', type_meat: 'pork', price: '', weight: '', photo_urls: [] });
+    mockBorsch.loadBorschData.mockImplementation(async () => {});
+    return bowl;
+  };
+
+  test('the third new borshch today: the stop instead of the questions, the bowl waits', async () => {
+    const bowl = await bowlOf();
+    commentsAPI.today.mockResolvedValue({ count: 2, limit: 2, remaining: 0, already_rated: false });
+    renderRate(bowl.id);
+    expect(await screen.findByRole('heading', { name: 'Сьогодні вже два Борщі' })).toBeInTheDocument();
+    expect(screen.getByText('Наступний оціниш завтра. Твоя миска чекатиме до трьох днів.')).toBeInTheDocument();
+    expect(commentsAPI.today).toHaveBeenCalledWith('b1');
+    expect(getDraft(bowl.id)).not.toBeNull();
+    expect(commentsAPI.createByBorschId).not.toHaveBeenCalled();
+  });
+
+  test('a bowl of a borshch new to the map asks about «a new one»', async () => {
+    signIn();
+    const bowl = await createDraft({ place: { id: 'p1', name: 'Криївка' }, borsch: { id: null, name: 'Борщ з квасолею' } });
+    commentsAPI.today.mockResolvedValue({ count: 2, limit: 2, remaining: 0, already_rated: false });
+    renderRate(bowl.id);
+    expect(await screen.findByRole('heading', { name: 'Сьогодні вже два Борщі' })).toBeInTheDocument();
+    expect(commentsAPI.today).toHaveBeenCalledWith(null);
+  });
+
+  test('429 at the save: the stop, the bowl and its photo kept, nothing «не вдалося»', async () => {
+    const bowl = await bowlOf();
+    commentsAPI.today.mockResolvedValue({ count: 1, limit: 2, remaining: 1, already_rated: false });
+    commentsAPI.createByBorschId.mockRejectedValue(Object.assign(new Error('limit'), { status: 429, code: 'daily_limit', data: { code: 'daily_limit', limit: 2 } }));
+    const user = userEvent.setup();
+    renderRate(bowl.id);
+    await user.click(await screen.findByRole('button', { name: 'Надіслати' }));
+    expect(await screen.findByRole('heading', { name: 'Сьогодні вже два Борщі' })).toBeInTheDocument();
+    expect(screen.queryByText('Не вдалося зберегти')).not.toBeInTheDocument();
+    expect(getDraft(bowl.id)).not.toBeNull();
+    expect(getDraft(bowl.id).reviewedAt).toBeFalsy();
+    expect(borschAPI.uploadPhoto).not.toHaveBeenCalled();
   });
 });

@@ -36,6 +36,7 @@ export const RateFlow = ({
   onSignIn,
   saving,
   isSent,
+  reviewUpdated = false,  // the server said the save replaced an earlier rating (200 updated)
   error,
   photoStatus = null,     // { failed, pending, total, retrying } once the photos were tried
   onRetryPhotos,
@@ -121,6 +122,8 @@ export const RateFlow = ({
         photosTotal: photoStatus?.total || 0,
         // sent, waiting for the AI check (NAV-218): said, never retried
         photosPending: photoStatus?.pending || 0,
+        // a second rating of this borshch replaced the first (no new coins)
+        updated: Boolean(reviewUpdated),
         photoRetrying: Boolean(photoStatus?.retrying),
       }}
       done={{ ...doneCopy, cta: t('flow.toBorsch') }}

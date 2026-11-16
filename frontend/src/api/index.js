@@ -718,13 +718,35 @@ export const commentsAPI = {
       body: payload,
       authRequired: true,
     });
+    // One rating per person per borshch (11.2026): a second one updates the
+    // first, and the server says so with 200 `updated: true` (a new one stays
+    // 201 `updated: false`; an older backend says nothing, which is «new»).
+    const updated = created?.updated === true;
     track('review_submitted', {
       borsch_id: borschId,
       overall_rating: payload.overall_rating,
       has_message: Boolean(payload.message),
+      updated,
       ...(payload.scheme ? { scheme: payload.scheme, answered: answeredParts(payload) } : {}),
     });
-    return mapReview(created);
+    return { ...mapReview(created), updated };
+  },
+
+  /**
+   * Two new borshch ratings a day per person (11.2026; tasting tables and
+   * updates of an already rated borshch are not counted). Asked before the
+   * questions, so nobody answers ten screens to be told no:
+   *   GET /reviews/today/?borsch=<id> → { count, limit, remaining, resets_at, already_rated }
+   * `limit: null` for staff. Without an account there is nothing to ask yet
+   * (the rating asks to sign in at its end): null. An error is the caller's
+   * to forgive (an older backend answers 404).
+   */
+  today: async (borschId = null) => {
+    if (!getAccessToken() && !tokenStorage.getRefresh()) return null;
+    return request('/reviews/today/', {
+      query: borschId ? { borsch: borschId } : {},
+      authRequired: true,
+    });
   },
 
   update: async (reviewId, updates) => {
