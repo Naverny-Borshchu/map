@@ -237,6 +237,16 @@ export const answersToReview = (answers, comment = '') => {
   };
 };
 
+/**
+ * A capitalised answer as a word inside a line («Хочу ще, зараз!» → «хочу ще,
+ * зараз!»). Only the first letter changes, and the English «I» stays a capital.
+ */
+export const lowerFirst = (text, lang = 'uk') => {
+  const s = String(text || '');
+  if (lang === 'en' && /^I[\s’']/.test(s)) return s;
+  return s.charAt(0).toLocaleLowerCase(lang) + s.slice(1);
+};
+
 // --- «Твій Борщ у двох словах» ------------------------------------------------------
 
 /**

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n';
 import { BowlArt, DensityRail } from '../../components/QuestFlow/BowlArt';
 import { RatingIconsSvg } from '../../components/RatingIconsSvg';
-import { SALT_BEST, SALT_MAX } from '../../components/QuestFlow/answers';
+import { SALT_BEST, SALT_MAX, lowerFirst } from '../../components/QuestFlow/answers';
 import {
   distMean,
   formatMean,
@@ -84,7 +84,7 @@ const Scores = ({ profile }) => {
             <div className={style.trow} key={key}>
               <div className={style.tname}>
                 <p className={style.tn}>{t(label)}</p>
-                <p className={style.tw}>{t(`r3.${key}.${step}`).toLocaleLowerCase(lang)}</p>
+                <p className={style.tw}>{lowerFirst(t(`r3.${key}.${step}`), lang)}</p>
               </div>
               <span role="img" aria-label={t('taste.bowls', { value: formatMean(m, lang) })}>
                 <RatingIconsSvg overall_rating={step} max={5} size={18} />
@@ -232,7 +232,7 @@ export const TasteProfile = ({ profile, rateTo }) => {
                 {sides.rest.length > 0 && (
                   <p className={style.dn}>
                     {t('taste.alsoSides', {
-                      list: sides.rest.map((c) => t(`r3.side.${c}`).toLocaleLowerCase(lang)).join(', '),
+                      list: sides.rest.map((c) => lowerFirst(t(`r3.side.${c}`), lang)).join(', '),
                     })}
                   </p>
                 )}

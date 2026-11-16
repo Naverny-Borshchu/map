@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleAuth } from '../GoogleAuth';
 import { useI18n } from '../../i18n';
-import { coinsEarned, stepShare, summaryPhrases, visibleQuestions, isAnswered } from './answers';
+import { coinsEarned, lowerFirst, stepShare, summaryPhrases, visibleQuestions, isAnswered } from './answers';
 import { ComponentQuestions, OverallQuestion } from './RatingControls';
 import { illustration } from './illustrations';
 import { tokenStorage } from '../../services/tokenStorage';
@@ -654,7 +654,7 @@ export const QuestFlow = ({
                     {values.aftertaste ? (
                       <div className={style.sumAfter}>
                         <span className={style.sumK}>{t('r3.sumAftertaste')}</span>
-                        <span>{t(`r3.aftertaste.${values.aftertaste}`).toLocaleLowerCase(lang)}</span>
+                        <span>{lowerFirst(t(`r3.aftertaste.${values.aftertaste}`), lang)}</span>
                       </div>
                     ) : null}
                   </section>

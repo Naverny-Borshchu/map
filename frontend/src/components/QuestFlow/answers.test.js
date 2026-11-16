@@ -5,6 +5,7 @@ import {
   coinsEarned,
   emptyAnswers,
   legacyRatings,
+  lowerFirst,
   ratingSteps,
   restoreAnswers,
   sidesPhrase,
@@ -206,5 +207,15 @@ describe('«Твій Борщ у двох словах»', () => {
     expect(sidesPhrase(['garlic', 'bread', 'croutons'], uk, 'uk')).toBe('З часником, хлібом і грінками');
     expect(sidesPhrase(['onion', 'horseradish', 'chili'], uk, 'uk')).toBe('З цибулею, хроном і гострим перцем');
     expect(sidesPhrase(['sour_cream', 'pampushky', 'chili'], en, 'en')).toBe('With sour cream, pampushky and chilli');
+  });
+});
+
+describe('lowerFirst', () => {
+  test('a capitalised answer reads as a word inside a line, the English I stays', () => {
+    expect(lowerFirst('Хочу ще, зараз!', 'uk')).toBe('хочу ще, зараз!');
+    expect(lowerFirst('Гострий перець', 'uk')).toBe('гострий перець');
+    expect(lowerFirst('I want more, now!', 'en')).toBe('I want more, now!');
+    expect(lowerFirst('I need to eat something else', 'en')).toBe('I need to eat something else');
+    expect(lowerFirst('Pleasant', 'en')).toBe('pleasant');
   });
 });
