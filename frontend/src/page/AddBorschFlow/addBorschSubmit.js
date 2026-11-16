@@ -1,4 +1,4 @@
-import { gradesToReview } from '../../components/QuestFlow/answers';
+import { answersToReview } from '../../components/QuestFlow/answers';
 import { requireId } from '../../utils/ids';
 import { uploadPhotos } from '../../utils/uploadPhotos';
 
@@ -33,7 +33,7 @@ export async function submitAddBorsch({
   street,
   city,
   country = '',
-  values,          // grades + meatType/name/price/weight/photo/comment
+  values,          // the rating answers (answers.js) + meatType/name/price/weight/photos/comment
   progress,
   apis,            // { placesAPI, borschAPI, commentsAPI }
   onStage = () => {},
@@ -104,7 +104,7 @@ export async function submitAddBorsch({
   // 3. the rating the person came here to leave
   if (!progress.reviewDone) {
     onStage(STAGES.review);
-    await commentsAPI.createByBorschId(progress.borschId, gradesToReview(values, values.comment));
+    await commentsAPI.createByBorschId(progress.borschId, answersToReview(values, values.comment));
     progress.reviewDone = true;
     onProgress({ ...progress });
   }

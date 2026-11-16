@@ -2,9 +2,10 @@
 @use "../../styles/mixin_adaptiv.scss" as *;
 @use "../../styles/brand.scss" as *;
 
-// «Стіл» on the red stage of the quest (QuestFlow.module.scss, BowlFlow's
-// venue cards). Only what those have no shape for lives here: the QR card, the
-// code, the progress panel, the door's name field, the create form's rows.
+// «Дегустація» on the cream frame of the quest (QuestFlow.module.scss, since
+// Оцінювання 3.0; BowlFlow's venue cards). Only what those have no shape for
+// lives here: the QR card, the code, the progress panel, the door's name
+// field, the create form's rows. Colours come from the frame's --q-* tokens.
 
 // the root of /t/<code> and /table/new (see TablePage)
 .route {
@@ -37,26 +38,24 @@
 
 .subline {
   margin: -2px 0 0;
-  max-width: 460px;
   @include footnote;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.92);
+  color: var(--q-ink-2);
 }
 
 .notice,
 .blindNote {
+  align-self: flex-start;
   margin: 2px 0 0;
-  max-width: 460px;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.16);
+  background: var(--q-smetana);
   @include caption;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-smetana-ink);
 }
 
 .blindNote {
-  background: rgba(23, 11, 11, 0.22);
   border-radius: var(--radius-sm);
 }
 
@@ -67,7 +66,6 @@
   align-items: center;
   gap: 14px;
   width: 100%;
-  max-width: 460px;
   margin-top: 8px;
 
   @media (min-width: 1024px) {
@@ -95,9 +93,9 @@
   gap: 6px;
   padding: 18px 18px 16px;
   border-radius: 28px;
-  background: #FFFAF5;
+  background: #FFFFFF;
   color: #1A1A1A;
-  box-shadow: 0 8px 0 rgba(60, 0, 18, 0.35), 0 18px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--q-shadow-md);
   text-align: center;
 }
 
@@ -157,9 +155,9 @@
 .panel {
   width: 100%;
   padding: 16px;
-  border: 2px solid rgba(255, 250, 245, 0.32);
   border-radius: 24px;
-  background: rgba(255, 250, 245, 0.1);
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
   text-align: left;
 }
 
@@ -172,7 +170,7 @@
 .bigNumber {
   margin: 0;
   @include numeric(64px, 800);
-  color: #FFFAF5;
+  color: var(--q-red-text);
 }
 
 .bigWords {
@@ -183,13 +181,13 @@
   margin: 0;
   @include body;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
 .bigSub {
   margin: 2px 0 0;
   @include footnote;
-  color: rgba(255, 250, 245, 0.85);
+  color: var(--q-ink-2);
 }
 
 .rows {
@@ -203,7 +201,7 @@
 
 .row {
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 250, 245, 0.2);
+  border-top: 1px dashed var(--q-hair);
 }
 
 .rowTop {
@@ -217,8 +215,8 @@
   min-width: 44px;
   padding: 5px 10px;
   border-radius: var(--radius-pill);
-  background: #FFFAF5;
-  color: #860130;
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
   @include numeric(15px, 800);
   text-align: center;
 }
@@ -227,7 +225,7 @@
   flex: 1 1 auto;
   min-width: 0;
   @include display(21px, 1.15);
-  color: #FFFAF5;
+  color: var(--q-ink);
   overflow-wrap: anywhere;
 }
 
@@ -236,7 +234,7 @@
   font-size: 15px;
   font-weight: 600;
   font-style: italic;
-  color: rgba(255, 250, 245, 0.8);
+  color: var(--q-muted);
 }
 
 .namesToggle {
@@ -246,8 +244,8 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: #FFFAF5;
-  box-shadow: inset 0 0 0 2px rgba(255, 250, 245, 0.7);
+  color: var(--q-red-text);
+  box-shadow: inset 0 0 0 2px currentColor;
   font-family: var(--font-family-main);
   font-size: 15px;
   font-weight: 700;
@@ -258,7 +256,7 @@
   flex: 0 0 auto;
   @include footnote;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.9);
+  color: var(--q-ink-2);
   white-space: nowrap;
 }
 
@@ -274,22 +272,23 @@
 .name {
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.2);
+  background: var(--q-smetana);
   @include caption;
   font-weight: 600;
-  color: #FFFAF5;
+  color: var(--q-smetana-ink);
 }
 
 // a guest without an account: outlined, so the host sees who has no account
 .nameGuest {
   background: transparent;
-  box-shadow: inset 0 0 0 1.5px rgba(255, 250, 245, 0.55);
+  color: var(--q-ink-2);
+  box-shadow: inset 0 0 0 1.5px var(--q-border-strong);
 }
 
 .panelHint {
   margin: 12px 0 0;
   @include caption;
-  color: rgba(255, 250, 245, 0.8);
+  color: var(--q-muted);
 }
 
 .hostActions {
@@ -304,12 +303,15 @@
   }
 }
 
-// the quest's cream pill stops at 460 px; in the host's column it fills the column
+// the quest's pill fills the host's column
 .hostActions > button,
 .confirmRow > button {
+  width: 100%;
   max-width: none;
+  flex: none;
 }
 
+// the outlined secondary of the frame (its name is history: it was cream on red)
 .ghostCream {
   width: 100%;
   min-height: 52px;
@@ -317,15 +319,15 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: #FFFAF5;
-  box-shadow: inset 0 0 0 2px rgba(255, 250, 245, 0.85);
+  color: var(--q-red-text);
+  box-shadow: inset 0 0 0 2px currentColor;
   font-family: var(--font-family-main);
   font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   transition: background-color var(--transition-fast);
   @media (hover: hover) {
-    &:hover { background: rgba(255, 250, 245, 0.12); }
+    &:hover { background: rgba(220, 20, 60, 0.06); }
   }
 }
 
@@ -333,20 +335,21 @@
   width: 100%;
   padding: 14px;
   border-radius: 22px;
-  background: rgba(23, 11, 11, 0.28);
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-md), inset 0 0 0 2px var(--q-red);
   text-align: center;
 }
 
 .confirmTitle {
   margin: 0;
   @include display(21px, 1.15);
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
 .confirmText {
   margin: 6px 0 12px;
   @include footnote;
-  color: rgba(255, 250, 245, 0.9);
+  color: var(--q-ink-2);
 }
 
 .confirmRow {
@@ -360,24 +363,23 @@
   margin: 0;
   @include footnote;
   font-weight: 700;
-  color: #FFE1A8;
+  color: var(--q-red-text);
 }
 
 .errorBox {
   width: 100%;
-  max-width: 460px;
   margin: 4px 0 0;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(23, 11, 11, 0.3);
+  background: var(--q-sel-bg);
+  box-shadow: inset 0 0 0 1.5px var(--q-red);
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-red-text);
 }
 
 // --- guest: the door --------------------------------------------------------
 .venueStatic {
-  max-width: 460px;
   cursor: default;
   box-shadow: none;
   margin-top: 6px;
@@ -386,10 +388,9 @@
 
 .onTable {
   width: 100%;
-  max-width: 460px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-top: 4px;
 }
@@ -397,40 +398,36 @@
 .onTableTitle {
   margin: 0;
   @include kicker;
-  color: rgba(255, 250, 245, 0.85);
 }
 
 .chipsRow {
   list-style: none;
   width: 100%;
-  max-width: 460px;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 8px;
 }
 
 .borschChip {
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.16);
-  border: 2px solid rgba(255, 250, 245, 0.4);
+  background: var(--q-surface);
+  box-shadow: inset 0 0 0 1.5px var(--q-border);
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
 .borschChipDone {
-  background: #FFFAF5;
-  border-color: #FFFAF5;
-  color: #860130;
+  background: var(--q-smetana);
+  box-shadow: none;
+  color: var(--q-smetana-ink);
 }
 
 .door {
   width: 100%;
-  max-width: 460px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -440,7 +437,7 @@
 
 .nameLabel {
   @include display(21px, 1.15);
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
 .or {
@@ -449,7 +446,7 @@
   text-align: center;
   @include caption;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.8);
+  color: var(--q-muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 
@@ -460,31 +457,32 @@
     top: 50%;
     width: calc(50% - 40px);
     height: 1px;
-    background: rgba(255, 250, 245, 0.35);
+    background: var(--q-hair);
   }
   &::before { left: 0; }
   &::after { right: 0; }
 }
 
 .asWho {
+  align-self: flex-start;
   margin: 6px 0 0;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.16);
+  background: var(--q-smetana);
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-smetana-ink);
 }
 
 // --- guest: the thank-you ---------------------------------------------------
 .mine {
   list-style: none;
   width: 100%;
-  max-width: 340px;
   margin: 6px 0 0;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-radius: 20px;
-  background: rgba(255, 250, 245, 0.14);
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
 }
 
 .mineRow {
@@ -492,18 +490,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 0;
+  padding: 8px 0;
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-ink);
 
   & + & {
-    border-top: 1px solid rgba(255, 250, 245, 0.2);
+    border-top: 1px dashed var(--q-hair);
   }
 }
 
 .mineScore {
   @include numeric(20px, 800);
+  color: var(--q-red-text);
 }
 
 // --- host: the create form --------------------------------------------------
@@ -520,13 +519,14 @@
   height: 44px;
   padding: 0 8px;
   border-radius: var(--radius-pill);
-  border: 2px solid rgba(255, 250, 245, 0.55);
+  border: 1.5px solid var(--q-border-strong);
+  color: var(--q-ink-2);
   @include numeric(16px, 800);
 }
 
 .pickCardOn .pickNumber {
   border-color: transparent;
-  background: color-mix(in srgb, var(--hue) 72%, #000 28%);
+  background: var(--q-red);
   color: #FFFAF5;
 }
 
@@ -534,7 +534,6 @@
   display: flex;
   gap: 8px;
   width: 100%;
-  max-width: 460px;
 
   input {
     flex: 1 1 auto;
@@ -550,14 +549,15 @@
   height: 54px;
   padding: 0 16px;
   border: 0;
-  border-radius: var(--radius-md);
-  background: #FFFAF5;
-  color: #C8102E;
+  border-radius: var(--radius-pill);
+  background: var(--q-red);
+  color: #FFFAF5;
+  box-shadow: 0 4px 0 var(--q-red-dark);
   font-family: var(--font-family-main);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
-  &:disabled { opacity: 0.5; cursor: default; }
+  &:disabled { background: var(--q-disabled); box-shadow: none; cursor: default; }
 }
 
 .removeBtn {
@@ -568,15 +568,14 @@
   height: 40px;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 250, 245, 0.2);
-  color: inherit;
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
   cursor: pointer;
 }
 
 .factsList {
   list-style: none;
   width: 100%;
-  max-width: 460px;
   margin: 6px 0 0;
   padding: 0;
   display: flex;
@@ -586,9 +585,9 @@
 
 .factsItem {
   padding: 14px;
-  border: 2px solid rgba(255, 250, 245, 0.32);
   border-radius: 22px;
-  background: rgba(255, 250, 245, 0.1);
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm);
   text-align: left;
 }
 
@@ -602,7 +601,7 @@
 .factsKnown {
   margin: -4px 0 10px;
   @include caption;
-  color: rgba(255, 250, 245, 0.85);
+  color: var(--q-ink-2);
 }
 
 .factsInputs {
@@ -617,7 +616,7 @@
   gap: 4px;
   @include caption;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.9);
+  color: var(--q-ink-2);
 }
 
 .factWrap {
@@ -629,32 +628,32 @@
     width: 100%;
     height: 50px;
     padding: 0 48px 0 14px;
-    border: 2px solid rgba(255, 250, 245, 0.5);
+    border: 1.5px solid var(--q-border);
     border-radius: var(--radius-sm);
-    background: rgba(255, 250, 245, 0.95);
-    color: #1A1A1A;
+    background: var(--q-surface);
+    color: var(--q-ink);
     @include numeric(18px, 700);
     appearance: textfield;
     -moz-appearance: textfield;
     &::-webkit-outer-spin-button,
     &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    &::placeholder { color: #9C8580; font-weight: 500; }
-    &:focus { outline: none; border-color: #FFFAF5; box-shadow: 0 0 0 4px rgba(255, 250, 245, 0.3); }
+    &::placeholder { color: var(--q-muted); font-weight: 500; }
+    &:focus { outline: none; border-color: var(--q-red); box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.14); }
   }
 }
 
 .factUnit {
   position: absolute;
   right: 14px;
-  color: #5C4744;
+  color: var(--q-ink-2);
   font-size: 15px;
   font-weight: 700;
   pointer-events: none;
 }
 
 .factErr input {
-  border-color: #FFE1A8;
-  box-shadow: 0 0 0 3px rgba(255, 225, 168, 0.4);
+  border-color: var(--q-red);
+  box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.16);
 }
 
 .toggleRow {
@@ -662,12 +661,12 @@
   align-items: center;
   gap: 14px;
   width: 100%;
-  max-width: 460px;
   padding: 14px 16px;
-  border: 2px solid rgba(255, 250, 245, 0.38);
+  border: 0;
   border-radius: 22px;
-  background: rgba(255, 250, 245, 0.12);
-  color: #FFFAF5;
+  background: var(--q-surface);
+  box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-border);
+  color: var(--q-ink);
   text-align: left;
   cursor: pointer;
 }
@@ -686,7 +685,7 @@
 
 .toggleHint {
   @include caption;
-  color: rgba(255, 250, 245, 0.88);
+  color: var(--q-ink-2);
 }
 
 .switch {
@@ -695,7 +694,7 @@
   width: 56px;
   height: 32px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.3);
+  background: var(--q-track-on);
   transition: background-color var(--transition-fast);
 
   &::after {
@@ -713,16 +712,15 @@
 }
 
 .switchOn {
-  background: #FFFAF5;
+  background: var(--q-red);
   &::after {
-    background: color-mix(in srgb, var(--hue) 80%, #000 20%);
+    background: #FFFAF5;
     transform: translateX(24px);
   }
 }
 
 .titleField {
   width: 100%;
-  max-width: 460px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -736,7 +734,7 @@
 .fieldLabel {
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
 // --- stage 3: a new borshch's meat type, asked once at creation -------------
@@ -750,7 +748,7 @@
 .meatLabel {
   @include caption;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.9);
+  color: var(--q-ink-2);
 }
 
 .meatChips {
@@ -762,10 +760,11 @@
 .meatChip {
   min-height: 40px;
   padding: 6px 12px;
-  border: 2px solid rgba(255, 250, 245, 0.45);
+  border: 0;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.12);
-  color: #FFFAF5;
+  background: var(--q-surface);
+  box-shadow: inset 0 0 0 1.5px var(--q-border);
+  color: var(--q-ink);
   font-family: var(--font-family-main);
   font-size: 14px;
   font-weight: 700;
@@ -773,9 +772,9 @@
 }
 
 .meatChipOn {
-  background: #FFFAF5;
-  border-color: #FFFAF5;
-  color: #860130;
+  background: var(--q-red);
+  box-shadow: 0 3px 0 var(--q-red-dark);
+  color: #FFFAF5;
 }
 
 // --- «Надрукувати QR» --------------------------------------------------------
@@ -801,14 +800,14 @@
   gap: 2px;
   min-height: 56px;
   padding: 8px 12px;
-  border: 2px solid rgba(26, 26, 26, 0.12);
+  border: 1.5px solid var(--q-border);
   border-radius: 14px;
-  background: #FFFFFF;
-  color: #1A1A1A;
+  background: var(--q-surface);
+  color: var(--q-ink);
   font-family: var(--font-family-main);
   text-align: left;
   cursor: pointer;
 
   strong { font-size: 15px; font-weight: 800; }
-  span { font-size: 12px; font-weight: 600; color: #5C4744; line-height: 1.25; }
+  span { font-size: 12px; font-weight: 600; color: var(--q-ink-2); line-height: 1.25; }
 }

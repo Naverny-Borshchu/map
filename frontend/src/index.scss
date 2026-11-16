@@ -282,6 +282,10 @@ html[data-theme='dark'] .nb-plate svg [fill='#1A1A1A'],
 html[data-theme='dark'] .nb-plate svg [fill='#1a1a1a'] {
   fill: #1A1A1A;
 }
+/* the drawn bowls of the rating (QuestFlow/bowlArt) are such plates too */
+html[data-theme='dark'] .nb-plate svg [stroke='#1A1A1A'] {
+  stroke: #1A1A1A;
+}
 
 main,html {
   overflow-x: hidden;

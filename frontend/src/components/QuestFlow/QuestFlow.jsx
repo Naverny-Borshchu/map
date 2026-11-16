@@ -1,64 +1,46 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BorschLevel } from '../BorschLevel';
-import { Mascot } from '../Mascot';
 import { GoogleAuth } from '../GoogleAuth';
-import { useT } from '../../i18n';
-import { optionForValue, scaleEnds } from './answers';
+import { useI18n } from '../../i18n';
+import { coinsEarned, stepShare, summaryPhrases, visibleQuestions, isAnswered } from './answers';
+import { ComponentQuestions, OverallQuestion } from './RatingControls';
+import { illustration } from './illustrations';
 import { tokenStorage } from '../../services/tokenStorage';
-import { IconCamera, IconClose } from '../Icons';
+import { IconCamera, IconClose, IconChevronLeft } from '../Icons';
 import { useFlowTracking } from '../../hook/useFlowTracking';
 import style from './QuestFlow.module.scss';
 import { CoinIcon } from '../CoinIcon';
 
 /**
- * The gamified quest engine behind both journeys — rating a borsch and adding
- * one. Shape borrowed from Duolingo, for the reason Duolingo has it: ONE task
- * per screen, ONE forward button, and visible progress. A person who is looking
- * at a single question answers it; a person looking at a nine-field form
- * closes the tab.
+ * The quest engine behind every journey that asks about a borshch: rating
+ * one, a bowl's rating, a tasting guest, adding one. ONE screen at a time,
+ * ONE forward button, visible progress.
  *
- * The engine owns the frame (background, progress, XP, transitions, keyboard)
- * and nothing about borsch. Callers pass step descriptors:
+ * Since Оцінювання 3.0 (NAV-216) it wears the identity of the approved
+ * prototype instead of the red full-screen stage: cream page (#FFFAF5, night
+ * #170B0B), white cards, MAK only for words, Roboto for every digit, crimson
+ * pills standing on a dark underside, a flat illustration per screen instead
+ * of the beet mascot.
  *
- *   { type: 'scale',  key, i18n, options: [{ value, i18n, emoji, mood }] }
- *   { type: 'choice', key, i18n, options: [{ value, i18n, emoji }] }
+ * Callers pass step descriptors:
+ *
+ *   { type: 'component', key, i18n, illu, index, of, questions }   one part of the borshch (answers.js)
+ *   { type: 'overall',   key, i18n, illu }                         «Загалом», required
+ *   { type: 'choice', key, i18n, options: [{ value, i18n }] }
  *   { type: 'text',   key, i18n, hint, placeholder, chips: [i18n keys] }
  *   { type: 'number', key, i18n, hint, unit, chips: [numbers], min }
- *   { type: 'photo',  key }        — optional by nature, holds a list of files
- *   { type: 'comment',key }        — optional by nature
- *   { type: 'signin', key }        — a wall we only raise after the work is done
- *   { type: 'done',   key }        — submits on arrival
+ *   { type: 'photo',  key }        optional by nature, holds a list of files
+ *   { type: 'comment',key }        optional by nature
+ *   { type: 'signin', key }        a wall we only raise after the work is done
+ *   { type: 'done',   key }        submits on arrival
  *
  * Values live in the caller (it knows how to submit them); the engine only
- * reads `values[key]` and calls `onChange(key, next)`.
+ * reads `values[key]` and calls `onChange(key, next)`. Nothing advances by
+ * itself: «Далі» wakes up with the first answer of a screen.
  */
 
-// Every step is worth the same XP, so the number in the header only ever grows
-// by tapping — no hidden scoring the user cannot predict.
+// Every rating screen is worth the same test БорщКоіни, paid in proportion to
+// how much of it was answered (answers.js coinsEarned).
 export const XP_PER_STEP = 10;
-
-// One colour per step, so moving forward is felt before the question is read.
-// All from the brand's reds (borshch, deep, beet and the steps between them);
-// the old rainbow of greens and blues belonged to the previous identity.
-const HUES = {
-  meat: '#C0102F',
-  beetroot: '#860130',
-  density: '#A00322',
-  salt: '#B5122E',
-  aftertaste: '#7A0A2A',
-  serving: '#C8213A',
-  overall: '#DC143C',
-  meatType: '#A00322',
-  name: '#B5122E',
-  price: '#860130',
-  weight: '#C0102F',
-  photo: '#A00322',
-  comment: '#860130',
-  signin: '#5E0A22',
-  done: '#DC143C',
-};
-
-const hueFor = (step) => HUES[step?.key] || HUES[step?.type] || '#DC143C';
 
 const isAuthed = () => {
   try {
@@ -75,14 +57,21 @@ export const MAX_PHOTOS = 6;
 export const isStepAnswered = (step, values) => {
   if (step.type === 'photo') return (values.photos || []).length > 0;
   if (step.type === 'comment') return !!(values.comment || '').trim();
+  if (step.type === 'component') return stepShare(step, values) === 1;
   return isStepFilled(step, values);
 };
 
-/** A step counts as satisfied when it can be left without losing anything. */
+/**
+ * May «Далі» be pressed? A part of the borshch needs one answer of its own
+ * (or «Пропустити»), «Загалом» needs its number, the chores need their field.
+ */
 export const isStepFilled = (step, values) => {
   const v = values[step.key];
   switch (step.type) {
-    case 'scale':
+    case 'component':
+      return visibleQuestions(step, values).some((q) => isAnswered(q.key, values));
+    case 'overall':
+      return isAnswered('overall', values);
     case 'choice':
       return v !== null && v !== undefined && v !== '';
     case 'text':
@@ -97,14 +86,21 @@ export const isStepFilled = (step, values) => {
   }
 };
 
+/** The share of a segment that is filled: parts by their answers, the rest once answered. */
+const segmentShare = (step, values) => {
+  if (step.type === 'component') return stepShare(step, values);
+  return isStepAnswered(step, values) ? 1 : 0;
+};
+
+const RATING_TYPES = new Set(['component', 'overall']);
+
 export const QuestFlow = ({
   steps,
   values,
   onChange,
-  // 'scale' steps render ten numbered taps instead of five worded answers.
-  // A build-time arm (REACT_APP_RATE_SCALE), passed in so it can be tested.
-  scale10 = false,
   title = '',
+  // the venue next to the borshch's name, small, under the progress
+  subtitle = '',
   xp = { perStep: XP_PER_STEP, multiplier: 1, total: null },
   status = { saving: false, sent: false, error: '', stage: '' },
   done = {},
@@ -120,18 +116,25 @@ export const QuestFlow = ({
   // same flow that came before this one on other routes (the map pick, say),
   // so `index` and `total` describe the whole journey, not just this part.
   analytics = null,       // { flow, offset = 0, context }
-  // Shown on the closing screen once the save went through, under the XP.
+  // Shown on the closing screen once the save went through, under the summary.
   doneExtra = null,
-  // A photo of the borshch being rated (a bowl's, from moment 1), shown next
-  // to the mascot so it is clear which bowl the questions are about.
+  // A photo of the borshch being rated: a bowl's File from moment 1, or the
+  // URL of the borshch's own photo. Shown small next to its name.
   cover = null,
+  coverSrc = '',
+  // The cross asks «Вийти з оцінки?» once something is answered; the answers
+  // stay in the caller's draft either way.
+  confirmExit = false,
 }) => {
-  const t = useT();
-  const [step, setStep] = useState(() => Math.max(0, Number(initialStep) || 0));
+  const { t, lang } = useI18n();
+  const [step, setStep] = useState(() => Math.max(0, Math.min(Number(initialStep) || 0, steps.length - 1)));
   const [dir, setDir] = useState(1);
   const [leaving, setLeaving] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
   const fileRef = useRef(null);
   const headingRef = useRef(null);
+  const stayRef = useRef(null);
+  const quitRef = useRef(null);
   const [authed, setAuthed] = useState(isAuthed);
 
   const current = steps[Math.min(step, steps.length - 1)];
@@ -140,7 +143,7 @@ export const QuestFlow = ({
   const hadPhotoFailure = useRef(false);
   if (status.photosFailed > 0) hadPhotoFailure.current = true;
   const taskSteps = useMemo(() => steps.filter((s) => s.type !== 'done'), [steps]);
-  const scaleSteps = useMemo(() => steps.filter((s) => s.type === 'scale'), [steps]);
+  const rates = useMemo(() => steps.some((s) => RATING_TYPES.has(s.type)), [steps]);
 
   const offset = analytics?.offset || 0;
   const { markClosing } = useFlowTracking({
@@ -152,14 +155,25 @@ export const QuestFlow = ({
     finished: current?.type === 'done' && !!status.sent,
     context: analytics?.context || null,
   });
-  const handleExit = () => {
+
+  const perStep = xp.perStep ?? XP_PER_STEP;
+  const multiplier = xp.multiplier || 1;
+  const earnedXp = coinsEarned(steps, values, perStep) * multiplier;
+
+  const anyAnswer = taskSteps.some((s) => RATING_TYPES.has(s.type) && segmentShare(s, values) > 0)
+    || !!(values.comment || '').trim();
+
+  const leave = () => {
     markClosing();
     onExit?.();
   };
-
-  const filledCount = taskSteps.filter((s, i) => i < step || isStepAnswered(s, values)).length;
-  const scaleFilled = scaleSteps.filter((s) => isStepFilled(s, values)).length;
-  const earnedXp = scaleFilled * xp.perStep * xp.multiplier;
+  const handleExit = () => {
+    if (confirmExit && current?.type !== 'done' && anyAnswer) {
+      setExitOpen(true);
+      return;
+    }
+    leave();
+  };
 
   useEffect(() => {
     onStepChange?.(step);
@@ -178,8 +192,12 @@ export const QuestFlow = ({
   // Move the reading position to the new question, or a screen reader keeps
   // announcing the old one while the visuals have already changed.
   useEffect(() => {
-    headingRef.current?.focus?.();
+    headingRef.current?.focus?.({ preventScroll: true });
   }, [step]);
+
+  useEffect(() => {
+    if (exitOpen) stayRef.current?.focus();
+  }, [exitOpen]);
 
   // One preview URL per FILE, not per render and not per list change: removing
   // one photo used to rebuild every URL, which makes the surviving thumbnails
@@ -235,9 +253,14 @@ export const QuestFlow = ({
     setCoverUrl(url);
     return () => { if (url) URL.revokeObjectURL(url); };
   }, [cover]);
+  const thumb = coverUrl || coverSrc || photoUrls[0] || '';
 
   const canAdvance = current ? isStepFilled(current, values) : false;
-  const optional = current?.type === 'photo' || current?.type === 'comment';
+  const gift = current?.type === 'photo' || current?.type === 'comment';
+  const nextEnabled = canAdvance || gift;
+  const showSkip = current?.type === 'component'
+    ? !isStepAnswered(current, values)
+    : current?.type === 'photo' && !isStepAnswered(current, values);
 
   const go = useCallback(
     (delta) => {
@@ -253,35 +276,25 @@ export const QuestFlow = ({
     [steps.length]
   );
 
-  const pick = (value) => {
-    onChange(current.key, value);
-  };
-
-  // Desktop: digits pick an answer, Enter goes forward. Costs nothing on a
-  // phone and makes the flow genuinely fast on a keyboard.
+  // Desktop: Enter goes forward from a field. On a focused answer Enter and
+  // Space choose it (the button's own click), they never skip a screen.
   useEffect(() => {
     const onKey = (e) => {
-      if (!current || current.type === 'done') return;
-      if (e.target?.tagName === 'TEXTAREA' || e.target?.tagName === 'INPUT') {
-        if (e.key === 'Enter' && canAdvance) go(1);
+      if (exitOpen) {
+        if (e.key === 'Escape') setExitOpen(false);
         return;
       }
-      if (/^[1-9]$/.test(e.key) && current.options) {
-        const opt = current.options[Number(e.key) - 1];
-        if (opt) onChange(current.key, opt.value);
+      if (!current || current.type === 'done') return;
+      const tag = e.target?.tagName;
+      if (tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A') return;
+      if (e.key === 'Enter' && nextEnabled) {
+        e.preventDefault?.();
+        go(1);
       }
-      if (e.key === 'Enter' && (canAdvance || optional)) go(1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [current, canAdvance, optional, go, onChange]);
-
-  const selectedOption = current?.type === 'scale' && scale10
-    ? optionForValue(current.key, values[current.key])
-    : current?.options?.find((o) => o.value === values[current.key]);
-  const mood = current?.type === 'done'
-    ? 'party'
-    : selectedOption?.mood || (current?.type === 'photo' ? 'happy' : current?.type === 'comment' ? 'love' : 'idle');
+  }, [current, nextEnabled, go, exitOpen]);
 
   const handleSignIn = async (credentialResponse) => {
     await onSignIn?.(credentialResponse);
@@ -290,113 +303,122 @@ export const QuestFlow = ({
     if (signedIn) go(1);
   };
 
-  return (
-    <div
-      className={style.flow}
-      style={{ '--hue': hueFor(current) }}
-      data-type={current?.type || 'rate'}
-    >
-      <div className={style.bg} aria-hidden="true">
-        <span className={style.blob1} />
-        <span className={style.blob2} />
-        <span className={style.blob3} />
-      </div>
+  const kickerFor = (s) => {
+    if (s.type === 'component') return t('r3.kicker', { n: s.index, total: s.of });
+    if (s.type === 'overall') return t('r3.required');
+    if (s.type === 'photo' || s.type === 'comment') return t('r3.optional');
+    return t('flow.step', { n: Math.min(step + 1, taskSteps.length), total: taskSteps.length });
+  };
+  const illuFor = (s) => {
+    if (s.illu) return illustration(s.illu);
+    if (s.type === 'comment') return illustration('comment');
+    if (s.type === 'photo') return illustration('photo');
+    if (s.type === 'signin') return illustration('hero');
+    return null;
+  };
+  // single words (a part's name) stand large; questions as titles a size down
+  const titleFor = (s) => (s.type === 'comment' ? t('r3.comment.title') : t(s.i18n));
+  const bigTitle = current && (RATING_TYPES.has(current.type) || current.type === 'comment');
 
+  const summary = rates && current?.type === 'done' ? summaryPhrases(values, t, lang) : [];
+
+  const head = current && current.type !== 'done' && (
+    <div className={style.headRow}>
+      <div className={style.headTxt}>
+        <p className={style.kicker}>{kickerFor(current)}</p>
+        <h2
+          className={`${style.question} ${bigTitle ? style.titleBig : ''}`}
+          ref={headingRef}
+          tabIndex={-1}
+          id="quest-title"
+        >
+          {titleFor(current)}
+        </h2>
+      </div>
+      {illuFor(current) && <img className={style.illu} src={illuFor(current)} alt="" width="88" height="88" />}
+    </div>
+  );
+
+  return (
+    <div className={style.flow} data-type={current?.type || 'rate'} data-step={current?.key || ''}>
       <header className={style.head}>
-        <button type="button" className={style.quit} onClick={handleExit} aria-label={t('card.close')}>
+        <button type="button" className={style.quit} onClick={handleExit} aria-label={t('card.close')} ref={quitRef}>
           <IconClose size={22} />
         </button>
 
-        {/* one segment per task, so "how much is left" is countable, not guessed */}
+        {/* one segment per screen, filled by how much of it was answered */}
         <div
           className={style.segments}
+          data-many={taskSteps.length > 10 || undefined}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={taskSteps.length}
-          aria-valuenow={filledCount}
+          aria-valuenow={Math.min(step + 1, taskSteps.length)}
         >
-          {taskSteps.map((s, i) => (
-            <span
-              key={s.key}
-              className={`${style.segment} ${
-                i < step || isStepAnswered(s, values) ? style.segOn : i === step ? style.segNow : ''
-              }`}
-            />
-          ))}
+          {taskSteps.map((s, i) => {
+            const share = current?.type === 'done' ? 1 : segmentShare(s, values);
+            const seen = current?.type === 'done' || i <= step;
+            return (
+              <span
+                key={s.key}
+                className={`${style.segment} ${seen ? style.segSeen : ''} ${share === 1 ? style.segOn : ''} ${i === step && current?.type !== 'done' ? style.segNow : ''}`}
+                style={{ '--f': share }}
+              >
+                <i />
+              </span>
+            );
+          })}
         </div>
 
-        <span className={style.xp} key={earnedXp} aria-label={t('coin.aria', { n: earnedXp })}>
-          <CoinIcon size={16} className={style.coin} />
-          {earnedXp} {t('coin.ticker')}
-          {xp.multiplier > 1 && <span className={style.xpMult}> ×{xp.multiplier}</span>}
+        <span className={style.xp} key={earnedXp} role="img" aria-label={t('coin.aria', { n: earnedXp })}>
+          <CoinIcon size={24} className={style.coin} />
+          <span>{earnedXp} {t('coin.ticker')}</span>
+          {multiplier > 1 && <span className={style.xpMult}>×{multiplier}</span>}
         </span>
       </header>
 
+      {(title || subtitle) && current?.type !== 'done' && (
+        <p className={style.ctx}>
+          {thumb && <img src={thumb} alt={t('bowl.coverAlt')} />}
+          <span>
+            {title && <b>{title}</b>}
+            {title && subtitle ? ' · ' : ''}
+            {subtitle}
+          </span>
+        </p>
+      )}
+
       <div
-        className={`${style.stage} ${leaving ? style.leaving : ''} ${dir < 0 ? style.back : ''}`}
+        className={`${style.stage} ${leaving ? style.leaving : ''} ${dir < 0 ? style.backward : ''}`}
         key={step}
       >
-        {current?.type !== 'done' && (
-          <>
-            <div className={style.mascotBox}>
-              <Mascot mood={mood} size={92} key={`${current?.key}-${mood}`} />
-              {coverUrl && <img className={style.cover} src={coverUrl} alt={t('bowl.coverAlt')} />}
-            </div>
-            <p className={style.stepCount}>
-              {title ? `${title} · ` : ''}
-              {t('flow.step', { n: Math.min(step + 1, taskSteps.length), total: taskSteps.length })}
-            </p>
-            <h2 className={style.question} ref={headingRef} tabIndex={-1}>
-              {t(current.i18n)}
-            </h2>
-            {current.hint && <p className={style.hint}>{t(current.hint)}</p>}
-          </>
+        {head}
+        {current?.hint && !RATING_TYPES.has(current.type) && current.type !== 'comment' && (
+          <p className={style.hint}>{t(current.hint)}</p>
         )}
 
-        {current?.type === 'scale' && scale10 && (
-          <>
-            <div className={style.scale} role="group" aria-label={t(current.i18n)}>
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
-                const on = values[current.key] === n;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    className={`${style.dot} ${on ? style.dotOn : ''}`}
-                    onClick={() => pick(n)}
-                    aria-label={String(n)}
-                    aria-pressed={on}
-                  >
-                    <BorschLevel level={n} size={26} />
-                    <span className={style.dotNum}>{n}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className={style.ends}>
-              <span>{t(scaleEnds(current.key).left)}</span>
-              <span>{t(scaleEnds(current.key).right)}</span>
-            </div>
-          </>
+        {current?.type === 'component' && (
+          <ComponentQuestions step={current} values={values} onChange={onChange} />
         )}
 
-        {((current?.type === 'scale' && !scale10) || current?.type === 'choice') && (
-          <div className={style.answers} role="group" aria-label={t(current.i18n)}>
-            {current.options.map((o, i) => {
+        {current?.type === 'overall' && (
+          <OverallQuestion value={values.overall ?? null} onChange={onChange} />
+        )}
+
+        {current?.type === 'choice' && (
+          <div className={style.answers} role="radiogroup" aria-labelledby="quest-title">
+            {current.options.map((o) => {
               const on = values[current.key] === o.value;
               return (
                 <button
                   key={String(o.value)}
                   type="button"
+                  role="radio"
                   className={`${style.card} ${on ? style.cardOn : ''}`}
-                  onClick={() => pick(o.value)}
-                  aria-pressed={on}
+                  onClick={() => onChange(current.key, o.value)}
+                  aria-checked={on}
                 >
-                  <span className={style.cardEmoji} aria-hidden="true">
-                    <BorschLevel level={o.value} size={34} />
-                  </span>
                   <span className={style.cardLabel}>{t(o.i18n)}</span>
-                  <span className={style.cardKey} aria-hidden="true">{i + 1}</span>
                   <span className={style.cardTick} aria-hidden="true" />
                 </button>
               );
@@ -414,6 +436,7 @@ export const QuestFlow = ({
               placeholder={t(current.placeholder)}
               maxLength={current.maxLength || 80}
               autoComplete="off"
+              aria-labelledby="quest-title"
             />
             {current.chips && (
               <div className={style.chips}>
@@ -443,6 +466,7 @@ export const QuestFlow = ({
                 onChange={(e) => onChange(current.key, e.target.value)}
                 placeholder="0"
                 min={current.min ?? 0}
+                aria-labelledby="quest-title"
               />
               <span className={style.unit}>{t(current.unit)}</span>
             </div>
@@ -513,14 +537,19 @@ export const QuestFlow = ({
         )}
 
         {current?.type === 'comment' && (
-          <div className={style.field}>
+          <div className={style.q}>
+            <p className={style.qLabel} id="ql-comment"><span>{t('r3.q.comment')}</span></p>
             <textarea
               className={style.textarea}
               value={values.comment || ''}
               onChange={(e) => onChange('comment', e.target.value)}
-              placeholder={t('rate.commentPlaceholder')}
-              rows={4}
+              placeholder={t('r3.commentPlaceholder')}
+              aria-labelledby="ql-comment"
+              aria-describedby="comment-hint"
+              rows={5}
+              maxLength={1000}
             />
+            <p className={style.hint} id="comment-hint">{t('r3.commentHint')}</p>
           </div>
         )}
 
@@ -536,43 +565,48 @@ export const QuestFlow = ({
           </div>
         )}
 
-        {current?.type === 'scale' && (
-          <p className={style.praise} aria-live="polite">
-            {selectedOption ? t(selectedOption.praise || 'flow.praiseMid') : ' '}
-          </p>
-        )}
-
         {current?.type === 'done' && (
-          <>
-            {status.sent && (
-              <div className={style.confetti} aria-hidden="true">
-                {Array.from({ length: 16 }, (_, i) => (
-                  <span key={i} className={style.piece} style={{ '--i': i }} />
-                ))}
+          <div className={style.done}>
+            <div className={style.doneTop}>
+              <img className={style.doneIllu} src={illustration('done')} alt="" width="104" height="104" />
+              <div className={style.doneWords}>
+                {status.saving && (
+                  <>
+                    <h2 className={style.doneTitle} ref={headingRef} tabIndex={-1}>{t('rate.saving')}</h2>
+                    <p className={style.doneSub}>{status.stage ? t(status.stage) : t('rate.savingHint')}</p>
+                  </>
+                )}
+                {!status.saving && status.sent && (
+                  <>
+                    <h2 className={style.doneTitle} ref={headingRef} tabIndex={-1}>{done.title}</h2>
+                    {done.text && <p className={style.doneSub}>{done.text}</p>}
+                  </>
+                )}
+                {!status.saving && !status.sent && (
+                  <>
+                    <h2 className={style.doneTitle} ref={headingRef} tabIndex={-1}>{t('rate.failed')}</h2>
+                    <p className={style.doneSub}>{status.error || t('rate.failedHint')}</p>
+                  </>
+                )}
               </div>
-            )}
-            <div className={style.mascotBox}>
-              <Mascot mood={status.sent ? 'party' : 'happy'} size={124} />
             </div>
-            {status.saving && (
-              <>
-                <h2 className={style.question}>{t('rate.saving')}</h2>
-                <p className={style.hint}>{status.stage ? t(status.stage) : t('rate.savingHint')}</p>
-                <div className={style.spinner} aria-hidden="true" />
-              </>
-            )}
+
+            {status.saving && <div className={style.spinner} aria-hidden="true" />}
+
             {!status.saving && status.sent && (
               <>
-                <h2 className={style.question}>{done.title}</h2>
-                <p className={style.hint}>{done.text}</p>
-                <p className={style.xpBig}>
-                  <CoinIcon size={30} className={style.coinBig} />
-                  +{earnedXp} {t('coin.ticker')}
-                  {xp.multiplier > 1 && <span className={style.xpMult}> ×{xp.multiplier}</span>}
-                </p>
-                {xp.total !== null && xp.total !== undefined && (
-                  <p className={style.xpTotal}>{t('flow.xpTotal', { n: xp.total })}</p>
-                )}
+                <div className={style.coinRow}>
+                  <CoinIcon size={52} className={style.coinBig} />
+                  <div>
+                    <p className={style.xpBig}>
+                      +{earnedXp} {t('coin.ticker')}
+                      {multiplier > 1 && <span className={style.xpMult}>×{multiplier}</span>}
+                    </p>
+                    {xp.total !== null && xp.total !== undefined && (
+                      <p className={style.xpTotal}>{t('flow.xpTotal', { n: xp.total })}</p>
+                    )}
+                  </div>
+                </div>
                 <p className={style.coinNote}>
                   {t('coin.testNote')}{' '}
                   <a href={t('coin.whatUrl')} target="_blank" rel="noopener noreferrer">{t('coin.what')}</a>
@@ -585,7 +619,7 @@ export const QuestFlow = ({
                     {onRetryPhotos && (
                       <button
                         type="button"
-                        className={style.back}
+                        className={style.inlineBtn}
                         onClick={onRetryPhotos}
                         disabled={status.photoRetrying}
                       >
@@ -597,20 +631,42 @@ export const QuestFlow = ({
                 {!status.photosFailed && hadPhotoFailure.current && (
                   <p className={style.photoWarn} role="status">{t('flow.photoRetryOk')}</p>
                 )}
+                {rates && (
+                  <section className={style.sum} aria-labelledby="sum-title">
+                    <h3 className={style.sumTitle} id="sum-title">{t('r3.sumTitle')}</h3>
+                    {summary.length > 0 ? (
+                      <>
+                        <div className={style.tags}>
+                          {summary.map((p) => <span className={style.tag} key={p}>{p}</span>)}
+                        </div>
+                        <p className={style.sumNote}>{t('r3.sumNote')}</p>
+                      </>
+                    ) : (
+                      <p className={style.sumNote}>{t('r3.sumOnlyOverall')}</p>
+                    )}
+                    {values.overall ? (
+                      <div className={style.sumOverall}>
+                        <span className={style.sumK}>{t('r3.sumOverall')}</span>
+                        <b>{values.overall}</b>
+                        <span>{t(`r3.overall.${values.overall}`)}</span>
+                      </div>
+                    ) : null}
+                    {values.aftertaste ? (
+                      <div className={style.sumAfter}>
+                        <span className={style.sumK}>{t('r3.sumAftertaste')}</span>
+                        <span>{t(`r3.aftertaste.${values.aftertaste}`).toLocaleLowerCase(lang)}</span>
+                      </div>
+                    ) : null}
+                  </section>
+                )}
                 {doneExtra}
               </>
             )}
-            {!status.saving && !status.sent && (
-              <>
-                <h2 className={style.question}>{t('rate.failed')}</h2>
-                <p className={style.hint}>{status.error || t('rate.failedHint')}</p>
-              </>
-            )}
-          </>
+          </div>
         )}
       </div>
 
-      <footer className={style.foot}>
+      <footer className={`${style.foot} ${current?.type === 'done' ? style.footCol : ''}`}>
         {current?.type === 'done' ? (
           !status.saving && (
             <button
@@ -623,29 +679,42 @@ export const QuestFlow = ({
           )
         ) : (
           <>
+            {step > 0 && (
+              <button type="button" className={style.backBtn} onClick={() => go(-1)} aria-label={t('flow.back')}>
+                <IconChevronLeft size={24} />
+              </button>
+            )}
+            {showSkip && (
+              <button type="button" className={style.skip} onClick={() => go(1)}>
+                {t('flow.skip')}
+              </button>
+            )}
             <button
               type="button"
               className={`${style.cta} ${canAdvance ? style.ctaReady : ''}`}
-              disabled={!canAdvance && !optional}
+              disabled={!nextEnabled}
               onClick={() => go(1)}
             >
-              {step === steps.length - 2 ? t('flow.finish') : t('flow.next')}
+              {step === steps.length - 2 ? t('flow.send') : t('flow.next')}
             </button>
-            <div className={style.footLinks}>
-              {step > 0 && (
-                <button type="button" className={style.back} onClick={() => go(-1)}>
-                  {t('flow.back')}
-                </button>
-              )}
-              {optional && !isStepAnswered(current, values) && (
-                <button type="button" className={style.skip} onClick={() => go(1)}>
-                  {t('flow.skip')}
-                </button>
-              )}
-            </div>
           </>
         )}
       </footer>
+
+      {exitOpen && (
+        <div className={style.scrim} onClick={(e) => { if (e.target === e.currentTarget) setExitOpen(false); }}>
+          <div className={style.sheet} role="dialog" aria-modal="true" aria-labelledby="exit-title">
+            <h2 className={style.sheetTitle} id="exit-title">{t('r3.exitTitle')}</h2>
+            <p className={style.sheetText}>{t('r3.exitText')}</p>
+            <button type="button" className={style.cta} ref={stayRef} onClick={() => { setExitOpen(false); quitRef.current?.focus(); }}>
+              {t('r3.exitStay')}
+            </button>
+            <button type="button" className={style.ghostBtn} onClick={() => { setExitOpen(false); leave(); }}>
+              {t('r3.exitLeave')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

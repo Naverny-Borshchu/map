@@ -5,7 +5,7 @@
  * now. A reload, a locked phone or a closed tab then continues at the same
  * borshch, at the same question, under the same name.
  *
- *   nb:table:<CODE>  { token, name, draft: { position, grades, step }, updatedAt }
+ *   nb:table:<CODE>  { token, name, draft: { scheme, position, answers, step }, updatedAt }
  *
  * The token is what makes a guest the same guest. Losing it means the next
  * rating would come from a new guest with the same name, so it is written the

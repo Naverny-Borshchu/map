@@ -2,32 +2,31 @@ import { useCallback, useMemo } from 'react';
 import { useT } from '../../i18n';
 import { useUser } from '../../context/UserContext';
 import { QuestFlow, XP_PER_STEP } from '../QuestFlow';
-import { hasTenPointScale } from '../../variant';
-import { SCALE_ANSWERS, SCALE_KEYS } from '../QuestFlow/answers';
+import { ratingSteps } from '../QuestFlow/answers';
 import { googleAuth } from '../../services/googleAuth';
 
 /**
- * Rating a borsch that is already on the map.
+ * Rating a borsch that is already on the map (Оцінювання 3.0, NAV-216).
  *
- * Taste first, chores after: seven answer screens, then the optional photo and
- * comment. Nothing is asked before the part people actually came to do, and the
- * save only happens on the closing screen — so a person who bails half-way
- * costs us nothing and a person who finishes gets confetti.
+ * The photo first (while there is something to photograph), then the six
+ * parts of the borshch, one per screen, «Загалом», the comment, the account
+ * wall for a guest, and the closing screen. The save only happens on the
+ * closing screen, so a person who bails half-way costs us nothing.
  *
- * The step machinery lives in QuestFlow; this component only knows which
- * questions a borsch has and where the answers go.
+ * The step machinery lives in QuestFlow and the questions in answers.js; this
+ * component only knows which screens a rating has and where the answers go.
  */
+
 /**
  * How many screens the rating has, for the step events of a picker that runs
- * before it (see BowlFlow): photo, seven questions, comment, sign-in, done.
+ * before it (see BowlFlow): photo, six parts and «Загалом», comment, sign-in, done.
  */
 export const rateStepCount = ({ withPhoto = true, needsSignIn = false } = {}) =>
-  (withPhoto ? 1 : 0) + SCALE_KEYS.length + 1 + (needsSignIn ? 1 : 0) + 1;
+  (withPhoto ? 1 : 0) + ratingSteps().length + 1 + (needsSignIn ? 1 : 0) + 1;
 
 export const RateFlow = ({
-  criteria,          // [{ key, i18n, icon }] — order comes from the caller
-  grades,
-  onGrade,
+  answers,           // answers.js shape: meat_amount … overall
+  onAnswer,
   comment,
   onComment,
   photos,
@@ -41,6 +40,7 @@ export const RateFlow = ({
   photoStatus = null,     // { failed, total, retrying } once the photos were tried
   onRetryPhotos,
   borschName,
+  placeName = '',
   firstDiscovery = false, // nobody had ever rated it → "Першовар"
   xpMultiplier = 1,       // ×3 for a discovery, ×2 for confirming a seed score
   xpTotal = null,
@@ -52,6 +52,7 @@ export const RateFlow = ({
   analytics = null,
   doneExtra = null,
   cover = null,
+  coverSrc = '',
 }) => {
   const t = useT();
   const { isAuthenticated, completeGoogleSignIn } = useUser();
@@ -60,48 +61,35 @@ export const RateFlow = ({
   const steps = useMemo(
     () => [
       // The photo goes first, because by the end there is nothing left to
-      // photograph. Every taste question below — how much meat, how thick,
-      // how salty, what aftertaste — can only be answered by someone who has
-      // eaten the bowl, so asking for a picture afterwards asks for it at the
-      // one moment it cannot exist. It stays optional and skippable.
+      // photograph. It stays optional and skippable.
       ...(withPhotoStep
-        ? [{ type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' }]
+        ? [{ type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'r3.photoHint' }]
         : []),
-      ...criteria.map((c) => ({
-        type: 'scale',
-        key: c.key,
-        // the worded question ("Скільки було мʼяса?") reads better than the
-        // criterion's own noun; fall back to the noun for any new criterion
-        // that has not been given answers yet
-        i18n: SCALE_ANSWERS[c.key] ? `flow.q.${c.key}` : c.i18n,
-        options: SCALE_ANSWERS[c.key] || [],
-      })).filter((s) => s.options.length > 0),
-      { type: 'comment', key: 'comment', i18n: 'flow.commentTitle', hint: 'flow.commentHint' },
+      ...ratingSteps(),
+      { type: 'comment', key: 'comment', i18n: 'flow.commentTitle' },
       // The account wall. A review belongs to a user, so the API refuses an
-      // anonymous POST /reviews/ — and without this step a guest answered all
-      // seven questions, hit ГОТОВО and got "Не вдалося зберегти", losing the
-      // lot. Ask here rather than at the door: the taste questions stay free,
-      // and the answers are still in state while signing in.
+      // anonymous POST /reviews/. Ask here rather than at the door: the
+      // questions stay free, and the answers are still in state while signing in.
       ...(needsSignIn
         ? [{ type: 'signin', key: 'signin', i18n: 'flow.signinTitle', hint: 'flow.signinHint' }]
         : []),
       { type: 'done', key: 'done' },
     ],
-    [criteria, needsSignIn, withPhotoStep]
+    [needsSignIn, withPhotoStep]
   );
 
   const values = useMemo(
-    () => ({ ...grades, comment, photos }),
-    [grades, comment, photos]
+    () => ({ ...answers, comment, photos }),
+    [answers, comment, photos]
   );
 
   const handleChange = useCallback(
     (key, value) => {
       if (key === 'comment') return onComment(value);
       if (key === 'photos') return onPhotos(value);
-      return onGrade(key, value);
+      return onAnswer(key, value);
     },
-    [onComment, onPhotos, onGrade]
+    [onComment, onPhotos, onAnswer]
   );
 
   const doneCopy = firstDiscovery
@@ -122,8 +110,8 @@ export const RateFlow = ({
       steps={steps}
       values={values}
       onChange={handleChange}
-      scale10={hasTenPointScale}
       title={borschName}
+      subtitle={placeName}
       xp={{ perStep: XP_PER_STEP, multiplier: xpMultiplier, total: xpTotal }}
       status={{
         saving,
@@ -138,15 +126,17 @@ export const RateFlow = ({
       onRetry={onSubmit}
       onRetryPhotos={onRetryPhotos}
       onExit={onExit}
-          // #34 moved the Google handler up to EvaluationsPage, which needs it
-          // to resume the pending review; #36 kept an identical one here for
-          // callers that do not supply it (the tests). Prefer the parent's.
-          onSignIn={onSignIn || handleSignIn}
-          initialStep={initialStep}
-          onStepChange={onStepChange}
-          analytics={analytics}
-          doneExtra={doneExtra}
-          cover={cover}
+      // #34 moved the Google handler up to EvaluationsPage, which needs it to
+      // resume the pending review; this one is for callers that do not supply
+      // it (the tests). Prefer the parent's.
+      onSignIn={onSignIn || handleSignIn}
+      initialStep={initialStep}
+      onStepChange={onStepChange}
+      analytics={analytics}
+      doneExtra={doneExtra}
+      cover={cover}
+      coverSrc={coverSrc}
+      confirmExit
     />
   );
 };

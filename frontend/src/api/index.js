@@ -4,6 +4,7 @@ import { hasRating } from "../utils/rating";
 import { normalizeId } from "../utils/ids";
 import { preparePhotoForUpload } from "../utils/preparePhoto";
 import { track } from "../analytics";
+import { normalizeProfile } from '../utils/tasteProfile';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.navernyborshchu.com/api';
 
@@ -361,6 +362,9 @@ const mapBorsch = (apiBorsch) => {
     community_review_count: apiBorsch.community_review_count ?? null,
     discovered_by: apiBorsch.discovered_by ?? null,
     discovered_at: apiBorsch.discovered_at || '',
+    // Оцінювання 3.0: «Який він» (utils/tasteProfile). null until the API
+    // sends one: the card then says the description is still being gathered.
+    profile: normalizeProfile(apiBorsch.profile),
   };
 };
 
@@ -622,6 +626,42 @@ export const borschAPI = {
   }
 };
 
+const SCHEME3_FIELDS = [
+  'meat_amount', 'meat_taste', 'beet_amount', 'beet_flavor', 'density', 'salt',
+  'serving_taste', 'aftertaste',
+];
+const LEGACY_FIELDS = [
+  'rating_salt', 'rating_meat', 'rating_beet', 'rating_density', 'rating_aftertaste', 'rating_serving',
+];
+// null stays null: Number(null) would turn a skipped part into a zero
+const numOrNull = (v) => (v === null || v === undefined || v === '' || Number.isNaN(Number(v)) ? null : Number(v));
+
+/**
+ * Оцінювання 3.0 (SPEC «Контракт API»): the raw answers, null for a skipped
+ * part, sides null (skipped) or a list ([] = «Нічого»). The old rating_* ride
+ * along as the client computed them (answers.js legacyRatings); a scheme-3
+ * server ignores them and fills its own.
+ */
+export const reviewPayloadV3 = (borschId, data, message = '') => ({
+  borsch: borschId,
+  scheme: 3,
+  ...Object.fromEntries(SCHEME3_FIELDS.map((f) => [f, numOrNull(data[f])])),
+  sides: Array.isArray(data.sides) ? data.sides.map(String) : null,
+  overall_rating: Number(data.overall_rating),
+  ...Object.fromEntries(LEGACY_FIELDS.map((f) => [f, numOrNull(data[f])])),
+  message,
+});
+
+/** How many of the six parts a scheme-3 review answered (analytics). */
+const answeredParts = (p) => [
+  p.meat_amount !== null || p.meat_taste !== null,
+  p.beet_amount !== null || p.beet_flavor !== null,
+  p.density !== null,
+  p.salt !== null,
+  p.sides !== null || p.serving_taste !== null,
+  p.aftertaste !== null,
+].filter(Boolean).length;
+
 // API for reviews/comments
 // Реальні ендпоінти: GET/POST /api/reviews/, фільтр ?borsch_id=<uuid>
 export const commentsAPI = {
@@ -648,17 +688,20 @@ export const commentsAPI = {
   },
 
   createByBorschId: async (borschId, reviewData) => {
-    const payload = {
-      borsch: borschId,
-      rating_salt: Number(reviewData.rating_salt),
-      rating_meat: Number(reviewData.rating_meat),
-      rating_beet: Number(reviewData.rating_beet),
-      rating_density: Number(reviewData.rating_density),
-      rating_aftertaste: Number(reviewData.rating_aftertaste),
-      rating_serving: Number(reviewData.rating_serving),
-      overall_rating: Number(reviewData.overall_rating),
-      message: reviewData.message || reviewData.comment || reviewData.messege || '',
-    };
+    const message = reviewData.message || reviewData.comment || reviewData.messege || '';
+    const payload = Number(reviewData.scheme) === 3
+      ? reviewPayloadV3(borschId, reviewData, message)
+      : {
+        borsch: borschId,
+        rating_salt: Number(reviewData.rating_salt),
+        rating_meat: Number(reviewData.rating_meat),
+        rating_beet: Number(reviewData.rating_beet),
+        rating_density: Number(reviewData.rating_density),
+        rating_aftertaste: Number(reviewData.rating_aftertaste),
+        rating_serving: Number(reviewData.rating_serving),
+        overall_rating: Number(reviewData.overall_rating),
+        message,
+      };
     const created = await request('/reviews/', {
       method: 'POST',
       body: payload,
@@ -668,6 +711,7 @@ export const commentsAPI = {
       borsch_id: borschId,
       overall_rating: payload.overall_rating,
       has_message: Boolean(payload.message),
+      ...(payload.scheme ? { scheme: payload.scheme, answered: answeredParts(payload) } : {}),
     });
     return mapReview(created);
   },

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mascot } from '../../components/Mascot';
+import { illustration } from '../../components/QuestFlow/illustrations';
 import { BowlLoader } from '../../components/EmptyState';
 import { MAX_PHOTOS } from '../../components/QuestFlow';
 import { rateStepCount } from '../../components/RateFlow';
@@ -560,7 +560,7 @@ export const BowlFlow = () => {
           )}
         </p>
         {photos.length === 0 && (
-          <div className={q.mascotBox}><Mascot mood="happy" size={84} /></div>
+          <div className={q.mascotBox}><img src={illustration('photo')} alt="" width="112" height="112" /></div>
         )}
         <h2 className={q.question} ref={headingRef} tabIndex={-1}>{t('bowl.photoTitle')}</h2>
         <p className={q.hint}>{t(borsch.isNew ? 'bowl.photoHintNew' : 'bowl.photoHint')}</p>
@@ -619,7 +619,7 @@ export const BowlFlow = () => {
     const isNew = !draft.place?.id || !draft.borsch?.id;
     body = (
       <>
-        <div className={q.mascotBox}><Mascot mood="party" size={112} /></div>
+        <div className={q.mascotBox}><img src={illustration('done')} alt="" width="112" height="112" /></div>
         {photoUrls[0] && <img className={style.donePhoto} src={photoUrls[0]} alt="" />}
         <h2 className={q.question} ref={headingRef} tabIndex={-1}>{t('bowl.doneTitle')}</h2>
         <p className={style.doneText}>{t('bowl.doneText')}</p>

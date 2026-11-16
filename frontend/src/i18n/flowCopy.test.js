@@ -11,7 +11,7 @@ const { uk, en } = translations;
 
 // keys that belong to the add flow only, which keeps the lower case for now
 const ADD_ONLY = new Set(['flow.qMeatType', 'flow.addedText', 'flow.stageBorsch']);
-const FLOW_KEY = /^(rate|flow|bowl|table|facts)\./;
+const FLOW_KEY = /^(rate|flow|bowl|table|facts|r3|taste)\./;
 const flowKeys = Object.keys(uk).filter((k) => FLOW_KEY.test(k) && !ADD_ONLY.has(k));
 
 describe('flow copy', () => {
@@ -46,5 +46,37 @@ describe('flow copy', () => {
     const keys = Object.keys(en).filter((k) => /^(table|bowl)\./.test(k));
     // {borsch} is a placeholder, not a word on screen
     expect(keys.filter((k) => /\bborsch\b/i.test(en[k].replace(/\{\w+\}/g, '')))).toEqual([]);
+  });
+});
+
+// Оцінювання 3.0 (NAV-216): the rating, its closing screen, the card and the filters
+describe('Оцінювання 3.0 copy', () => {
+  const NEW = /^(r3|taste|filter\.(trait|describe|new|traitHint))\b/;
+  const keys = Object.keys(uk).filter((k) => NEW.test(k));
+
+  it('every string is in both languages', () => {
+    expect(keys.length).toBeGreaterThan(100);
+    expect(keys.filter((k) => !(k in en))).toEqual([]);
+  });
+
+  it('no dashes, no hryvnia sign, no emoji, no Russian letters', () => {
+    const bad = [];
+    keys.forEach((k) => {
+      [uk[k], en[k]].filter(Boolean).forEach((s) => {
+        if (/[\u2013\u2014\u20B4]/.test(s) || /\p{Extended_Pictographic}/u.test(s) || /[\u044B\u044D\u044A\u0451]/i.test(s)) bad.push(`${k}: ${s}`);
+      });
+    });
+    expect(bad).toEqual([]);
+  });
+
+  it('English says borshch, never borsch', () => {
+    expect(keys.filter((k) => /\bborsch\b/i.test(en[k]))).toEqual([]);
+  });
+
+  it('the guide and the FAQ describe the new rating', () => {
+    expect(uk['guide.rateText']).toMatch(/Шість складників/);
+    expect(uk['faq.a3']).toMatch(/шість складників/);
+    expect(en['guide.rateText']).toMatch(/Six parts/);
+    expect(uk['faq.a3']).not.toMatch(/сім екранів/);
   });
 });

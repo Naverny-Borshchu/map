@@ -1,11 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ReactComponent as IconMeat } from './meat.svg';
-import { ReactComponent as IconBeetroot } from './beetroot.svg';
-import { ReactComponent as IconDensity } from './vegetable.svg';
-import { ReactComponent as IconSalt } from './salt.svg';
-import { ReactComponent as IconAftertaste } from './aftertaste.svg';
-import { ReactComponent as IconServing } from './serving.svg';
 import { useBorsch } from '../../context/BorschContext';
 import { useComments } from '../../context/CommentsContext';
 import { useUser } from '../../context/UserContext';
@@ -21,7 +15,9 @@ import { track } from '../../analytics';
 import { deleteDraft, getDraft, updateDraft } from '../../services/bowlDrafts';
 import { ensureBowlTargets } from '../../services/bowlTargets';
 import style from './EvaluationsPage.module.scss';
-import { useT, useDishLabel } from "../../i18n";
+import { useT, useDishLabel, useVenueLabel } from "../../i18n";
+import { XP_PER_STEP } from '../../components/QuestFlow';
+import { answersToReview, coinsEarned, ratingSteps, restoreAnswers } from '../../components/QuestFlow/answers';
 import {
   claimSessionDraftSubmission,
   clearSessionDraft,
@@ -29,15 +25,6 @@ import {
   releaseSessionDraftSubmission,
   writeSessionDraft,
 } from '../../components/QuestFlow/sessionDraft';
-
-const GradesArray = [
-  { key: "meat", icon: IconMeat, i18n: "meat" },
-  { key: "beetroot", icon: IconBeetroot, i18n: "beetroot" },
-  { key: "density", icon: IconDensity, i18n: "density" },
-  { key: "salt", icon: IconSalt, i18n: "salt" },
-  { key: "aftertaste", icon: IconAftertaste, i18n: "aftertaste" },
-  { key: "serving", icon: IconServing, i18n: "serving" },
-];
 
 /**
  * bowl           moment 2 of a bowl (services/bowlDrafts): the rating of a
@@ -89,16 +76,11 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const navigate = useNavigate();
     const t = useT();
     const dishLabel = useDishLabel();
+    const venueLabel = useVenueLabel();
     const [comment, setComment] = useState(() => restoredDraft?.values?.comment || "");
-    const [grades, setGrades] = useState({
-      meat: restoredDraft?.values?.grades?.meat ?? null,
-      beetroot: restoredDraft?.values?.grades?.beetroot ?? null,
-      density: restoredDraft?.values?.grades?.density ?? null,
-      salt: restoredDraft?.values?.grades?.salt ?? null,
-      aftertaste: restoredDraft?.values?.grades?.aftertaste ?? null,
-      serving: restoredDraft?.values?.grades?.serving ?? null,
-      overall: restoredDraft?.values?.grades?.overall ?? null,
-    });
+    // Оцінювання 3.0: the answers of answers.js. A draft of the old seven
+    // scores carries the previous draft version and is not read at all.
+    const [answers, setAnswers] = useState(() => restoreAnswers(restoredDraft?.values?.answers));
     const [draftStep, setDraftStep] = useState(() => restoredDraft?.step || 0);
     const { getBorschById, getBorschExploration, loadBorschData} = useBorsch();
     const { syncWithServer } = useComments();
@@ -139,26 +121,25 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         .catch(() => { if (!cancelled) setNotFound(true); });
       return () => { cancelled = true; };
     }, [id, fromContext, fetched]);
-    const isFormValid = grades.meat !== null && grades.beetroot !== null && 
-    grades.density !== null && grades.salt !== null && 
-    grades.aftertaste !== null && grades.serving !== null && 
-    grades.overall !== null;
+    // «Загалом» is the one required answer; every part may be skipped
+    const isFormValid = answers.overall !== null && answers.overall !== undefined;
 
     useEffect(() => {
       if (isSent) return;
       writeSessionDraft(draftKey, {
         step: draftStep,
-        values: { grades, comment },
+        values: { answers, comment },
       });
-    }, [draftKey, draftStep, grades, comment, isSent]);
-   
-    
-    const handleGradeChange = (key, value) => {      
-      setGrades((prev) => {
-        const newGrades = { ...prev, [key]: value };        
-        return newGrades;
-      });
-    };
+    }, [draftKey, draftStep, answers, comment, isSent]);
+
+    const handleAnswer = useCallback((key, value) => {
+      setAnswers((prev) => ({
+        ...prev,
+        [key]: value,
+        // «Нема» мʼяса: its taste is not asked, and not kept either
+        ...(key === 'meat_amount' && value === 0 ? { meat_taste: null } : {}),
+      }));
+    }, []);
 
     const handleGoogleSignIn = useCallback(async (credentialResponse) => {
       const data = await googleAuth(credentialResponse.credential);
@@ -189,16 +170,9 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
           setCreatedId(targetId);
         }
         // Реальний бекенд: POST /api/reviews/ з Bearer-токеном (id борщу — UUID-рядок)
-        await commentsAPI.createByBorschId(targetId, {
-          rating_meat: grades.meat,
-          rating_beet: grades.beetroot,
-          rating_density: grades.density,
-          rating_salt: grades.salt,
-          rating_aftertaste: grades.aftertaste,
-          rating_serving: grades.serving,
-          overall_rating: grades.overall || 5,
-          message: comment.trim(),
-        });
+        // scheme 3 (SPEC «Контракт API»): the raw answers; the server fills
+        // the old rating_* from them
+        await commentsAPI.createByBorschId(targetId, answersToReview(answers, comment));
         // Photos are a separate endpoint, one call each; a failure here must not
         // lose the rating the user just spent seven screens on, and one bad
         // photo must not take the others with it. It must not stay silent
@@ -224,9 +198,14 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         if (!ratedIds.includes(String(targetId))) {
           localStorage.setItem('ratedBorsch', JSON.stringify([...ratedIds, String(targetId)]));
         }
-        // XP: 10 per rating step, tripled for a first discovery. The running
-        // total lives in localStorage until accounts carry it server-side.
-        const earnedXp = 7 * 10 * xpMultiplier;
+        // Test БорщКоіни: what the screens paid (answers.js coinsEarned), ×3
+        // for a first discovery. The running total lives in localStorage until
+        // accounts carry it server-side.
+        const earnedXp = coinsEarned(
+          [...ratingSteps(), { type: 'comment', key: 'comment' }],
+          { ...answers, comment },
+          XP_PER_STEP,
+        ) * xpMultiplier;
         const newTotal = (Number(localStorage.getItem('nb_xp')) || 0) + earnedXp;
         localStorage.setItem('nb_xp', String(newTotal));
         setXpTotal(newTotal);
@@ -298,12 +277,8 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
 
   return (
     <RateFlow
-      criteria={[
-        ...GradesArray.map((g) => ({ key: g.key, i18n: `rate.${g.i18n}`, icon: g.icon })),
-        { key: 'overall', i18n: 'rate.overall' },
-      ]}
-      grades={grades}
-      onGrade={handleGradeChange}
+      answers={answers}
+      onAnswer={handleAnswer}
       comment={comment}
       onComment={setComment}
       photos={photos}
@@ -312,6 +287,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       onExit={() => navigate(id ? `/borsch/${id}` : '/')}
       withPhotoStep={withPhotoStep}
       cover={withPhotoStep ? null : photos[0] || null}
+      coverSrc={withPhotoStep ? (borschOne.photo_urls || [])[0] || '' : ''}
       analytics={analytics}
       doneExtra={
         <>
@@ -330,6 +306,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       photoStatus={photoStatus}
       onRetryPhotos={retryPhotos}
       borschName={dishLabel(borschOne.name)}
+      placeName={venueLabel(getPlaceById(borschOne.place_id)?.name || borschOne.place_name || bowl?.place?.name || '')}
       firstDiscovery={firstDiscovery}
       xpMultiplier={xpMultiplier}
       xpTotal={xpTotal}

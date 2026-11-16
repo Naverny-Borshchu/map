@@ -5,7 +5,8 @@ import bowl from '../BowlFlow/BowlFlow.module.scss';
 import style from './Table.module.scss';
 
 /**
- * The red stage of the rating quest (QuestFlow.module.scss), for the screens
+ * The frame of the rating quest (QuestFlow.module.scss, cream since
+ * Оцінювання 3.0), for the screens
  * of a table that are not questions: the host's QR, the guest's door, the
  * guest's thank-you, the host's form. Full screen, over the tab bar, like the
  * bowl: a table is a moment at the table, not a page of the map.

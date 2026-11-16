@@ -1,9 +1,10 @@
 @use "../../styles/mixin_font.scss" as *;
 
-// The bowl uses the rating quest's frame (QuestFlow.module.scss: the red
-// stage, the blobs, the progress, the cream pill). Only what the quest has no
-// shape for lives here: venue cards with a distance, the search field, the
-// three photo buttons.
+// The bowl uses the rating quest's frame (QuestFlow.module.scss: since
+// Оцінювання 3.0 the cream page, white cards, the progress, the crimson pill).
+// Only what the quest has no shape for lives here: venue cards with a
+// distance, the search field, the three photo buttons. Colours come from the
+// frame's --q-* tokens, so the tip, the tasting and the pickers match.
 
 // Lists grow past the screen; a centred flex column would cut their top off.
 .stageTop {
@@ -18,13 +19,14 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: #FFFAF5;
+  color: var(--q-ink);
+  text-align: center;
 }
 
 .loaderRow {
   display: flex;
   justify-content: center;
-  color: #FFFAF5;
+  color: var(--q-red);
   padding: 6px 0;
 }
 
@@ -32,22 +34,20 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 4px 10px;
   margin: 0;
-  max-width: 460px;
   @include footnote;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.92);
+  color: var(--q-ink-2);
 }
 
 .change {
   min-height: 32px;
   padding: 2px 12px;
-  border: 1.5px solid rgba(255, 250, 245, 0.6);
+  border: 1.5px solid var(--q-border-strong);
   border-radius: var(--radius-pill);
   background: transparent;
-  color: #FFFAF5;
+  color: var(--q-red-text);
   font-family: var(--font-family-main);
   font-size: 13px;
   font-weight: 700;
@@ -60,7 +60,6 @@
   flex-direction: column;
   gap: 10px;
   width: 100%;
-  max-width: 460px;
   margin-top: 6px;
 }
 
@@ -71,34 +70,36 @@
   width: 100%;
   min-height: 72px;
   padding: 12px 14px;
-  border: 2px solid rgba(255, 250, 245, 0.38);
+  border: 0;
   border-radius: 20px;
-  background: rgba(255, 250, 245, 0.12);
-  color: #FFFAF5;
+  background: var(--q-surface);
+  color: var(--q-ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.14);
-  transition: transform 0.14s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.14s ease;
+  box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-border);
+  transition: transform 0.14s ease, background 0.18s ease, box-shadow 0.14s ease;
 
   &:active {
-    transform: translateY(calc(3px * var(--nb-move, 1)));
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.14);
+    transform: translateY(calc(2px * var(--nb-move, 1)));
   }
   @media (hover: hover) {
-    &:hover { background: rgba(255, 250, 245, 0.2); }
+    &:hover { box-shadow: var(--q-shadow-sm), inset 0 0 0 1.5px var(--q-red); }
   }
 }
 
 .venueOn {
-  background: #FFFAF5;
-  border-color: #FFFAF5;
-  color: color-mix(in srgb, var(--hue) 72%, #000 28%);
+  background: var(--q-sel-bg);
+  color: var(--q-red-text);
+  box-shadow: 0 3px 0 var(--q-red-dark), inset 0 0 0 2.5px var(--q-red);
 }
 
 .other {
-  border-style: dashed;
   background: transparent;
   box-shadow: none;
+  border: 1.5px dashed var(--q-border-strong);
+  @media (hover: hover) {
+    &:hover { box-shadow: none; border-color: var(--q-red); }
+  }
 }
 
 .venueIcon {
@@ -108,7 +109,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 250, 245, 0.18);
+  background: var(--q-smetana);
+  color: var(--q-red-dark);
 }
 
 .venueWords {
@@ -128,7 +130,7 @@
 
 .venueAddr {
   @include caption;
-  opacity: 0.85;
+  color: var(--q-ink-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,7 +140,8 @@
   flex: 0 0 auto;
   padding: 6px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 250, 245, 0.18);
+  background: var(--q-smetana);
+  color: var(--q-smetana-ink);
   @include numeric(14px, 700);
   white-space: nowrap;
 }
@@ -146,7 +149,7 @@
 .venueChevron {
   flex: 0 0 auto;
   display: inline-flex;
-  opacity: 0.8;
+  color: var(--q-muted);
 }
 
 // --- search ---------------------------------------------------------------
@@ -155,14 +158,13 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  max-width: 460px;
   min-height: 54px;
   margin-top: 8px;
   padding: 0 16px;
-  border: 2px solid rgba(255, 250, 245, 0.5);
+  border: 1.5px solid var(--q-border);
   border-radius: var(--radius-md);
-  background: rgba(255, 250, 245, 0.95);
-  color: #5C4744;
+  background: var(--q-surface);
+  color: var(--q-ink-2);
 
   input {
     flex: 1 1 auto;
@@ -170,21 +172,22 @@
     height: 50px;
     border: 0;
     background: transparent;
-    color: #1A1A1A;
+    color: var(--q-ink);
     font-family: var(--font-family-main);
     font-size: 17px;
     font-weight: 600;
     outline: none;
 
-    // the field's own ring (below) is the focus indicator on the red stage
+    &::placeholder { color: var(--q-muted); }
+    // the field's own ring (below) is the focus indicator
     &:focus-visible { outline: none; }
     // the browser's blue clear cross is not ours
     &::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
   }
 
   &:focus-within {
-    border-color: #FFFAF5;
-    box-shadow: 0 0 0 4px rgba(255, 250, 245, 0.45);
+    border-color: var(--q-red);
+    box-shadow: 0 0 0 4px rgba(220, 20, 60, 0.14);
   }
 }
 
@@ -194,13 +197,19 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-self: center;
   max-width: 340px;
 
   > div { width: min(44vw, 160px); }
 }
 
-.foot {
+// the bowl, the tip and the tasting stack their buttons: the pill, then the
+// rest (footer: outranks the frame's own row of back, skip and the pill)
+footer.foot {
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
+  > button { flex: none; width: 100%; }
 }
 
 .ctaIcon {
@@ -210,17 +219,16 @@
   gap: 10px;
 }
 
-// The second of the three photo choices: outlined in cream on the red stage.
+// The second of the three photo choices: outlined in red on the cream frame.
 .ghost {
   width: 100%;
-  max-width: 460px;
   min-height: 52px;
   padding: 0 20px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: #FFFAF5;
-  box-shadow: inset 0 0 0 2px rgba(255, 250, 245, 0.85);
+  color: var(--q-red-text);
+  box-shadow: inset 0 0 0 2px currentColor;
   font-family: var(--font-family-main);
   font-size: 17px;
   font-weight: 700;
@@ -228,17 +236,18 @@
   transition: background-color var(--transition-fast);
 
   @media (hover: hover) {
-    &:hover { background: rgba(255, 250, 245, 0.12); }
+    &:hover { background: rgba(220, 20, 60, 0.06); }
   }
 }
 
 // --- done -----------------------------------------------------------------
 .donePhoto {
+  align-self: center;
   width: min(52vw, 200px);
   height: min(52vw, 200px);
   object-fit: cover;
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--q-shadow-md);
 }
 
 .doneText {
@@ -246,7 +255,7 @@
   @include body;
   font-weight: 700;
   font-size: 18px;
-  color: #FFFAF5;
+  color: var(--q-ink);
 }
 
 @media (max-height: 720px) {
@@ -259,7 +268,7 @@
   margin: 2px 0 0;
   @include footnote;
   font-weight: 700;
-  color: rgba(255, 250, 245, 0.88);
+  color: var(--q-ink-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -270,13 +279,12 @@
   align-items: flex-start;
   gap: 12px;
   width: 100%;
-  max-width: 460px;
   padding: 12px;
   border-radius: 20px;
-  background: #FFFAF5;
-  color: #1A1A1A;
+  background: var(--q-surface);
+  color: var(--q-ink);
   text-align: left;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--q-shadow-md), inset 0 0 0 2px var(--q-red);
 }
 
 .photoAskThumb {
@@ -305,7 +313,7 @@
 .photoAskWhen {
   margin: 0;
   @include caption;
-  color: #5C4744;
+  color: var(--q-ink-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -331,23 +339,22 @@
   border: 0;
   background: var(--nb-borshch, #DC143C);
   color: #FFFAF5;
+  box-shadow: 0 3px 0 var(--q-red-dark);
 }
 
 .photoAskNo {
-  border: 2px solid rgba(26, 26, 26, 0.18);
+  border: 1.5px solid var(--q-border-strong);
   background: transparent;
-  color: #1A1A1A;
+  color: var(--q-ink);
 }
 
 .problem {
   width: 100%;
-  max-width: 460px;
   margin: 6px 0 0;
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--q-smetana);
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
-  text-align: center;
+  color: var(--q-smetana-ink);
 }

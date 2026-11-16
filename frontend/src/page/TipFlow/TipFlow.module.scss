@@ -1,33 +1,30 @@
 @use "../../styles/mixin_font.scss" as *;
 
-// The tip uses the quest's frame like the bowl; only what it adds lives here.
+// The tip uses the quest's frame like the bowl (the cream page of
+// Оцінювання 3.0); only what it adds lives here.
 
 .venueStatic {
   cursor: default;
-  max-width: 460px;
 
-  &:active { transform: none; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.14); }
+  &:active { transform: none; }
 }
 
 .count {
   width: 100%;
-  max-width: 460px;
   margin: 2px 0 0;
   @include caption;
-  color: rgba(255, 250, 245, 0.8);
+  color: var(--q-muted);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 .problem {
   width: 100%;
-  max-width: 460px;
   margin: 6px 0 0;
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--q-smetana);
   @include footnote;
   font-weight: 700;
-  color: #FFFAF5;
-  text-align: center;
+  color: var(--q-smetana-ink);
 }

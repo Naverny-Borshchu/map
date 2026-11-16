@@ -1,114 +1,289 @@
 /**
- * The five answers behind every taste question.
+ * Оцінювання 3.0 (NAV-216, approved by Andrii 16.11.2026): two questions per
+ * part of the borshch instead of one score.
  *
- * The old scale was ten small numbered buttons. Numbers make you translate a
- * memory ("it was watery") into arithmetic ("so… 3?"), and a 52px button is a
- * poor target for a thumb. Here each criterion asks a question and offers five
- * big, worded answers — you recognise the one that matches instead of scoring.
+ *   «скільки / яка»  describes the borshch, there is no good or bad in it:
+ *                    concrete answers with a drawn bowl, or a 1..10 scale with
+ *                    Pasha's word for every number (density, salt);
+ *   «смак»           how good that part was: five words, no numbers.
  *
- * The stored value is still on the 1–10 scale the API and every existing review
- * use, mapped 2 / 4 / 6 / 8 / 10, so the top answer really is a 10.
+ * Six parts, one screen each (Мʼясо, Буряк, Густина, Сіль, Подача, Післясмак),
+ * then «Загалом» 1..10, the only required answer and the only one the map's
+ * rating is made of. Nothing advances by itself: «Далі» wakes up with the
+ * first answer of a screen, «Пропустити» skips a part.
  *
- * `mood` drives the mascot and `praise` the line under the cards, and both come
- * from the ANSWER rather than from the number — salt is the reason. Its scale
- * runs bland → over-salted, so on salt the best answer sits in the middle, and
- * a 10 deserves a wince, not applause.
+ * The answers keep the API's own names (the contract in SPEC.md, «Контракт
+ * API»), so the payload is the state minus the bookkeeping:
+ *
+ *   meat_amount   0..3  (0 = нема: the taste question goes away)
+ *   meat_taste    1..5
+ *   beet_amount   1..3
+ *   beet_flavor   1..5  (how strongly it is felt, not «tasty»)
+ *   density       1..10
+ *   salt          1..9  (5 = саме те, exactly in the middle: four steps each way)
+ *   sides         null = not answered, [] = «Нічого», or some of SIDE_CODES
+ *   serving_taste 1..5
+ *   aftertaste    1..5
+ *   overall       1..10 (sent as overall_rating)
  */
 
-export const SCALE_KEYS = ['meat', 'beetroot', 'density', 'salt', 'aftertaste', 'serving', 'overall'];
+export const RATING_SCHEME = 3;
 
-const LOW = 'flow.praiseLow';
-const MID = 'flow.praiseMid';
-const GOOD = 'flow.praiseGood';
-const TOP = 'flow.praiseTop';
+export const SIDE_CODES = [
+  'sour_cream', 'pampushky', 'garlic', 'salo', 'bread', 'croutons', 'greens', 'onion', 'horseradish', 'chili',
+];
 
-export const SCALE_ANSWERS = {
-  meat: [
-    { value: 2,  emoji: '😶', i18n: 'ans.meat1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '🔎', i18n: 'ans.meat2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '🙂', i18n: 'ans.meat3', mood: 'meh',   praise: MID },
-    { value: 8,  emoji: '😋', i18n: 'ans.meat4', mood: 'happy', praise: GOOD },
-    { value: 10, emoji: '🍖', i18n: 'ans.meat5', mood: 'love',  praise: TOP },
-  ],
-  beetroot: [
-    { value: 2,  emoji: '🥛', i18n: 'ans.beetroot1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '🌸', i18n: 'ans.beetroot2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '🍷', i18n: 'ans.beetroot3', mood: 'happy', praise: GOOD },
-    { value: 8,  emoji: '🟣', i18n: 'ans.beetroot4', mood: 'happy', praise: GOOD },
-    { value: 10, emoji: '❤️', i18n: 'ans.beetroot5', mood: 'love',  praise: TOP },
-  ],
-  density: [
-    { value: 2,  emoji: '💧', i18n: 'ans.density1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '🌊', i18n: 'ans.density2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '⚖️', i18n: 'ans.density3', mood: 'happy', praise: GOOD },
-    { value: 8,  emoji: '🍲', i18n: 'ans.density4', mood: 'happy', praise: GOOD },
-    { value: 10, emoji: '🥄', i18n: 'ans.density5', mood: 'love',  praise: TOP },
-  ],
-  // bipolar: the ideal is the middle answer, not the last one
-  salt: [
-    { value: 2,  emoji: '😐', i18n: 'ans.salt1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '🤏', i18n: 'ans.salt2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '👌', i18n: 'ans.salt3', mood: 'love',  praise: TOP },
-    { value: 8,  emoji: '🧂', i18n: 'ans.salt4', mood: 'meh',   praise: MID },
-    { value: 10, emoji: '🥵', i18n: 'ans.salt5', mood: 'sad',   praise: LOW },
-  ],
-  aftertaste: [
-    { value: 2,  emoji: '😖', i18n: 'ans.aftertaste1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '😕', i18n: 'ans.aftertaste2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '🙂', i18n: 'ans.aftertaste3', mood: 'happy', praise: GOOD },
-    { value: 8,  emoji: '😋', i18n: 'ans.aftertaste4', mood: 'happy', praise: GOOD },
-    { value: 10, emoji: '🤤', i18n: 'ans.aftertaste5', mood: 'love',  praise: TOP },
-  ],
-  serving: [
-    { value: 2,  emoji: '🫤', i18n: 'ans.serving1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '😐', i18n: 'ans.serving2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '🙂', i18n: 'ans.serving3', mood: 'happy', praise: GOOD },
-    { value: 8,  emoji: '✨', i18n: 'ans.serving4', mood: 'happy', praise: GOOD },
-    { value: 10, emoji: '🍽️', i18n: 'ans.serving5', mood: 'love',  praise: TOP },
-  ],
-  overall: [
-    { value: 2,  emoji: '🙅', i18n: 'ans.overall1', mood: 'sad',   praise: LOW },
-    { value: 4,  emoji: '😕', i18n: 'ans.overall2', mood: 'meh',   praise: MID },
-    { value: 6,  emoji: '🙂', i18n: 'ans.overall3', mood: 'happy', praise: GOOD },
-    { value: 8,  emoji: '😋', i18n: 'ans.overall4', mood: 'happy', praise: GOOD },
-    { value: 10, emoji: '🔁', i18n: 'ans.overall5', mood: 'love',  praise: TOP },
-  ],
+/**
+ * Salt runs 1..9 so that «саме те» is the middle stop (Pasha, 16.11: on 1..10
+ * the 5 sat left of centre), density keeps the 1..10 of Pasha's template.
+ */
+export const SALT_MAX = 9;
+export const SALT_BEST = 5;
+export const DENSITY_MAX = 10;
+
+/** Ten density numbers onto the four hand-drawn broth bowls (bowlArt). */
+export const DENSITY_LEVEL = [0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
+
+const RANGES = {
+  meat_amount: [0, 3],
+  meat_taste: [1, 5],
+  beet_amount: [1, 3],
+  beet_flavor: [1, 5],
+  density: [1, 10],
+  salt: [1, SALT_MAX],
+  serving_taste: [1, 5],
+  aftertaste: [1, 5],
+  overall: [1, 10],
+};
+
+export const ANSWER_KEYS = [...Object.keys(RANGES), 'sides'];
+
+export const emptyAnswers = () => ({
+  meat_amount: null,
+  meat_taste: null,
+  beet_amount: null,
+  beet_flavor: null,
+  density: null,
+  salt: null,
+  sides: null,
+  serving_taste: null,
+  aftertaste: null,
+  overall: null,
+});
+
+const inRange = (key, v) => {
+  const [lo, hi] = RANGES[key];
+  return Number.isInteger(v) && v >= lo && v <= hi;
 };
 
 /**
- * Which of the five answers a raw 1–10 score belongs to.
- *
- * The ten-point arm still has to know whether a score is good news, and it
- * cannot ask the number: on salt, 10 means over-salted. Bucketing back onto the
- * answer table keeps the mascot and the praise line honest in both arms.
+ * Answers read back from a draft: anything out of range or of the wrong
+ * shape is dropped, so a stale or hand-edited draft can only lose answers,
+ * never send nonsense.
  */
-export const optionForValue = (key, value) => {
-  const options = SCALE_ANSWERS[key];
-  if (!options || value === null || value === undefined || value === '') return null;
-  const n = Math.min(10, Math.max(1, Number(value)));
-  return options[Math.min(4, Math.ceil(n / 2) - 1)] || null;
+export const restoreAnswers = (raw) => {
+  const out = emptyAnswers();
+  if (!raw || typeof raw !== 'object') return out;
+  Object.keys(RANGES).forEach((key) => {
+    if (inRange(key, raw[key])) out[key] = raw[key];
+  });
+  if (Array.isArray(raw.sides)) out.sides = SIDE_CODES.filter((c) => raw.sides.includes(c));
+  if (out.meat_amount === 0) out.meat_taste = null;
+  return out;
 };
 
-/** The two ends of a criterion's scale, as written for the old 1–10 strip. */
-export const scaleEnds = (key) => ({ left: `rate.${key}Left`, right: `rate.${key}Right` });
+// --- the screens ----------------------------------------------------------------
 
-/** The taste half of both journeys: one screen per criterion, in this order. */
-export const tasteSteps = () =>
-  SCALE_KEYS.map((key) => ({
-    type: 'scale',
-    key,
-    i18n: `flow.q.${key}`,
-    options: SCALE_ANSWERS[key],
-  }));
+/**
+ * One part of the borshch per screen. `kind` picks the control:
+ *   amount  big cards with a top-view bowl (bowlArt), one per value
+ *   taste   five word pills, 1..5
+ *   scale   a 1..10 slider of ten stops with a word under the chosen number
+ *   sides   check chips, several at once, «Нічого» clears them
+ */
+export const RATING_COMPONENTS = [
+  {
+    key: 'meat',
+    illu: 'meat',
+    questions: [
+      { key: 'meat_amount', kind: 'amount', draw: 'meat', values: [0, 1, 2, 3] },
+      { key: 'meat_taste', kind: 'taste', hideIf: (a) => a.meat_amount === 0, note: 'r3.meatNone' },
+    ],
+  },
+  {
+    key: 'beet',
+    illu: 'beet',
+    questions: [
+      { key: 'beet_amount', kind: 'amount', draw: 'beet', values: [1, 2, 3] },
+      { key: 'beet_flavor', kind: 'taste', layout: 'pairs' },
+    ],
+  },
+  { key: 'density', illu: 'broth', questions: [{ key: 'density', kind: 'scale', max: DENSITY_MAX }] },
+  { key: 'salt', illu: 'salt', questions: [{ key: 'salt', kind: 'scale', max: SALT_MAX, best: SALT_BEST }] },
+  {
+    key: 'serving',
+    illu: 'serving',
+    questions: [
+      { key: 'sides', kind: 'sides' },
+      { key: 'serving_taste', kind: 'taste' },
+    ],
+  },
+  { key: 'aftertaste', illu: 'aftertaste', questions: [{ key: 'aftertaste', kind: 'taste', layout: 'pairs' }] },
+];
 
-/** Grades → the field names the reviews endpoint expects. */
-export const gradesToReview = (grades, comment = '') => ({
-  rating_meat: grades.meat,
-  rating_beet: grades.beetroot,
-  rating_density: grades.density,
-  rating_salt: grades.salt,
-  rating_aftertaste: grades.aftertaste,
-  rating_serving: grades.serving,
-  overall_rating: grades.overall || 5,
-  message: (comment || '').trim(),
-});
+/** The rating half of every journey: six parts, then «Загалом». */
+export const ratingSteps = () => [
+  ...RATING_COMPONENTS.map((c, i) => ({
+    type: 'component',
+    key: c.key,
+    i18n: `r3.${c.key}.title`,
+    illu: c.illu,
+    index: i + 1,
+    of: RATING_COMPONENTS.length,
+    questions: c.questions,
+  })),
+  { type: 'overall', key: 'overall', i18n: 'r3.overall.title', illu: 'overall' },
+];
+
+/** The questions of a screen that are on it right now («Нема» hides the meat taste). */
+export const visibleQuestions = (step, answers) =>
+  (step?.questions || []).filter((q) => !(q.hideIf && q.hideIf(answers || {})));
+
+export const isAnswered = (key, answers) => {
+  const v = (answers || {})[key];
+  if (key === 'sides') return Array.isArray(v);
+  return v !== null && v !== undefined;
+};
+
+/**
+ * How much of a screen is answered, 0..1: drives the progress segment, the
+ * coins and the «Пропустити» link (gone once the screen is complete).
+ */
+export const stepShare = (step, values) => {
+  if (!step) return 0;
+  if (step.type === 'component') {
+    const qs = visibleQuestions(step, values);
+    if (!qs.length) return 0;
+    return qs.filter((q) => isAnswered(q.key, values)).length / qs.length;
+  }
+  if (step.type === 'overall') return isAnswered('overall', values) ? 1 : 0;
+  if (step.type === 'comment') return (values?.comment || '').trim() ? 1 : 0;
+  return 0;
+};
+
+/**
+ * Test БорщКоіни for a set of answers: every rating screen is worth the same,
+ * paid in proportion to how much of it was answered, and a comment is worth
+ * one screen too (the prototype's rule). The multiplier (Першовар ×3, a seed
+ * score confirmed ×2) is the caller's.
+ */
+export const coinsEarned = (steps, values, perStep = 10) =>
+  (steps || []).reduce((sum, s) => sum + Math.round(perStep * stepShare(s, values)), 0);
+
+// --- the payload --------------------------------------------------------------------
+
+const TASTE_10 = [null, 2, 4, 6, 8, 10];
+const MEAT_AMOUNT_10 = [null, 4, 7, 10];
+const BEET_AMOUNT_10 = [null, 3, 6, 10];
+
+const mean = (...xs) => {
+  const vals = xs.filter((x) => x !== null && x !== undefined);
+  if (!vals.length) return null;
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+};
+
+/**
+ * The seven old 1..10 fields, as the server fills them for scheme 3 («Як це
+ * стає рейтингом»). The server ignores them for scheme 3; they ride along so
+ * an API that does not know the scheme yet still stores sensible numbers.
+ * An unanswered part is null, and «Нема» leaves the meat empty instead of
+ * sinking a borshch without meat.
+ */
+export const legacyRatings = (a) => {
+  const meatAmount = a.meat_amount;
+  return {
+    rating_meat: meatAmount === 0
+      ? null
+      : mean(MEAT_AMOUNT_10[meatAmount] ?? null, TASTE_10[a.meat_taste] ?? null),
+    rating_beet: mean(BEET_AMOUNT_10[a.beet_amount] ?? null, TASTE_10[a.beet_flavor] ?? null),
+    rating_density: a.density ?? null,
+    // the old field is 1..10 with 5 = норм: 1..8 as is, «сіль!» (9) is its 10
+    rating_salt: a.salt === null || a.salt === undefined ? null : (a.salt === SALT_MAX ? 10 : a.salt),
+    rating_serving: TASTE_10[a.serving_taste] ?? null,
+    rating_aftertaste: TASTE_10[a.aftertaste] ?? null,
+  };
+};
+
+/**
+ * Answers → the body of POST /reviews/ (and a tasting guest's rating), scheme 3.
+ * A skipped part is null; sides: null skipped, [] «Нічого».
+ */
+export const answersToReview = (answers, comment = '') => {
+  const a = restoreAnswers(answers);
+  return {
+    scheme: RATING_SCHEME,
+    meat_amount: a.meat_amount,
+    meat_taste: a.meat_amount === 0 ? null : a.meat_taste,
+    beet_amount: a.beet_amount,
+    beet_flavor: a.beet_flavor,
+    density: a.density,
+    salt: a.salt,
+    sides: a.sides,
+    serving_taste: a.serving_taste,
+    aftertaste: a.aftertaste,
+    overall_rating: a.overall,
+    message: (comment || '').trim(),
+    ...legacyRatings(a),
+  };
+};
+
+// --- «Твій Борщ у двох словах» ------------------------------------------------------
+
+/**
+ * Sides as one phrase: «Зі сметаною й пампушками», «With sour cream and salo».
+ * Ukrainian picks з / зі / із for the first word and і / й before the last,
+ * by the sounds around them, as the prototype does.
+ */
+export const sidesPhrase = (codes, t, lang = 'uk') => {
+  const list = SIDE_CODES.filter((c) => (codes || []).includes(c));
+  if (!list.length) return '';
+  const words = list.map((c) => t(`r3.sideWith.${c}`));
+  if (lang !== 'uk') {
+    const head = words.length > 1 ? `${words.slice(0, -1).join(', ')} ${t('r3.and')} ${words[words.length - 1]}` : words[0];
+    return `${t('r3.withPrefix')} ${head}`;
+  }
+  let out = `${t(`r3.sidePre.${list[0]}`)} ${words[0]}`;
+  for (let k = 1; k < words.length; k += 1) {
+    if (k < words.length - 1) {
+      out += `, ${words[k]}`;
+    } else {
+      const prev = words[k - 1];
+      const next = words[k];
+      const afterVowel = /[аеєиіїоуюяь]$/i.test(prev) && !/^[йвєїюяі]/i.test(next);
+      out += `${afterVowel ? ' й ' : ' і '}${next}`;
+    }
+  }
+  return out;
+};
+
+const beetPhrase = (a, t) => {
+  const am = a.beet_amount;
+  const fl = a.beet_flavor;
+  if (am && fl) return `${t(`r3.sum.beetAmount.${am}`)}, ${t(`r3.sum.beetFlavorTail.${fl}`)}`;
+  if (am) return t(`r3.sum.beetAmount.${am}`);
+  if (fl) return t(`r3.sum.beetFlavor.${fl}`);
+  return '';
+};
+
+/** The tags of the closing screen, in the order of the screens. */
+export const summaryPhrases = (answers, t, lang = 'uk') => {
+  const a = restoreAnswers(answers);
+  const out = [];
+  if (a.meat_amount !== null) out.push(t(`r3.sum.meat.${a.meat_amount}`));
+  const beet = beetPhrase(a, t);
+  if (beet) out.push(beet);
+  if (a.density) out.push(t(`r3.sum.density.${a.density}`));
+  if (a.salt) out.push(t(`r3.sum.salt.${a.salt}`));
+  if (Array.isArray(a.sides)) out.push(a.sides.length ? sidesPhrase(a.sides, t, lang) : t('r3.sum.noSides'));
+  return out;
+};

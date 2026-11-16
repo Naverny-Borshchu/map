@@ -119,13 +119,18 @@ const signIn = () => {
   localStorage.setItem('user', JSON.stringify({ id: 7, given_name: 'Андрій' }));
 };
 
-// seven taste questions: an answer and «Далі», the last one «Готово»
+// Оцінювання 3.0: six parts and «Загалом», one screen each
+const TITLES = ['М’ясо', 'Буряк', 'Густина', 'Сіль', 'Подача', 'Післясмак', 'Загалом'];
+
+// one answer per screen (the third choice of its first group) and «Далі»,
+// «Загалом» 8 and «Надіслати» at the end
 const answerSeven = async (user, title) => {
-  for (let i = 1; i <= 7; i += 1) {
-    await screen.findByText(`${title} · Крок ${i} / 7`);
-    const cards = screen.getAllByRole('button', { pressed: false });
-    await user.click(cards[3]);
-    await user.click(screen.getByRole('button', { name: i === 7 ? 'Готово' : 'Далі' }));
+  for (let i = 0; i < TITLES.length; i += 1) {
+    await screen.findByRole('heading', { name: TITLES[i] });
+    expect(screen.getByText(title)).toBeInTheDocument();
+    if (i < 6) await user.click(screen.getAllByRole('radio')[2]);
+    else await user.click(screen.getByRole('radio', { name: '8, прекрасний' }));
+    await user.click(screen.getByRole('button', { name: i === 6 ? 'Надіслати' : 'Далі' }));
   }
 };
 
@@ -201,19 +206,22 @@ describe('a guest at an open blind table', () => {
     expect(await screen.findByRole('heading', { name: 'Борщ №1 оцінено!' })).toBeInTheDocument();
     expect(tablesAPI.rate).toHaveBeenCalledWith('K7M2QX', expect.objectContaining({
       position: 1, as: 'guest', guestName: 'Оля', guestToken: null,
-      grades: expect.objectContaining({ meat: 8, beetroot: 8, overall: 8 }),
+      answers: expect.objectContaining({ meat_amount: 2, beet_amount: 3, density: 3, salt: 3, serving_taste: 3, aftertaste: 3, overall: 8 }),
     }));
     expect(readTableGuest('K7M2QX')).toEqual(expect.objectContaining({ token: 'tok-aaaaaaaaaaaaaaaaaaaaaaaa', name: 'Оля', draft: null }));
 
     await user.click(screen.getByRole('button', { name: 'Далі: Борщ №2' }));
-    expect(await screen.findByText('Борщ №2 · Крок 1 / 7')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'М’ясо' })).toBeInTheDocument();
+    expect(screen.getByText('Борщ №2')).toBeInTheDocument();
+    // a fresh borshch starts with nothing answered
+    expect(screen.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(0);
   });
 
   it('after a reload continues at the next borshch, at the same question, as the same guest', async () => {
     localStorage.setItem('nb:table:K7M2QX', JSON.stringify({
       token: 'tok-aaaaaaaaaaaaaaaaaaaaaaaa',
       name: 'Оля',
-      draft: { position: 2, grades: { meat: 8, beetroot: 6 }, step: 2 },
+      draft: { scheme: 3, position: 2, answers: { meat_amount: 3, beet_amount: 2 }, step: 2 },
       updatedAt: Date.now(),
     }));
     tablesAPI.get.mockResolvedValue(table({ me: { kind: 'guest', name: 'Оля', rated_positions: [1], reviews: [] } }));
@@ -221,15 +229,30 @@ describe('a guest at an open blind table', () => {
     const user = userEvent.setup();
     renderAt('/t/K7M2QX');
 
-    // straight to the third question of №2: no door, no name again
-    expect(await screen.findByText('Борщ №2 · Крок 3 / 7')).toBeInTheDocument();
+    // straight to the third screen of №2: no door, no name again
+    expect(await screen.findByRole('heading', { name: 'Густина' })).toBeInTheDocument();
+    expect(screen.getByText('Борщ №2')).toBeInTheDocument();
     expect(tablesAPI.get).toHaveBeenCalledWith('K7M2QX', { guestToken: 'tok-aaaaaaaaaaaaaaaaaaaaaaaa' });
     expect(screen.queryByLabelText('Як тебе звати?')).not.toBeInTheDocument();
 
-    // the two answers given before the reload are still there
+    // the answers given before the reload are still there
     await user.click(screen.getByRole('button', { name: 'Назад' }));
-    await screen.findByText('Борщ №2 · Крок 2 / 7');
-    expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1);
+    await screen.findByRole('heading', { name: 'Буряк' });
+    const amount = screen.getByRole('radiogroup', { name: 'Скільки буряку?' });
+    expect(within(amount).getByRole('radio', { name: /Помірно/ })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('a draft of the old seven scores is dropped, not reopened on a screen it was not made for', async () => {
+    localStorage.setItem('nb:table:K7M2QX', JSON.stringify({
+      token: 'tok-aaaaaaaaaaaaaaaaaaaaaaaa',
+      name: 'Оля',
+      draft: { position: 2, grades: { meat: 8, beetroot: 6 }, step: 5 },
+      updatedAt: Date.now(),
+    }));
+    tablesAPI.get.mockResolvedValue(table({ me: { kind: 'guest', name: 'Оля', rated_positions: [1], reviews: [] } }));
+    renderAt('/t/K7M2QX');
+    expect(await screen.findByRole('heading', { name: 'М’ясо' })).toBeInTheDocument();
+    expect(screen.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(0);
   });
 
   it('a guest who rated everything is thanked and waits for the results', async () => {

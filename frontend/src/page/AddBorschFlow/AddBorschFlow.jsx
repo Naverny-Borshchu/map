@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QuestFlow, XP_PER_STEP } from '../../components/QuestFlow';
 import { EmptyState } from '../../components/EmptyState';
-import { hasTenPointScale } from '../../variant';
-import { tasteSteps } from '../../components/QuestFlow/answers';
+import { coinsEarned, emptyAnswers, ratingSteps, restoreAnswers } from '../../components/QuestFlow/answers';
 import { placesAPI, borschAPI, commentsAPI } from '../../api';
 import { googleAuth } from '../../services/googleAuth';
 import { tokenStorage } from '../../services/tokenStorage';
@@ -44,11 +43,11 @@ import style from './AddBorschFlow.module.scss';
 
 // The values must stay the Ukrainian labels the API layer maps to its enum.
 const MEAT_OPTIONS = [
-  { value: "Без м'яса", emoji: '🥬', i18n: 'ans.meatNo' },
-  { value: 'Курка',     emoji: '🐔', i18n: 'ans.meatChicken' },
-  { value: 'Свинина',   emoji: '🐖', i18n: 'ans.meatPork' },
-  { value: 'Яловичина', emoji: '🐄', i18n: 'ans.meatBeef' },
-  { value: 'Інше',      emoji: '🍲', i18n: 'ans.meatOther' },
+  { value: "Без м'яса", i18n: 'ans.meatNo' },
+  { value: 'Курка',     i18n: 'ans.meatChicken' },
+  { value: 'Свинина',   i18n: 'ans.meatPork' },
+  { value: 'Яловичина', i18n: 'ans.meatBeef' },
+  { value: 'Інше',      i18n: 'ans.meatOther' },
 ];
 
 
@@ -58,12 +57,12 @@ const MEAT_OPTIONS = [
  */
 export const buildAddSteps = ({ needsSignIn, priceChips = getPriceChipsForCountry('') }) => [
   // The photo goes first, because by the end there is nothing left to
-  // photograph. Every taste question in tasteSteps() — how much meat, how
-  // thick, how salty, what aftertaste — can only be answered by someone
-  // who has eaten the bowl, so asking for a picture afterwards asks for it
-  // at the one moment it cannot exist. It stays optional and skippable.
-  { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'flow.photoHint' },
-  ...tasteSteps(),
+  // photograph. Every question in ratingSteps() (how much meat, how thick,
+  // how salty, what aftertaste) can only be answered by someone who has
+  // eaten the bowl, so asking for a picture afterwards asks for it at the
+  // one moment it cannot exist. It stays optional and skippable.
+  { type: 'photo', key: 'photo', i18n: 'flow.photoTitle', hint: 'r3.photoHint' },
+  ...ratingSteps(),
   { type: 'choice', key: 'meatType', i18n: 'flow.qMeatType', options: MEAT_OPTIONS },
   {
     type: 'text',
@@ -112,14 +111,18 @@ export const AddBorschFlow = () => {
   // callback. A real token, not the legacy auth flag, is the contract.
   const [needsSignIn] = useState(() => !tokenStorage.getAccess());
 
-  const [values, setValues] = useState(() => ({
-    meat: null, beetroot: null, density: null, salt: null,
-    aftertaste: null, serving: null, overall: null,
-    meatType: null, name: '', price: '', weight: '', comment: '',
-    ...(restoredDraft?.values || {}),
-    // File objects cannot be serialized by Web Storage; all actual answers do.
-    photos: [],
-  }));
+  const [values, setValues] = useState(() => {
+    const restored = restoredDraft?.values || {};
+    return {
+      ...emptyAnswers(),
+      meatType: null, name: '', price: '', weight: '', comment: '',
+      ...restored,
+      // the rating answers are checked one by one (answers.js), the rest is text
+      ...restoreAnswers(restored),
+      // File objects cannot be serialized by Web Storage; all actual answers do.
+      photos: [],
+    };
+  });
   const [draftStep, setDraftStep] = useState(() => restoredDraft?.step || 0);
   const [status, setStatus] = useState({ saving: false, sent: false, error: '', stage: '' });
   const [xpTotal, setXpTotal] = useState(null);
@@ -139,7 +142,12 @@ export const AddBorschFlow = () => {
   const steps = useMemo(() => buildAddSteps({ needsSignIn, priceChips }), [needsSignIn, priceChips]);
 
   const onChange = useCallback((key, value) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => ({
+      ...prev,
+      [key]: value,
+      // «Нема» мʼяса: its taste is not asked, and not kept either
+      ...(key === 'meat_amount' && value === 0 ? { meat_taste: null } : {}),
+    }));
   }, []);
 
   useEffect(() => {
@@ -177,8 +185,8 @@ export const AddBorschFlow = () => {
         onProgress: (nextProgress) => writeSessionDraft(DRAFT_KEY, { progress: nextProgress }),
       });
 
-      // XP and the "already rated" mark, same bookkeeping the rating flow does
-      const earned = tasteSteps().length * XP_PER_STEP * XP_MULTIPLIER;
+      // БорщКоіни and the "already rated" mark, same bookkeeping the rating flow does
+      const earned = coinsEarned(steps, values, XP_PER_STEP) * XP_MULTIPLIER;
       try {
         const total = (Number(localStorage.getItem('nb_xp')) || 0) + earned;
         localStorage.setItem('nb_xp', String(total));
@@ -208,7 +216,7 @@ export const AddBorschFlow = () => {
         stage: '',
       });
     }
-  }, [flowContext, values, t]);
+  }, [flowContext, values, steps, t]);
 
   // Only the photos that did not land; the borsch and the rating are already
   // saved, so this must not run the whole submit (and its XP) a second time.
@@ -226,7 +234,7 @@ export const AddBorschFlow = () => {
 
   const onExit = useCallback(() => {
     const started = Object.entries(values).some(
-      ([k, v]) => v !== null && v !== '' && k !== 'photo'
+      ([k, v]) => v !== null && v !== '' && k !== 'photos'
     );
     if (status.sent || !started || window.confirm(t('flow.quitConfirm'))) {
       navigate(status.sent && progress.current.borschId ? `/borsch/${progress.current.borschId}` : '/');
@@ -252,7 +260,6 @@ export const AddBorschFlow = () => {
       steps={steps}
       values={values}
       onChange={onChange}
-      scale10={hasTenPointScale}
       title={flowContext.place.name}
       xp={{ perStep: XP_PER_STEP, multiplier: XP_MULTIPLIER, total: xpTotal }}
       status={status}

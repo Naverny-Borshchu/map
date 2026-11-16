@@ -1,5 +1,5 @@
 import { apiRequest } from './index';
-import { gradesToReview } from '../components/QuestFlow/answers';
+import { answersToReview } from '../components/QuestFlow/answers';
 import { track } from '../analytics';
 
 /**
@@ -111,8 +111,8 @@ export const tablesAPI = {
    * guestName  a guest's first rating only
    * guestToken a guest's later ratings
    */
-  rate: async (code, { position, grades, comment = '', as = 'guest', guestName = '', guestToken = null }) => {
-    const body = { position, ...gradesToReview(grades, comment) };
+  rate: async (code, { position, answers, comment = '', as = 'guest', guestName = '', guestToken = null }) => {
+    const body = { position, ...answersToReview(answers, comment) };
     const asUser = as === 'user';
     // The name rides along with the token too: a token the table does not
     // know (cleared on the server, or never used) then simply starts that
@@ -127,6 +127,7 @@ export const tablesAPI = {
       as: asUser ? 'user' : 'guest',
       created: Boolean(result?.created),
       overall_rating: body.overall_rating,
+      scheme: body.scheme,
       rated: (result?.rated_positions || []).length,
     });
     return result;
