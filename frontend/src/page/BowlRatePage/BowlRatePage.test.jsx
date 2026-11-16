@@ -166,3 +166,23 @@ test('a failed rating keeps the created ids in the bowl: the retry creates nothi
   expect(commentsAPI.createByBorschId.mock.calls.map(([id]) => id)).toEqual(['b-new', 'b-new']);
   console.error.mockRestore();
 });
+
+// Оцінювання 3.0: a draft of the old seven scores (draft version 1) opened on
+// the comment screen with keys the new flow does not know. It is dropped: the
+// rating starts at its first part, and the old draft is gone from the session.
+test('a draft of the old seven scores is dropped: the rating starts again at its first part', async () => {
+  signIn();
+  const bowl = await createDraft({ place: { id: 'p1', name: 'Криївка' }, borsch: { id: 'b1', name: 'Борщ дня' } });
+  const key = `nb:quest-draft:bowl:${bowl.id}`;
+  sessionStorage.setItem(key, JSON.stringify({ version: 1, step: 8, values: { grades: { meat: 8, salt: 10, overall: 9 }, comment: 'старе' } }));
+  borschAPI.getById.mockResolvedValue({ id_borsch: 'b1', name: 'Борщ дня', type_meat: 'pork', price: '', weight: '' });
+
+  renderRate(bowl.id);
+  // no photo was taken: the rating opens on its first screen, not on the old comment step
+  expect(await screen.findByRole('heading', { name: 'Покажи свій Борщ' })).toBeInTheDocument();
+  await waitFor(() => expect(JSON.parse(sessionStorage.getItem(key)).version).toBe(2));
+  const stored = JSON.parse(sessionStorage.getItem(key));
+  expect(stored.values.answers.overall).toBeNull();
+  expect(stored.values.comment).toBe('');
+  expect(stored.values).not.toHaveProperty('grades');
+});
