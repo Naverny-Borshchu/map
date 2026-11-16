@@ -33,7 +33,7 @@ export const TablePage = () => {
   }, [code, raw, navigate]);
 
   // One wrapper as the page's root: the map1 variant pads the root of every
-  // page for the tab bar. On the full-screen red stage that padding would land
+  // page for the tab bar. On the full-screen quest frame that padding would land
   // inside the fixed frame and cut its bottom off; here it pads an empty block
   // behind the frame, and the bottom of the results page, where it belongs.
   return (

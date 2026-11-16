@@ -3,18 +3,12 @@ import { buildReviewList } from './reviewList';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useRequireAuthAction } from '../../hook/useRequireAuthAction';
 import {Link,useParams,useNavigate } from "react-router-dom";
-import { ReactComponent as IconMeat } from './meat.svg';
-import { ReactComponent as IconBeetroot } from './beetroot.svg';
-import { ReactComponent as IconDensity } from './vegetable.svg';
-import { ReactComponent as IconSalt } from './salt.svg';
-import { ReactComponent as IconAftertaste } from './aftertaste.svg';
-import { ReactComponent as IconServing } from './serving.svg';
 import { IconClose, IconHeart, IconShare, IconChevronLeft, IconChevronRight, IconMapPin } from "../../components/Icons";
 import { EmptyState } from "../../components/EmptyState";
 import { shareBorsch } from "../../utils/share";
 import { priceLabel, weightLabel } from "../../utils/price";
 import { RatingIconsSvg } from "../../components/RatingIconsSvg";
-import { ProgressLine } from "../../components/ProgressLine/ProgressLine";
+import { TasteProfile } from './TasteProfile';
 import { FotoBorschGallary } from "../../components/FotoBorschGallary";
 import { useBorsch } from '../../context/BorschContext';
 import { usePlaces } from '../../context/PlacesContext';
@@ -239,17 +233,10 @@ export const BorschPage=({ borschId: propId })=>{
                 </div>
             </section>
 
-            <section className={style.criteria}>
-                <h2 className={style.sectionTitle}>{t('borsch.criteria')}</h2>
-                <div className={style.gradesFlex}>
-                    <ProgressLine title={t('rate.meat')} value={borschOne.rating_meat} icon={IconMeat}/>
-                    <ProgressLine title={t('rate.beetroot')} value={borschOne.rating_beet} icon={IconBeetroot}/>
-                    <ProgressLine title={t('rate.density')} value={borschOne.rating_density} icon={IconDensity}/>
-                    <ProgressLine title={t('rate.salt')} value={borschOne.rating_salt} icon={IconSalt}/>
-                    <ProgressLine title={t('rate.aftertaste')} value={borschOne.rating_aftertaste} icon={IconAftertaste}/>
-                    <ProgressLine title={t('rate.serving')} value={borschOne.rating_serving} icon={IconServing}/>
-                </div>
-            </section>
+            {/* Оцінювання 3.0: «Який він» and «Оцінки» from the profile of the
+                new answers. The old criteria bars are gone: «Солоність 8.4»
+                read as praise and meant «very oversalted». */}
+            <TasteProfile profile={borschOne.profile || null} rateTo={`/borsch/${id}/evaluations`} />
 
             {paginatedComments.length > 0 && (
             <section className={style.comentsBox}>

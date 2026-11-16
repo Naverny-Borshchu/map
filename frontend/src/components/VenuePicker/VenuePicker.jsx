@@ -5,7 +5,7 @@ import { useI18n, useVenueLabel, useCityLabel } from '../../i18n';
 import q from '../QuestFlow/QuestFlow.module.scss';
 import style from '../../page/BowlFlow/BowlFlow.module.scss';
 
-/** One venue as a big card on the red stage: name, address, distance. */
+/** One venue as a big card on the quest frame: name, address, distance. */
 export const VenueCard = ({ place: p, distance = null, onPick }) => {
   const { t, lang } = useI18n();
   const venueLabel = useVenueLabel();

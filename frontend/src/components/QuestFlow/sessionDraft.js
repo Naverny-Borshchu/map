@@ -1,4 +1,8 @@
-const VERSION = 1;
+// 2 since Оцінювання 3.0 (NAV-216): the answers changed their keys and the
+// screens their order, so a draft of the old seven scores is dropped instead
+// of opening on the wrong screen with half-understood values.
+export const DRAFT_VERSION = 2;
+const VERSION = DRAFT_VERSION;
 
 const storage = () => {
   try {
@@ -10,8 +14,13 @@ const storage = () => {
 
 export const readSessionDraft = (key) => {
   try {
-    const parsed = JSON.parse(storage()?.getItem(key) || 'null');
-    return parsed?.version === VERSION ? parsed : null;
+    const target = storage();
+    const parsed = JSON.parse(target?.getItem(key) || 'null');
+    if (parsed?.version === VERSION) return parsed;
+    // an older draft is not merely ignored: left behind it would ride into the
+    // next write (writeSessionDraft spreads what it reads) and linger
+    if (parsed) target?.removeItem(key);
+    return null;
   } catch (e) {
     return null;
   }

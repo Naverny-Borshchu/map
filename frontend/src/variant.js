@@ -30,15 +30,9 @@ export const FULLSCREEN_MAP_VARIANTS = ['map1'];
  */
 export const hasWideNav = (process.env.REACT_APP_NAV || '').trim() === 'wide';
 
-/**
- * Rating scale arm, set per site in .env as REACT_APP_RATE_SCALE.
- *
- * '10' — the 1–10 strip the flow used before the answer cards: ten tap targets
- *        per question with the criterion's two anchors underneath.
- * default — five worded answers ("Щедро", "У кожній ложці"), mapped onto the
- *        same 1–10 field so both arms write the same shape of review.
- */
-export const hasTenPointScale = (process.env.REACT_APP_RATE_SCALE || '').trim() === '10';
+// REACT_APP_RATE_SCALE (the 1..10 strip against five worded answers) is
+// retired: Оцінювання 3.0 (NAV-216) asks every part of the borshch its own
+// way (QuestFlow/answers.js), so a build ignores the variable.
 
 export const hasFullscreenMap = FULLSCREEN_MAP_VARIANTS.includes(VARIANT);
 

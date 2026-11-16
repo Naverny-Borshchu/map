@@ -242,21 +242,10 @@ html[data-theme='dark'] .fact {
   padding-bottom: 8px;
 }
 
-// --- criteria ----------------------------------------------------------------
-.criteria {
-  margin-top: 26px;
-}
-
 .sectionTitle {
   @include displayM;
   margin: 0 0 6px;
   color: var(--color-text-btn);
-}
-
-.gradesFlex {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 // --- reviews -----------------------------------------------------------------

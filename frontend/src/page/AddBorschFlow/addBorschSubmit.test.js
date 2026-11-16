@@ -3,9 +3,10 @@ import { submitAddBorsch, uploadPendingPhotos, emptyProgress, STAGES } from './a
 const place = { name: 'Ватра', location: { lat: 50.4, lng: 30.5 }, type: 'restaurant' };
 
 const values = {
-  meat: 8, beetroot: 10, density: 6, salt: 6, aftertaste: 8, serving: 4, overall: 8,
+  meat_amount: 2, meat_taste: 4, beet_amount: 3, beet_flavor: null, density: 6, salt: 4,
+  sides: ['salo', 'garlic'], serving_taste: null, aftertaste: 3, overall: 8,
   meatType: 'Яловичина', name: 'Борщ український', price: '180', weight: '350',
-  comment: '  смачно  ', photo: null,
+  comment: '  смачно  ', photos: [],
 };
 
 const makeApis = (over = {}) => ({
@@ -42,10 +43,17 @@ test('creates the venue, the borsch and the review, in that order', async () => 
   expect(apis.borschAPI.create).toHaveBeenCalledWith(
     expect.objectContaining({ name: 'Борщ український', place_id: 'place-1', type_meat: 'Яловичина', price: '180', weight: '350' })
   );
+  // Оцінювання 3.0: the answers themselves, scheme 3, a skipped one as null
   expect(apis.commentsAPI.createByBorschId).toHaveBeenCalledWith('borsch-1', expect.objectContaining({
-    rating_meat: 8, rating_beet: 10, rating_density: 6, rating_salt: 6,
-    rating_aftertaste: 8, rating_serving: 4, overall_rating: 8, message: 'смачно',
+    scheme: 3,
+    meat_amount: 2, meat_taste: 4, beet_amount: 3, beet_flavor: null, density: 6, salt: 4,
+    sides: ['garlic', 'salo'], serving_taste: null, aftertaste: 3,
+    overall_rating: 8, message: 'смачно',
   }));
+  // nothing of the add flow's own answers leaks into the review
+  const body = apis.commentsAPI.createByBorschId.mock.calls[0][1];
+  expect(body).not.toHaveProperty('meatType');
+  expect(body).not.toHaveProperty('price');
 });
 
 test('persists each completed write so a reload can resume without duplicates', async () => {

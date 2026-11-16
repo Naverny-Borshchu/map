@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { I18nProvider } from '../../i18n';
 import { UserProvider } from '../../context/UserContext';
-import { RateFlow } from './RateFlow';
+import { emptyAnswers } from '../QuestFlow/answers';
+import { RateFlow, rateStepCount } from './RateFlow';
 
 jest.mock('../GoogleAuth', () => ({
   GoogleAuth: ({ onSuccess }) => (
@@ -14,30 +15,24 @@ jest.mock('../GoogleAuth', () => ({
 }));
 
 /**
- * A guest used to be able to answer all seven taste questions and only then be
- * told "Не вдалося зберегти" — the API refuses an anonymous POST /reviews/, and
- * seven screens of work went with it. The flow must ask for an account BEFORE
- * it ever tries to save.
+ * A guest used to be able to answer every question and only then be told
+ * "Не вдалося зберегти": the API refuses an anonymous POST /reviews/, and the
+ * work went with it. The flow must ask for an account BEFORE it ever tries to
+ * save.
  */
 beforeEach(() => {
   localStorage.clear();
   localStorage.setItem('lang', 'uk');
 });
 
-const CRITERIA = [
-  { key: 'meat', i18n: 'flow.q.meat' },
-  { key: 'beetroot', i18n: 'flow.q.beetroot' },
-];
-
-const renderFlow = () =>
+const renderFlow = (props = {}) =>
   render(
     <MemoryRouter>
       <I18nProvider>
         <UserProvider>
           <RateFlow
-            criteria={CRITERIA}
-            grades={{}}
-            onGrade={() => {}}
+            answers={emptyAnswers()}
+            onAnswer={() => {}}
             comment=""
             onComment={() => {}}
             photos={[]}
@@ -48,11 +43,15 @@ const renderFlow = () =>
             isSent={false}
             error=""
             borschName="Борщ"
+            placeName="Ватра"
+            {...props}
           />
         </UserProvider>
       </I18nProvider>
     </MemoryRouter>
   );
+
+const screens = () => Number(screen.getByRole('progressbar').getAttribute('aria-valuemax'));
 
 const signIn = () => {
   localStorage.setItem('auth', 'true');
@@ -68,36 +67,13 @@ const signInWithRefreshOnly = () => {
 
 describe('RateFlow account wall', () => {
   it('forwards the Google credential callback from the guest sign-in step', async () => {
-  const user = userEvent.setup();
+    const user = userEvent.setup();
     const onSignIn = jest.fn().mockResolvedValue(undefined);
-    render(
-      <MemoryRouter>
-        <I18nProvider>
-          <UserProvider>
-            <RateFlow
-              criteria={[]}
-              grades={{}}
-              onGrade={() => {}}
-              comment=""
-              onComment={() => {}}
-              photos={[]}
-              onPhotos={() => {}}
-              onSubmit={() => {}}
-              onExit={() => {}}
-              onSignIn={onSignIn}
-              saving={false}
-              isSent={false}
-              error=""
-              borschName="Борщ"
-            />
-          </UserProvider>
-        </I18nProvider>
-      </MemoryRouter>
-    );
+    // a restored draft that already stands on the comment, «Загалом» answered
+    renderFlow({ onSignIn, answers: { ...emptyAnswers(), overall: 8 }, initialStep: 8 });
 
-    await user.click(screen.getByRole('button', { name: /Пропустити/i }));
-    await screen.findByText(/Крок 2 \/ 3/i);
-    await user.click(screen.getByRole('button', { name: /Пропустити/i }));
+    expect(screen.getByRole('heading', { name: 'Коментар' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Далі' }));
     const googleCta = await screen.findByRole('button', { name: /Продовжити з Google/i });
     await user.click(googleCta);
 
@@ -108,15 +84,14 @@ describe('RateFlow account wall', () => {
 
   it('adds a sign-in step for a guest, so the save is never attempted anonymously', () => {
     renderFlow();
-    // 2 criteria + photo + comment + signin = 5 answerable steps
-    expect(screen.getByText(/Крок 1 \/ 5/i)).toBeInTheDocument();
+    // photo + six parts + «Загалом» + comment + sign-in
+    expect(screens()).toBe(10);
   });
 
   it('drops the sign-in step once an account is present', () => {
     signIn();
     renderFlow();
-    // 2 criteria + photo + comment = 4, no wall
-    expect(screen.getByText(/Крок 1 \/ 4/i)).toBeInTheDocument();
+    expect(screens()).toBe(9);
   });
 
   it('does not treat a stale auth flag with no token as signed in', () => {
@@ -124,104 +99,57 @@ describe('RateFlow account wall', () => {
     localStorage.setItem('auth', 'true');
     localStorage.setItem('user', JSON.stringify({ id: 1, username: 'u' }));
     renderFlow();
-    expect(screen.getByText(/Крок 1 \/ 5/i)).toBeInTheDocument();
+    expect(screens()).toBe(10);
   });
 
   it('keeps a session active when only its refresh token remains', () => {
     signInWithRefreshOnly();
     renderFlow();
-    expect(screen.getByText(/Крок 1 \/ 4/i)).toBeInTheDocument();
+    expect(screens()).toBe(9);
   });
 });
 
 /**
- * The photo used to sit second from the end, after all seven taste questions.
- * Every one of those — how much meat, how thick, how salty, what aftertaste —
- * can only be answered by somebody who has eaten the bowl, so the app asked
- * for a picture at the exact moment there was nothing left to photograph.
- * Reported from the table: "не зміг додати фото, бо вже зʼїв борщ".
+ * The photo used to sit second from the end, after all the questions about
+ * the meal, so the app asked for a picture when there was nothing left to
+ * photograph. Reported from the table: "не зміг додати фото, бо вже зʼїв борщ".
  */
 describe('the photo is asked for while there is still a borsch to photograph', () => {
-  const withCriteria = () =>
-    render(
-      <MemoryRouter>
-        <I18nProvider>
-          <UserProvider>
-            <RateFlow
-              criteria={[{ key: 'meat', i18n: 'crit.meat' }, { key: 'salt', i18n: 'crit.salt' }]}
-              grades={{}}
-              onGrade={() => {}}
-              comment=""
-              onComment={() => {}}
-              photos={[]}
-              onPhotos={() => {}}
-              onSubmit={() => {}}
-              onExit={() => {}}
-              onSignIn={() => {}}
-              saving={false}
-              isSent={false}
-              error=""
-              borschName="Борщ"
-            />
-          </UserProvider>
-        </I18nProvider>
-      </MemoryRouter>
-    );
-
-  it('opens on the photo, not on a taste question', () => {
-    withCriteria();
-    expect(screen.getByText('Покажи свій Борщ')).toBeInTheDocument();
-    // and the taste questions have not started yet
-    expect(screen.queryByText(/Скільки в ньому було мʼяса/i)).not.toBeInTheDocument();
+  it('opens on the photo, not on a question about the meal', () => {
+    renderFlow();
+    expect(screen.getByRole('heading', { name: 'Покажи свій Борщ' })).toBeInTheDocument();
+    expect(screen.getByText('Необовʼязково')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'М’ясо' })).not.toBeInTheDocument();
   });
 
   it('says when to take it, so the first step does not read as a demand', () => {
-    withCriteria();
+    renderFlow();
     expect(screen.getByText(/поки не взяв ложку/i)).toBeInTheDocument();
   });
 
-  it('is still skippable — nobody is blocked by not having a photo', async () => {
-  const user = userEvent.setup();
-    withCriteria();
+  it('is still skippable: nobody is blocked by not having a photo', async () => {
+    const user = userEvent.setup();
+    renderFlow();
     await user.click(screen.getByRole('button', { name: /Пропустити/i }));
-    // the taste questions begin only after the photo step is passed
-    expect(await screen.findByText(/Скільки в ньому було мʼяса/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'М’ясо' })).toBeInTheDocument();
+  });
+
+  it('shows which borshch is being rated, with its venue', () => {
+    renderFlow();
+    expect(screen.getByText('Борщ')).toBeInTheDocument();
+    expect(screen.getByText(/· Ватра/)).toBeInTheDocument();
   });
 });
 
 describe('RateFlow for a bowl (moment 2)', () => {
   it('skips the photo screen when the bowl already brought a photo', () => {
-    render(
-      <MemoryRouter>
-        <I18nProvider>
-          <UserProvider>
-            <RateFlow
-              criteria={CRITERIA}
-              grades={{}}
-              onGrade={() => {}}
-              comment=""
-              onComment={() => {}}
-              photos={[]}
-              onPhotos={() => {}}
-              onSubmit={() => {}}
-              onExit={() => {}}
-              saving={false}
-              isSent={false}
-              error=""
-              borschName="Борщ"
-              withPhotoStep={false}
-            />
-          </UserProvider>
-        </I18nProvider>
-      </MemoryRouter>
-    );
-    // the first screen is the first taste question, not «Покажи свій Борщ»
-    expect(screen.getByText('Скільки в ньому було мʼяса?')).toBeInTheDocument();
+    renderFlow({ withPhotoStep: false });
+    expect(screen.getByRole('heading', { name: 'М’ясо' })).toBeInTheDocument();
     expect(screen.queryByText('Покажи свій Борщ')).not.toBeInTheDocument();
   });
 
   it('counts its screens for a picker in front of it', () => {
-    const { rateStepCount } = require('./RateFlow');
+    // photo + 7 + comment + done; sign-in when needed
     expect(rateStepCount({ withPhoto: true, needsSignIn: false })).toBe(10);
     expect(rateStepCount({ withPhoto: false, needsSignIn: true })).toBe(10);
     expect(rateStepCount({ withPhoto: true, needsSignIn: true })).toBe(11);

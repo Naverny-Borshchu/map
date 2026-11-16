@@ -398,3 +398,75 @@ describe('stage 3: venues from Google, facts that want confirming', () => {
     expect(JSON.parse(options.body)).toEqual({ confirm: ['price'] });
   });
 });
+
+/**
+ * Оцінювання 3.0 (NAV-216, SPEC «Контракт API»): a review carries the raw
+ * answers with scheme 3, and every borshch may carry its `profile`.
+ */
+describe('Оцінювання 3.0 on the wire', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  const ANSWERS = {
+    scheme: 3,
+    meat_amount: 0, meat_taste: null, beet_amount: 2, beet_flavor: 4, density: 7, salt: 9,
+    sides: [], serving_taste: null, aftertaste: 5, overall_rating: 9, message: 'Смачно',
+    rating_meat: null, rating_beet: 7, rating_density: 7, rating_salt: 10, rating_serving: null, rating_aftertaste: 10,
+  };
+
+  it('posts scheme 3 as is: a skipped part stays null, never becomes 0', async () => {
+    localStorage.setItem('access', 'review-access-token');
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ id: 'review-1', borsch: 'borsch-1', overall_rating: '9.0' }));
+    await commentsAPI.createByBorschId('borsch-1', ANSWERS);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload).toEqual({ borsch: 'borsch-1', ...ANSWERS });
+    expect(payload.meat_taste).toBeNull();
+    expect(payload.serving_taste).toBeNull();
+    expect(payload.sides).toEqual([]);
+  });
+
+  it('an old-scheme review keeps its seven numbers and no scheme', async () => {
+    localStorage.setItem('access', 'review-access-token');
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ id: 'review-1' }));
+    await commentsAPI.createByBorschId('borsch-1', {
+      rating_salt: 5, rating_meat: 6, rating_beet: 7, rating_density: 8, rating_aftertaste: 9, rating_serving: 4, overall_rating: 8,
+    });
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(payload).not.toHaveProperty('scheme');
+    expect(payload.rating_salt).toBe(5);
+  });
+
+  it('maps the profile of a borshch, and a borshch without one has none', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({
+      count: 2,
+      next: null,
+      results: [
+        {
+          id: 'b1', place: 'p1', name: 'Борщ', overall_rating: '9.2', rating_count: 9,
+          profile: {
+            reviews: 9,
+            meat_amount: { counts: [0, 0, 3, 6], n: 9 },
+            beet_amount: { counts: [1, 2, 6], n: 9 },
+            beet_flavor: { counts: [0, 0, 2, 5, 2], n: 9 },
+            density: { mean: 7.6, n: 9, legacy_n: 0 },
+            salt: { mean: 5.3, n: 9, legacy_n: 0, low: 2, high: 1 },
+            sides: { counts: { sour_cream: 8, pampushky: 6, salo: 5, garlic: 3, croutons: 1 }, n: 9, none: 0 },
+            meat_taste: { mean: 4.6, n: 9 }, aftertaste: { mean: 4.4, n: 8 }, serving_taste: { mean: 4.1, n: 9 },
+          },
+        },
+        { id: 'b2', place: 'p1', name: 'Борщ 2', overall_rating: '8.0', rating_count: 3 },
+      ],
+    }));
+    const [withProfile, without] = await borschAPI.getAll();
+    expect(withProfile.profile).toMatchObject({
+      reviews: 9,
+      meat_amount: { counts: [0, 0, 3, 6], n: 9 },
+      salt: { mean: 5.3, n: 9, legacy_n: 0, low: 2, high: 1 },
+      sides: { n: 9, none: 0 },
+    });
+    expect(withProfile.profile.sides.counts).toMatchObject({ sour_cream: 8, croutons: 1, chili: 0 });
+    expect(without.profile).toBeNull();
+  });
+});
