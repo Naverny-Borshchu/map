@@ -512,3 +512,55 @@ describe('a photo upload: 202 waits for the AI check, 201 is public at once (NAV
     await expect(borschAPI.uploadPhoto('b1', gif())).resolves.toEqual({ photo_url: '/media/borsches/b1/photos/x.jpg' });
   });
 });
+
+describe('one rating per borshch, two new ones a day (11.2026)', () => {
+  const reply = (status, body) => ({ ok: status < 400, status, json: async () => body });
+  const V3 = { scheme: 3, overall_rating: 8, meat_amount: 2 };
+
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('access', 'review-access-token');
+  });
+  afterEach(() => {
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  it('200 updated: true is an update of the earlier rating', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(reply(200, { id: 'r1', borsch: 'b1', overall_rating: 8, updated: true }));
+    const saved = await commentsAPI.createByBorschId('b1', V3);
+    expect(saved).toMatchObject({ id: 'r1', id_borsch: 'b1', updated: true });
+  });
+
+  it('201 updated: false, and an older backend without the field, are a new rating', async () => {
+    jest.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(reply(201, { id: 'r2', borsch: 'b1', overall_rating: 8, updated: false }))
+      .mockResolvedValueOnce(reply(201, { id: 'r3', borsch: 'b1', overall_rating: 8 }));
+    expect((await commentsAPI.createByBorschId('b1', V3)).updated).toBe(false);
+    expect((await commentsAPI.createByBorschId('b1', V3)).updated).toBe(false);
+  });
+
+  it('a 429 daily_limit keeps its code and body for the screen', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue(reply(429, { code: 'daily_limit', detail: 'limit', limit: 2, resets_at: '2026-11-17T00:00:00+02:00' }));
+    await expect(commentsAPI.createByBorschId('b1', V3)).rejects.toMatchObject({
+      status: 429, code: 'daily_limit', data: expect.objectContaining({ limit: 2 }),
+    });
+  });
+
+  it('today: the borshch in the query, with the account; nothing to ask without one', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(reply(200, { count: 2, limit: 2, remaining: 0, already_rated: false }));
+    await expect(commentsAPI.today('b1')).resolves.toMatchObject({ remaining: 0 });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toMatch(/\/reviews\/today\/\?borsch=b1$/);
+    expect(init.method).toBe('GET');
+    expect(init.headers.Authorization).toBe('Bearer review-access-token');
+
+    await commentsAPI.today(null);
+    expect(String(fetchMock.mock.calls[1][0])).toMatch(/\/reviews\/today\/$/);
+
+    localStorage.clear();
+    fetchMock.mockClear();
+    await expect(commentsAPI.today('b1')).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

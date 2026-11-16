@@ -49,11 +49,15 @@ export const List = () => {
         const all = await getAllBorsch();
         const mine = await commentsAPI.getMine();
 
-        // one row per borsch — the newest review wins
+        // one row per borsch, the newest review wins. Since 11.2026 a second
+        // rating updates the first, but older accounts may still hold two
+        // reviews of one borshch; the newest is taken by its date, not by the
+        // order the API happens to answer in.
         const latestByBorsch = new Map();
         mine.forEach((review) => {
           const key = String(review.id_borsch);
-          if (!latestByBorsch.has(key)) latestByBorsch.set(key, review);
+          const seen = latestByBorsch.get(key);
+          if (!seen || String(review.created_at || '') > String(seen.created_at || '')) latestByBorsch.set(key, review);
         });
 
         setBorschList(

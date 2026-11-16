@@ -8,6 +8,8 @@ import { uploadPhotos } from '../../utils/uploadPhotos';
 import { googleAuth } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
 import { EmptyState } from '../../components/EmptyState';
+import { DailyLimitStop } from '../../components/DailyLimit';
+import { isDailyLimitError, useDailyLimit } from '../../hook/useDailyLimit';
 import { FactsQuestion } from '../../components/FactsQuestion';
 import { MeatQuestion } from '../../components/MeatQuestion';
 import { usePlaces } from '../../context/PlacesContext';
@@ -84,6 +86,18 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     // scores carries the previous draft version and is not read at all.
     const [answers, setAnswers] = useState(() => restoreAnswers(restoredDraft?.values?.answers));
     const [draftStep, setDraftStep] = useState(() => restoredDraft?.step || 0);
+    // Two new borshch ratings a day (11.2026): asked once, before the
+    // questions, for the borshch this page opened with (a bowl's new borshch
+    // has no id yet: «a new one»). A second rating of the same borshch is an
+    // update, never stopped, and pays no new БорщКоіни.
+    const [limitId] = useState(() => propId || params?.borschId || bowl?.borsch?.id || null);
+    const dailyLimit = useDailyLimit({ borschId: limitId, where: bowl ? 'bowl' : 'card' });
+    const [startedBefore] = useState(() => Boolean(restoredDraft && (
+      (restoredDraft.step || 0) > 0
+      || String(restoredDraft.values?.comment || '').trim()
+      || Object.values(restoreAnswers(restoredDraft.values?.answers)).some((v) => v !== null && v !== undefined)
+    )));
+    const [reviewUpdated, setReviewUpdated] = useState(false);
     const { getBorschById, getBorschExploration, loadBorschData} = useBorsch();
     const { syncWithServer } = useComments();
     const { completeGoogleSignIn } = useUser();
@@ -174,7 +188,10 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         // Реальний бекенд: POST /api/reviews/ з Bearer-токеном (id борщу — UUID-рядок)
         // scheme 3 (SPEC «Контракт API»): the raw answers; the server fills
         // the old rating_* from them
-        await commentsAPI.createByBorschId(targetId, answersToReview(answers, comment));
+        const saved = await commentsAPI.createByBorschId(targetId, answersToReview(answers, comment));
+        // one rating per person per borshch: this one replaced the earlier
+        const updated = saved?.updated === true;
+        setReviewUpdated(updated);
         // Photos are a separate endpoint, one call each; a failure here must not
         // lose the rating the user just spent seven screens on, and one bad
         // photo must not take the others with it. It must not stay silent
@@ -206,7 +223,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         // Test БорщКоіни: what the screens paid (answers.js coinsEarned), ×3
         // for a first discovery. The running total lives in localStorage until
         // accounts carry it server-side.
-        const earnedXp = coinsEarned(
+        const earnedXp = updated ? 0 : coinsEarned(
           [...ratingSteps(), { type: 'comment', key: 'comment' }],
           { ...answers, comment },
           XP_PER_STEP,
@@ -219,6 +236,12 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
         setIsSent(true);
       } catch (err) {
         releaseSessionDraftSubmission(draftKey);
+        // the third new borshch of the day (two flows raced the check): not a
+        // failure; the answers and the bowl stay for tomorrow
+        if (isDailyLimitError(err)) {
+          dailyLimit.block(err.data || null);
+          return;
+        }
         console.error('❌ Помилка збереження оцінки:', err);
         // A review needs an account. Saying "try again" to someone who is not
         // signed in just sends them round the same loop.
@@ -268,7 +291,11 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       await loadBorschData().catch(() => {});
     };
 
-    if (!borschOne) {
+    if (dailyLimit.state === 'blocked' && !isSent) {
+      return <DailyLimitStop keeps={bowl ? 'bowl' : startedBefore ? 'draft' : null} />;
+    }
+
+    if (!borschOne || dailyLimit.state === 'checking') {
       return (
         <div className={style.wrapp}>
           <EmptyState
@@ -310,6 +337,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       onSignIn={handleGoogleSignIn}
       saving={saving}
       isSent={isSent}
+      reviewUpdated={reviewUpdated}
       error={saveError}
       photoStatus={photoStatus}
       onRetryPhotos={retryPhotos}

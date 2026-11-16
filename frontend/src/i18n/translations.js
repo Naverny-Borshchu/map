@@ -288,6 +288,14 @@ export const translations = {
     'flow.photoFailed': 'Оцінку збережено, але фото не завантажилось: {n} з {total}.',
     'flow.photoRetry': 'Спробувати ще раз',
     'flow.photoRetryOk': 'Фото завантажено',
+    // one rating per person per borshch (11.2026): a second one updates the first
+    'flow.reviewUpdated': 'Твою попередню оцінку цього Борщу оновлено. Нових BRSH за повторну оцінку нема.',
+    // two new borshch ratings a day (11.2026)
+    'limit.title': 'Сьогодні вже два Борщі',
+    'limit.text': 'Наступний оціниш завтра.',
+    'limit.keepsBowl': 'Твоя миска чекатиме до трьох днів.',
+    'limit.keepsDraft': 'Почате не загубиться, поки відкрита ця вкладка.',
+    'limit.toMap': 'До мапи',
     'flow.commentTitle': 'Кілька слів?',
     'flow.commentHint': 'Що запамʼяталось? Теж необовʼязково.',
 
@@ -1326,6 +1334,12 @@ export const translations = {
     'flow.photoFailed': 'Your rating is saved, but {n} of {total} photos did not upload.',
     'flow.photoRetry': 'Try again',
     'flow.photoRetryOk': 'Photos uploaded',
+    'flow.reviewUpdated': 'You had rated this borshch before, so we updated your rating. A second rating earns no new BRSH.',
+    'limit.title': 'Two borshch today already',
+    'limit.text': 'You can rate the next one tomorrow.',
+    'limit.keepsBowl': 'Your bowl will wait for up to three days.',
+    'limit.keepsDraft': 'What you started stays here while this tab is open.',
+    'limit.toMap': 'To the map',
     'flow.commentTitle': 'A few words?',
     'flow.commentHint': 'What stood out? Also optional.',
 
