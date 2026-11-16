@@ -283,7 +283,8 @@
   flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  img { width: 112px; height: 112px; object-fit: contain; }
+  /* a scene (the photo step's) stands as a rounded picture; cut-outs are unaffected */
+  img { width: 112px; height: 112px; object-fit: contain; border-radius: 18px; }
 }
 
 .cover {
