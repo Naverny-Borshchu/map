@@ -20,7 +20,7 @@ import { TipSheet } from "../TipSheet";
 import { venueLabel as rawVenueLabel } from "../../i18n/venueNames";
 import { useI18n } from "../../i18n";
 import { cityCenter } from "../../utils/cityCenter";
-import { coordsOf, focusPlan } from "../../utils/mapZoom";
+import { coordsOf, focusPlan, viewBounds } from "../../utils/mapZoom";
 import style from "./Map.module.scss";
 
 
@@ -82,6 +82,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   const { updateCity, updateCenter, mapTarget, focusMap } = useFilters();
 
   const mapRef = useRef(null);
+  const canvasRef = useRef(null);
   const [startView] = useState(() => lastView);
   const [zoomLevel, setZoomLevel] = useState(() => (startView && startView.zoom) || 16);
   // the previous view until something sets a new centre (a selected place, a city, «near me»)
@@ -120,12 +121,8 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
     const target = coordsOf(getPlaceById(selectedPlaceId));
     if (!target) return undefined;
     const map = mapRef.current;
-    const show = () => {
-      const plan = focusPlan({
-        target,
-        bounds: map ? map.getBounds() : null,
-        zoom: map ? map.getZoom() : zoomLevel,
-      });
+    const show = (bounds, zoom) => {
+      const plan = focusPlan({ target, bounds, zoom });
       if (plan.move) {
         updateCenter(target);
         if (map) map.panTo(target);
@@ -135,14 +132,19 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
         if (map) map.setZoom(plan.zoom);
       }
     };
-    // A map created a moment ago has no bounds until its first idle: wait for it, so «is the pin on screen» is
-    // judged against the view it opened with (lastView), not guessed.
+    if (map && map.getBounds()) {
+      show(map.getBounds(), map.getZoom());
+      return undefined;
+    }
     const events = window.google && window.google.maps && window.google.maps.event;
-    if (map && !map.getBounds() && events) {
-      const once = events.addListenerOnce(map, 'idle', show);
+    if (map && events) {   // created, not drawn yet: its first idle has the real bounds
+      const once = events.addListenerOnce(map, 'idle', () => show(map.getBounds(), map.getZoom()));
       return () => events.removeListener(once);
     }
-    show();
+    // No map yet (the desktop split is creating a new one): judge against the view it is about to open with, so
+    // a pin already in sight keeps the view and one off screen opens the map right there, without a jump.
+    const box = canvasRef.current ? canvasRef.current.getBoundingClientRect() : null;
+    show(startView ? viewBounds(startView.center, startView.zoom, box) : null, startView ? startView.zoom : zoomLevel);
     return undefined;
     // getPlaceById reads the full set through a ref; allPlaces is here so a deep link re-runs once places arrive
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -325,7 +327,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   );
 
   return (
-    <div className={`${style.container} nb-mapcanvas`}>
+    <div ref={canvasRef} className={`${style.container} nb-mapcanvas`}>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={shownCenter}

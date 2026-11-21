@@ -4,6 +4,7 @@ import {
   zoomToShowNearest,
   coordsOf,
   focusPlan,
+  viewBounds,
   FOCUS_ZOOM,
   FOCUS_MIN_ZOOM,
   MIN_FIT_ZOOM,
@@ -159,5 +160,42 @@ describe('focusPlan', () => {
 
   it('zooms to street level when the zoom is unknown', () => {
     expect(focusPlan({ target: KYIV, bounds: null, zoom: undefined }).zoom).toBe(FOCUS_ZOOM);
+  });
+});
+
+// A map that does not exist yet: what it will show when it opens at a known view (the desktop split, 21.11.2026)
+describe('viewBounds', () => {
+  const PANEL = { width: 755, height: 784 };   // the map beside the card at 1440 x 900, measured on map1
+  const south = (metres) => ({ lat: KYIV.lat - metres / 111320, lng: KYIV.lng });
+  const east = (metres) => ({ lat: KYIV.lat, lng: KYIV.lng + metres / (111320 * Math.cos((KYIV.lat * Math.PI) / 180)) });
+
+  it('sees a pin 149 m away at street zoom (the card whose pin was in sight but still moved the map)', () => {
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(149))).toBe(true);
+  });
+
+  it('agrees with Google\'s tile maths on how far the panel reaches', () => {
+    // half the panel height at zoom 16, from metresPerPixel above (independent of the implementation), minus the 10% edge
+    const halfHeight = metresPerPixel(16, KYIV.lat) * (PANEL.height / 2);
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(halfHeight * 0.85))).toBe(true);
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(halfHeight * 0.95))).toBe(false);
+    const halfWidth = metresPerPixel(16, KYIV.lat) * (PANEL.width / 2);
+    expect(viewBounds(KYIV, 16, PANEL).contains(east(halfWidth * 0.85))).toBe(true);
+    expect(viewBounds(KYIV, 16, PANEL).contains(east(halfWidth * 0.95))).toBe(false);
+  });
+
+  it('does not see Gudauri from Kyiv, nor a pin 5 km away at street zoom', () => {
+    expect(viewBounds(KYIV, 16, PANEL).contains({ lat: 42.4649, lng: 44.4835 })).toBe(false);
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(5000))).toBe(false);
+  });
+
+  it('sees farther when zoomed out', () => {
+    expect(viewBounds(KYIV, 12, PANEL).contains(south(5000))).toBe(true);
+  });
+
+  it('gives no box when it cannot know (no panel yet, no view): the caller then moves the map', () => {
+    expect(viewBounds(KYIV, 16, null)).toBeNull();
+    expect(viewBounds(KYIV, 16, { width: 0, height: 784 })).toBeNull();
+    expect(viewBounds(null, 16, PANEL)).toBeNull();
+    expect(viewBounds(KYIV, undefined, PANEL)).toBeNull();
   });
 });
