@@ -3,6 +3,10 @@ import {
   nearestPlace,
   zoomToShowNearest,
   coordsOf,
+  focusPlan,
+  viewBounds,
+  FOCUS_ZOOM,
+  FOCUS_MIN_ZOOM,
   MIN_FIT_ZOOM,
   MAX_FIT_ZOOM,
 } from './mapZoom';
@@ -76,6 +80,14 @@ describe('coordsOf', () => {
     expect(coordsOf({ latitude: 'скоро', longitude: '' })).toBeNull();
     expect(coordsOf(null)).toBeNull();
   });
+
+  it('refuses 0,0: the add form writes lat || 0 when it has no location, and 0,0 is the Gulf of Guinea', () => {
+    expect(coordsOf({ latitude: 0, longitude: 0 })).toBeNull();
+    expect(coordsOf({ latitude: '0', longitude: '0.0' })).toBeNull();
+    expect(coordsOf({ location: { lat: 0, lng: 0 } })).toBeNull();
+    // a real point on one of the axes is still a point
+    expect(coordsOf({ latitude: 0, longitude: 30.52 })).toEqual({ lat: 0, lng: 30.52 });
+  });
 });
 
 describe('nearestPlace', () => {
@@ -112,5 +124,78 @@ describe('zoomToShowNearest', () => {
   it('returns null when there is nothing to fit, so the caller leaves zoom alone', () => {
     expect(zoomToShowNearest(KYIV, [], DESKTOP)).toBeNull();
     expect(zoomToShowNearest(KYIV, undefined, DESKTOP)).toBeNull();
+  });
+});
+
+// 21.11.2026: a borshch in Gudauri opened beside a map of Kyiv. What the map does to show one place.
+describe('focusPlan', () => {
+  const GUDAURI = { lat: 42.4769, lng: 44.4769 };
+  // a stand-in for google.maps.LatLngBounds: a box around Kyiv
+  const kyivBox = {
+    contains: ({ lat, lng }) => lat > 50.3 && lat < 50.6 && lng > 30.3 && lng < 30.8,
+  };
+
+  it('moves when the place is off screen', () => {
+    expect(focusPlan({ target: GUDAURI, bounds: kyivBox, zoom: 16 }).move).toBe(true);
+  });
+
+  it('keeps the view when the place is already on screen (a card opened from a pin you were looking at)', () => {
+    expect(focusPlan({ target: KYIV, bounds: kyivBox, zoom: 16 })).toEqual({ move: false, zoom: null });
+  });
+
+  it('moves when the map has no bounds yet: it was just created by the desktop split', () => {
+    expect(focusPlan({ target: KYIV, bounds: null, zoom: 16 }).move).toBe(true);
+    expect(focusPlan({ target: KYIV, bounds: undefined, zoom: 16 }).move).toBe(true);
+  });
+
+  it('zooms in from far out, where one pin is lost among city markers', () => {
+    expect(focusPlan({ target: GUDAURI, bounds: null, zoom: 6 }).zoom).toBe(FOCUS_ZOOM);
+    expect(focusPlan({ target: GUDAURI, bounds: null, zoom: FOCUS_MIN_ZOOM - 1 }).zoom).toBe(FOCUS_ZOOM);
+  });
+
+  it('never zooms out of a closer view the visitor chose', () => {
+    expect(focusPlan({ target: KYIV, bounds: null, zoom: FOCUS_MIN_ZOOM }).zoom).toBeNull();
+    expect(focusPlan({ target: KYIV, bounds: null, zoom: 19 }).zoom).toBeNull();
+  });
+
+  it('zooms to street level when the zoom is unknown', () => {
+    expect(focusPlan({ target: KYIV, bounds: null, zoom: undefined }).zoom).toBe(FOCUS_ZOOM);
+  });
+});
+
+// A map that does not exist yet: what it will show when it opens at a known view (the desktop split, 21.11.2026)
+describe('viewBounds', () => {
+  const PANEL = { width: 755, height: 784 };   // the map beside the card at 1440 x 900, measured on map1
+  const south = (metres) => ({ lat: KYIV.lat - metres / 111320, lng: KYIV.lng });
+  const east = (metres) => ({ lat: KYIV.lat, lng: KYIV.lng + metres / (111320 * Math.cos((KYIV.lat * Math.PI) / 180)) });
+
+  it('sees a pin 149 m away at street zoom (the card whose pin was in sight but still moved the map)', () => {
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(149))).toBe(true);
+  });
+
+  it('agrees with Google\'s tile maths on how far the panel reaches', () => {
+    // half the panel height at zoom 16, from metresPerPixel above (independent of the implementation), minus the 10% edge
+    const halfHeight = metresPerPixel(16, KYIV.lat) * (PANEL.height / 2);
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(halfHeight * 0.85))).toBe(true);
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(halfHeight * 0.95))).toBe(false);
+    const halfWidth = metresPerPixel(16, KYIV.lat) * (PANEL.width / 2);
+    expect(viewBounds(KYIV, 16, PANEL).contains(east(halfWidth * 0.85))).toBe(true);
+    expect(viewBounds(KYIV, 16, PANEL).contains(east(halfWidth * 0.95))).toBe(false);
+  });
+
+  it('does not see Gudauri from Kyiv, nor a pin 5 km away at street zoom', () => {
+    expect(viewBounds(KYIV, 16, PANEL).contains({ lat: 42.4649, lng: 44.4835 })).toBe(false);
+    expect(viewBounds(KYIV, 16, PANEL).contains(south(5000))).toBe(false);
+  });
+
+  it('sees farther when zoomed out', () => {
+    expect(viewBounds(KYIV, 12, PANEL).contains(south(5000))).toBe(true);
+  });
+
+  it('gives no box when it cannot know (no panel yet, no view): the caller then moves the map', () => {
+    expect(viewBounds(KYIV, 16, null)).toBeNull();
+    expect(viewBounds(KYIV, 16, { width: 0, height: 784 })).toBeNull();
+    expect(viewBounds(null, 16, PANEL)).toBeNull();
+    expect(viewBounds(KYIV, undefined, PANEL)).toBeNull();
   });
 });

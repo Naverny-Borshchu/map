@@ -56,8 +56,42 @@ export const coordsOf = (place) => {
   if (!place) return null;
   const lat = Number(place.latitude ?? place.location?.lat);
   const lng = Number(place.longitude ?? place.location?.lng);
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  // 0,0 is not a place in our data, it is «unknown»: the add form writes `lat || 0` when it has none
+  return lat === 0 && lng === 0 ? null : { lat, lng };
 };
+
+/** Below this zoom one pin is lost among city markers and clusters: showing a place zooms in from there. */
+export const FOCUS_MIN_ZOOM = 15;
+/** Street level, where the pin and its neighbours read clearly (the zoom a picked list row has always used). */
+export const FOCUS_ZOOM = 16;
+
+/**
+ * What the map has to do to show one place (21.11.2026: a borshch in Gudauri opened beside a map of Kyiv).
+ * Move only when the point is off screen, or when the map has no bounds yet (it was just created); a card
+ * opened from a pin the visitor is looking at keeps their view. Zoom in only from far out, never out.
+ * `bounds` is anything with contains({lat, lng}), i.e. google.maps.LatLngBounds.
+ */
+/**
+ * The box a map of `size` px shows around `center` at `zoom` (Web Mercator: one 256 px tile spans 360° of longitude at
+ * zoom 0), shrunk by `inset` so a pin under the edge controls does not count as on screen. For a map that does not
+ * exist yet: the desktop split creates a new one on every route change, and it opens at a known view (lastView in
+ * Map.jsx). Without this the card moved a map whose pin was already in sight (map1, 21.11.2026).
+ */
+export const viewBounds = (center, zoom, size, inset = 0.9) => {
+  if (!center || !Number.isFinite(zoom) || !size || !(size.width > 0) || !(size.height > 0)) return null;
+  const halfLng = (size.width / 2) * (360 / (256 * 2 ** zoom)) * inset;
+  const metresPerPx = (EQUATOR_MPP * Math.cos((center.lat * Math.PI) / 180)) / 2 ** zoom;
+  const halfLat = (((size.height / 2) * metresPerPx) / 111320) * inset;
+  return {
+    contains: ({ lat, lng }) => Math.abs(lat - center.lat) <= halfLat && Math.abs(lng - center.lng) <= halfLng,
+  };
+};
+
+export const focusPlan = ({ target, bounds, zoom }) => ({
+  move: !bounds || !bounds.contains(target),
+  zoom: Number.isFinite(zoom) && zoom >= FOCUS_MIN_ZOOM ? null : FOCUS_ZOOM,
+});
 
 /** The closest place to `from`, with its distance. Null when there is none. */
 export const nearestPlace = (from, places) => {

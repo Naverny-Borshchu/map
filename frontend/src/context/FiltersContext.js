@@ -1,7 +1,6 @@
 import { createContext, 
 useContext, 
 useState,
-useRef,
 useCallback 
 }from 'react';
 import { EMPTY_FILTERS, PLACE_TYPES, MEAT_TYPES, countActiveFilters } from '../utils/filtering';
@@ -19,6 +18,9 @@ export const PRICE_MAX = 5000;
 // there was no way to tell a default apart from a deliberate choice.
 export const DEFAULT_FILTERS = { ...EMPTY_FILTERS };
 
+// grows for the whole page life: Map compares it with the last target it applied (components/Map/Map.jsx)
+let focusNonce = 0;
+
 const FiltersContext = createContext();
 
 export const FiltersProvider = ({ children }) => {
@@ -30,9 +32,10 @@ export const FiltersProvider = ({ children }) => {
   // A one-shot "focus the map here (and optionally zoom)" signal. The Map
   // watches it; the nonce lets the same target fire again.
   const [mapTarget, setMapTarget] = useState(null);
-  const focusNonce = useRef(0);
+  // module-level counter (focusNonce below): Map remembers the last nonce it applied across remounts, so the
+  // numbers must keep growing even if this provider is created again (21.11.2026)
   const focusMap = useCallback((lat, lng, zoom) => {
-    setMapTarget({ lat, lng, zoom, nonce: ++focusNonce.current });
+    setMapTarget({ lat, lng, zoom, nonce: ++focusNonce });
   }, []);
 
   const updateFilters = (patch) => {
