@@ -58,6 +58,10 @@ export const MODES = {
 
 // the last focusMap() target a map has applied (see the mapTarget effect); module level, so it outlives a remount
 let appliedTargetNonce = 0;
+// Where the last map ended (centre and zoom, saved on every idle). The desktop split creates a new map on every
+// list <-> card switch and a phone on every tab switch; the new one opens exactly here (21.11.2026). Before this a
+// new map only looked right because it re-applied the last focusMap target, which also undid the visitor's own pans.
+let lastView = null;
 
 export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) => {
   const [isActiveAbout, setIsActiveAbout] = useState(false);
@@ -78,7 +82,11 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   const { updateCity, updateCenter, mapTarget, focusMap } = useFilters();
 
   const mapRef = useRef(null);
-  const [zoomLevel, setZoomLevel] = useState(16);
+  const [startView] = useState(() => lastView);
+  const [zoomLevel, setZoomLevel] = useState(() => (startView && startView.zoom) || 16);
+  // the previous view until something sets a new centre (a selected place, a city, «near me»)
+  const mountCenter = useRef(center);
+  const shownCenter = startView && center === mountCenter.current ? startView.center : center;
 
   const isDesktop = useMediaQuery("(min-width: 1280px)");
 
@@ -108,23 +116,34 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   //  - re-running on every filter change pulled the map back to the selection; now only a new selection moves it.
   // It moves only when the pin is off screen and zooms in only from far out (focusPlan, utils/mapZoom).
   useEffect(() => {
-    if (!selectedPlaceId) return;
+    if (!selectedPlaceId) return undefined;
     const target = coordsOf(getPlaceById(selectedPlaceId));
-    if (!target) return;
+    if (!target) return undefined;
     const map = mapRef.current;
-    const plan = focusPlan({
-      target,
-      bounds: map ? map.getBounds() : null,
-      zoom: map ? map.getZoom() : zoomLevel,
-    });
-    if (plan.move) {
-      updateCenter(target);
-      if (map) map.panTo(target);
+    const show = () => {
+      const plan = focusPlan({
+        target,
+        bounds: map ? map.getBounds() : null,
+        zoom: map ? map.getZoom() : zoomLevel,
+      });
+      if (plan.move) {
+        updateCenter(target);
+        if (map) map.panTo(target);
+      }
+      if (plan.zoom) {
+        setZoomLevel(plan.zoom);
+        if (map) map.setZoom(plan.zoom);
+      }
+    };
+    // A map created a moment ago has no bounds until its first idle: wait for it, so «is the pin on screen» is
+    // judged against the view it opened with (lastView), not guessed.
+    const events = window.google && window.google.maps && window.google.maps.event;
+    if (map && !map.getBounds() && events) {
+      const once = events.addListenerOnce(map, 'idle', show);
+      return () => events.removeListener(once);
     }
-    if (plan.zoom) {
-      setZoomLevel(plan.zoom);
-      if (map) map.setZoom(plan.zoom);
-    }
+    show();
+    return undefined;
     // getPlaceById reads the full set through a ref; allPlaces is here so a deep link re-runs once places arrive
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlaceId, allPlaces]);
@@ -309,13 +328,17 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
     <div className={`${style.container} nb-mapcanvas`}>
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={center}
+        center={shownCenter}
         zoom={zoomLevel}
         onLoad={onLoad}
         onUnmount={onUnmount}
         options={mapOptions}
         onClick={onClickMap}
-        onIdle={() => onIdleTips(mapRef.current)}
+        onIdle={() => {
+          const map = mapRef.current;
+          if (map && map.getCenter()) lastView = { center: map.getCenter().toJSON(), zoom: map.getZoom() };
+          onIdleTips(map);
+        }}
       >
         {/* Low zoom: one marker per city with its total borsch count */}
         {showCityMarkers &&
