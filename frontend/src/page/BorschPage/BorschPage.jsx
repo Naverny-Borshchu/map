@@ -23,6 +23,7 @@ import { useT } from "../../i18n";
 import { useVenueLabel } from "../../i18n";
 import { useDishLabel } from "../../i18n";
 import { useCityLabel } from "../../i18n";
+import { useShowOnMap } from "../../hook/useShowOnMap";
 
 
 export const BorschPage=({ borschId: propId })=>{
@@ -82,6 +83,9 @@ export const BorschPage=({ borschId: propId })=>{
 
       return () => { cancelled = true; };
     }, [missingPlaceId]);
+
+    // On desktop the card sits beside the map: the map shows this borshch (hook/useShowOnMap)
+    useShowOnMap(borschOne?.place_id);
 
       if (!id) {
         return (

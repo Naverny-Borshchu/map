@@ -2124,6 +2124,7 @@ export const CITY_LABELS = {
     'Чернігів': 'Chernihiv',
     'Чорна Тиса': 'Chorna Tysa',
     'Яремче': 'Yaremche',
+    'Гудаурі': 'Gudauri',
     'Берлін': 'Berlin',
     'Лісабон': 'Lisbon',
     'Тель-Авів': 'Tel Aviv',
