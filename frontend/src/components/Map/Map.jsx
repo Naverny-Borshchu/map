@@ -20,6 +20,7 @@ import { TipSheet } from "../TipSheet";
 import { venueLabel as rawVenueLabel } from "../../i18n/venueNames";
 import { useI18n } from "../../i18n";
 import { cityCenter } from "../../utils/cityCenter";
+import { coordsOf, focusPlan } from "../../utils/mapZoom";
 import style from "./Map.module.scss";
 
 
@@ -55,6 +56,9 @@ export const MODES = {
   SET_MARKER: 1,
 };
 
+// the last focusMap() target a map has applied (see the mapTarget effect); module level, so it outlives a remount
+let appliedTargetNonce = 0;
+
 export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) => {
   const [isActiveAbout, setIsActiveAbout] = useState(false);
   const [isActiveAddForm, setIsActiveAddForm] = useState(false);
@@ -70,7 +74,7 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
   const { t, lang, cityLabel } = useI18n();
   // «Кажуть, тут є Борщ»: the tip a grey bowl opened
   const [openTip, setOpenTip] = useState(null);
-  const { selectedPlaceId, cities } = usePlaces();
+  const { selectedPlaceId, cities, allPlaces, getPlaceById } = usePlaces();
   const { updateCity, updateCenter, mapTarget, focusMap } = useFilters();
 
   const mapRef = useRef(null);
@@ -95,29 +99,46 @@ export const Map = ({ center, mode, places, onMarkerAdd, pickedPlace = null }) =
     return hasFullscreenMap && !isDesktop ? { ...withPois, zoomControl: false } : withPois;
   }, [isDesktop, theme, mode]);
 
-  // Pan and zoom to the selected place when selectedPlaceId changes
+  // Show the selected place: a row picked in the list, the quest chip, and since 21.11.2026 the borshch card
+  // open beside the map on desktop (useShowOnMap). Andrii: a card for Gudauri next to a map of Kyiv, «I would
+  // like to show on map because it shows in general Kyiv in many cases». Three things that kept it from working:
+  //  - the place was looked up in the FILTERED list, so a venue hidden by a filter could not be shown; now ALL places;
+  //  - before the map exists nothing happened, and the desktop split creates a new map on every route change
+  //    (list ↔ card), so a card opened from the list never moved it; now the new map starts right there;
+  //  - re-running on every filter change pulled the map back to the selection; now only a new selection moves it.
+  // It moves only when the pin is off screen and zooms in only from far out (focusPlan, utils/mapZoom).
   useEffect(() => {
-    if (!mapRef.current || !selectedPlaceId) return;
-    const found = places.find((p) => String(p.id) === String(selectedPlaceId));
-    if (found && found.latitude && found.longitude) {
-      const target = {
-        lat: Number(found.latitude),
-        lng: Number(found.longitude),
-      };
-      mapRef.current.panTo(target);
-      // Zoom in if current zoom is too far to see the marker clearly
-      const currentZoom = mapRef.current.getZoom();
-      if (currentZoom < 15) {
-        mapRef.current.setZoom(16);
-      }
+    if (!selectedPlaceId) return;
+    const target = coordsOf(getPlaceById(selectedPlaceId));
+    if (!target) return;
+    const map = mapRef.current;
+    const plan = focusPlan({
+      target,
+      bounds: map ? map.getBounds() : null,
+      zoom: map ? map.getZoom() : zoomLevel,
+    });
+    if (plan.move) {
+      updateCenter(target);
+      if (map) map.panTo(target);
     }
-  }, [selectedPlaceId, places]);
+    if (plan.zoom) {
+      setZoomLevel(plan.zoom);
+      if (map) map.setZoom(plan.zoom);
+    }
+    // getPlaceById reads the full set through a ref; allPlaces is here so a deep link re-runs once places arrive
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlaceId, allPlaces]);
 
   // Recentre (and optionally zoom) when something asks to focus the map —
   // e.g. picking a city from the sheet. updateCenter keeps the controlled
   // center prop in step; panTo/setZoom drive the live map imperatively.
+  // One-shot for real (21.11.2026): mapTarget stays in the context, and the desktop split creates a new map on
+  // every route change (list <-> card), so every new map re-applied the LAST city pick / «nearby» / quest target
+  // and pulled the view away from the borshch the card had just shown. A target now applies once per app session;
+  // a map created later starts from `center`, which applying it already set.
   useEffect(() => {
-    if (!mapTarget) return;
+    if (!mapTarget || mapTarget.nonce <= appliedTargetNonce) return;
+    appliedTargetNonce = mapTarget.nonce;
     const { lat, lng, zoom } = mapTarget;
     updateCenter({ lat, lng });
     if (zoom) setZoomLevel(zoom);

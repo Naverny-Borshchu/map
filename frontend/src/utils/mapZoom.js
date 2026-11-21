@@ -56,8 +56,26 @@ export const coordsOf = (place) => {
   if (!place) return null;
   const lat = Number(place.latitude ?? place.location?.lat);
   const lng = Number(place.longitude ?? place.location?.lng);
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  // 0,0 is not a place in our data, it is «unknown»: the add form writes `lat || 0` when it has none
+  return lat === 0 && lng === 0 ? null : { lat, lng };
 };
+
+/** Below this zoom one pin is lost among city markers and clusters: showing a place zooms in from there. */
+export const FOCUS_MIN_ZOOM = 15;
+/** Street level, where the pin and its neighbours read clearly (the zoom a picked list row has always used). */
+export const FOCUS_ZOOM = 16;
+
+/**
+ * What the map has to do to show one place (21.11.2026: a borshch in Gudauri opened beside a map of Kyiv).
+ * Move only when the point is off screen, or when the map has no bounds yet (it was just created); a card
+ * opened from a pin the visitor is looking at keeps their view. Zoom in only from far out, never out.
+ * `bounds` is anything with contains({lat, lng}), i.e. google.maps.LatLngBounds.
+ */
+export const focusPlan = ({ target, bounds, zoom }) => ({
+  move: !bounds || !bounds.contains(target),
+  zoom: Number.isFinite(zoom) && zoom >= FOCUS_MIN_ZOOM ? null : FOCUS_ZOOM,
+});
 
 /** The closest place to `from`, with its distance. Null when there is none. */
 export const nearestPlace = (from, places) => {
