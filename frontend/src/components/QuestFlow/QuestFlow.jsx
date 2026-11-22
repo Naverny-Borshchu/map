@@ -125,6 +125,11 @@ export const QuestFlow = ({
   // The cross asks «Вийти з оцінки?» once something is answered; the answers
   // stay in the caller's draft either way.
   confirmExit = false,
+  // The answers came in a link from another browser (services/handoff), and
+  // anybody can write one. The comment screen then shows every answer, the
+  // way the closing screen does, with «Змінити відповіді»: nothing is sent
+  // that the person has not seen.
+  carried = false,
 }) => {
   const { t, lang } = useI18n();
   const [step, setStep] = useState(() => Math.max(0, Math.min(Number(initialStep) || 0, steps.length - 1)));
@@ -299,6 +304,17 @@ export const QuestFlow = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [current, nextEnabled, go, exitOpen]);
 
+  // «Змінити відповіді»: back to the first rating screen, answers kept
+  const jumpTo = (index) => {
+    if (index < 0) return;
+    setDir(-1);
+    setLeaving(true);
+    setTimeout(() => {
+      setStep(Math.min(Math.max(index, 0), steps.length - 1));
+      setLeaving(false);
+    }, 150);
+  };
+
   const handleSignIn = async (credentialResponse) => {
     await onSignIn?.(credentialResponse);
     const signedIn = isAuthed();
@@ -323,7 +339,40 @@ export const QuestFlow = ({
   const titleFor = (s) => (s.type === 'comment' ? t('r3.comment.title') : t(s.i18n));
   const bigTitle = current && (RATING_TYPES.has(current.type) || current.type === 'comment');
 
-  const summary = rates && current?.type === 'done' ? summaryPhrases(values, t, lang) : [];
+  const showsSummary = rates && (current?.type === 'done' || (carried && current?.type === 'comment'));
+  const summary = showsSummary ? summaryPhrases(values, t, lang) : [];
+  const firstRating = steps.findIndex((s) => RATING_TYPES.has(s.type));
+
+  // «Твій Борщ у двох словах»: the closing screen, and the comment screen of
+  // a carried rating, before anything is sent
+  const summaryBlock = (id) => (
+    <section className={style.sum} aria-labelledby={id}>
+      <h3 className={style.sumTitle} id={id}>{t('r3.sumTitle')}</h3>
+      {summary.length > 0 ? (
+        <>
+          <div className={style.tags}>
+            {summary.map((p) => <span className={style.tag} key={p}>{p}</span>)}
+          </div>
+          <p className={style.sumNote}>{t('r3.sumNote')}</p>
+        </>
+      ) : (
+        <p className={style.sumNote}>{t('r3.sumOnlyOverall')}</p>
+      )}
+      {values.overall ? (
+        <div className={style.sumOverall}>
+          <span className={style.sumK}>{t('r3.sumOverall')}</span>
+          <b>{values.overall}</b>
+          <span>{t(`r3.overall.${values.overall}`)}</span>
+        </div>
+      ) : null}
+      {values.aftertaste ? (
+        <div className={style.sumAfter}>
+          <span className={style.sumK}>{t('r3.sumAftertaste')}</span>
+          <span>{lowerFirst(t(`r3.aftertaste.${values.aftertaste}`), lang)}</span>
+        </div>
+      ) : null}
+    </section>
+  );
 
   const head = current && current.type !== 'done' && (
     <div className={style.headRow}>
@@ -539,6 +588,18 @@ export const QuestFlow = ({
           </div>
         )}
 
+        {current?.type === 'comment' && carried && rates && (
+          <div className={style.carried} data-testid="carried-summary">
+            <p className={style.carriedNote}>{t('r3.carriedNote')}</p>
+            {summaryBlock('sum-carried')}
+            {firstRating >= 0 && (
+              <button type="button" className={style.inlineBtn} onClick={() => jumpTo(firstRating)}>
+                {t('r3.carriedEdit')}
+              </button>
+            )}
+          </div>
+        )}
+
         {current?.type === 'comment' && (
           <div className={style.q}>
             <p className={style.qLabel} id="ql-comment"><span>{t('r3.q.comment')}</span></p>
@@ -645,34 +706,7 @@ export const QuestFlow = ({
                 {!status.photosFailed && !(status.photosPending > 0) && hadPhotoFailure.current && (
                   <p className={style.photoWarn} role="status">{t('flow.photoRetryOk')}</p>
                 )}
-                {rates && (
-                  <section className={style.sum} aria-labelledby="sum-title">
-                    <h3 className={style.sumTitle} id="sum-title">{t('r3.sumTitle')}</h3>
-                    {summary.length > 0 ? (
-                      <>
-                        <div className={style.tags}>
-                          {summary.map((p) => <span className={style.tag} key={p}>{p}</span>)}
-                        </div>
-                        <p className={style.sumNote}>{t('r3.sumNote')}</p>
-                      </>
-                    ) : (
-                      <p className={style.sumNote}>{t('r3.sumOnlyOverall')}</p>
-                    )}
-                    {values.overall ? (
-                      <div className={style.sumOverall}>
-                        <span className={style.sumK}>{t('r3.sumOverall')}</span>
-                        <b>{values.overall}</b>
-                        <span>{t(`r3.overall.${values.overall}`)}</span>
-                      </div>
-                    ) : null}
-                    {values.aftertaste ? (
-                      <div className={style.sumAfter}>
-                        <span className={style.sumK}>{t('r3.sumAftertaste')}</span>
-                        <span>{lowerFirst(t(`r3.aftertaste.${values.aftertaste}`), lang)}</span>
-                      </div>
-                    ) : null}
-                  </section>
-                )}
+                {rates && summaryBlock('sum-title')}
                 {doneExtra}
               </>
             )}
