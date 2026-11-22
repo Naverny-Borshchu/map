@@ -88,9 +88,12 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     // scores carries the previous draft version and is not read at all.
     const [answers, setAnswers] = useState(() => restoreAnswers(restoredDraft?.values?.answers));
     // A draft carried in from another browser (services/handoff) came in a
-    // link that anybody can write, so it opens no further than the comment:
-    // the person sees what is about to go out and sends it with their own tap.
-    // Opened right on «done», the flow would post it by itself.
+    // link that anybody can write, so it opens no further than the comment,
+    // and that screen then shows every answer with «Змінити відповіді»
+    // (QuestFlow `carried`): the person sees what is about to go out and sends
+    // it with their own tap. Opened right on «done», the flow would post it by
+    // itself.
+    const [carried] = useState(() => Boolean(restoredDraft?.handoff));
     const [draftStep, setDraftStep] = useState(() => {
       const step = restoredDraft?.step || 0;
       if (!restoredDraft?.handoff) return step;
@@ -358,6 +361,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       xpTotal={xpTotal}
       initialStep={draftStep}
       onStepChange={setDraftStep}
+      carried={carried}
     />
   );
 };

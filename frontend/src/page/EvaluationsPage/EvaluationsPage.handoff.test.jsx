@@ -6,6 +6,7 @@ import { UserProvider } from '../../context/UserContext';
 import { track } from '../../analytics';
 import { borschAPI, commentsAPI } from '../../api';
 import { EvaluationsPage } from './EvaluationsPage';
+import { applyHandoff, HANDOFF_PARAM } from '../../services/handoff';
 
 jest.mock('react-router-dom', () => require('react-router'));
 jest.mock('../../analytics', () => ({ ...jest.requireActual('../../analytics'), track: jest.fn() }));
@@ -66,13 +67,21 @@ beforeEach(() => {
   localStorage.setItem('user', JSON.stringify({ id: 7 }));
 });
 
-it('a carried rating stops on the comment, in plain sight, and goes only on the person\'s tap', async () => {
+it('a carried rating stops on the comment, every answer in plain sight, and goes only on the person\'s tap', async () => {
   sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
     version: 2, step: 99, handoff: true, values: { answers: ANSWERS, comment: 'Не мій текст' },
   }));
   renderRate();
 
   expect(await screen.findByDisplayValue('Не мій текст')).toBeInTheDocument();
+  // what will go out, the way the closing screen says it, before it goes
+  const summary = screen.getByTestId('carried-summary');
+  expect(summary).toHaveTextContent('Ці відповіді прийшли разом із посиланням');
+  expect(summary).toHaveTextContent('Твій Борщ у двох словах');
+  expect(summary).toHaveTextContent('Мʼяса кілька шматків');
+  expect(summary).toHaveTextContent('Сіль саме те');
+  expect(summary).toHaveTextContent(/Загалом\s*8\s*прекрасний/);
+  expect(screen.getByRole('button', { name: 'Змінити відповіді' })).toBeInTheDocument();
   await new Promise((r) => setTimeout(r, 300));
   expect(commentsAPI.createByBorschId).not.toHaveBeenCalled();
 
@@ -89,3 +98,42 @@ it('a carried rating that stopped earlier opens where it stopped', async () => {
   expect(screen.queryByDisplayValue('x')).not.toBeInTheDocument();
   expect(commentsAPI.createByBorschId).not.toHaveBeenCalled();
 });
+
+it('«Змінити відповіді» goes to the first rating screen with the answers kept', async () => {
+  sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+    version: 2, step: 99, handoff: true, values: { answers: ANSWERS, comment: '' },
+  }));
+  renderRate();
+  await userEvent.click(await screen.findByRole('button', { name: 'Змінити відповіді' }));
+  // the meat screen, «кілька шматків» still chosen
+  expect(await screen.findByText('Скільки його було?')).toBeInTheDocument();
+  expect(screen.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true').length).toBeGreaterThan(0);
+  expect(screen.queryByTestId('carried-summary')).not.toBeInTheDocument();
+  expect(commentsAPI.createByBorschId).not.toHaveBeenCalled();
+  expect(JSON.parse(sessionStorage.getItem(DRAFT_KEY)).values.answers).toMatchObject({ meat_amount: 2, overall: 8 });
+});
+
+it('a rating that was not carried shows no such summary on the comment', async () => {
+  sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+    version: 2, step: 8, values: { answers: ANSWERS, comment: 'мій' },
+  }));
+  renderRate();
+  expect(await screen.findByDisplayValue('мій')).toBeInTheDocument();
+  expect(screen.queryByTestId('carried-summary')).not.toBeInTheDocument();
+});
+
+it.each([
+  ['a number', 5],
+  ['an object', { a: 1 }],
+  ['an array', ['x']],
+])('a link with a comment that is %s opens the rating instead of a blank page', async (_, comment) => {
+  const raw = btoa(JSON.stringify({ v: 2, draft: { step: 99, answers: ANSWERS, comment } }))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  window.history.replaceState(null, '', `/borsch/b1/evaluations?${HANDOFF_PARAM}=${raw}`);
+  expect(applyHandoff()).toEqual({ drafts: 1, bowl: false });
+  renderRate();
+  expect(await screen.findByTestId('carried-summary')).toBeInTheDocument();
+  expect(screen.getByRole('textbox')).toHaveValue('');
+  window.history.replaceState(null, '', '/');
+});
+
