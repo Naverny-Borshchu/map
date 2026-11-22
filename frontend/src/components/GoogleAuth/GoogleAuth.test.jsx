@@ -142,6 +142,28 @@ it('disabled (terms not accepted) covers Google\'s button so it cannot be tapped
   expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
 });
 
+it('disabled means no sign-in at all, even if Google\'s button was reached from the keyboard', async () => {
+  installGoogle();
+  const onSuccess = jest.fn();
+  renderAuth({ disabled: true, onSuccess });
+  // Tab cannot reach the frame…
+  expect(screen.getByTestId('google-button-slot')).toHaveAttribute('inert');
+  // …and a credential that arrives anyway is dropped
+  await googleSignsIn();
+  expect(onSuccess).not.toHaveBeenCalled();
+  expect(track).toHaveBeenCalledWith('auth_google_blocked', { in_app: false });
+});
+
+it('turns back on once the terms are accepted', async () => {
+  installGoogle();
+  const onSuccess = jest.fn();
+  const { rerender } = renderAuth({ disabled: true, onSuccess });
+  rerender(<I18nProvider><GoogleAuth disabled={false} onSuccess={onSuccess} /></I18nProvider>);
+  expect(screen.getByTestId('google-button-slot')).not.toHaveAttribute('inert');
+  await googleSignsIn();
+  expect(onSuccess).toHaveBeenCalledTimes(1);
+});
+
 describe('inside Threads', () => {
   beforeEach(() => setUA(THREADS_IOS));
 

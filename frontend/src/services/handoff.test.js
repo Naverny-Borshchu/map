@@ -72,6 +72,23 @@ it('carries the bowl being rated, without its photos', async () => {
   expect(getDraft(bowl.id)).toMatchObject({ id: bowl.id, borsch: { id: 'b1' }, photoCount: 0, reviewedAt: null });
 });
 
+it('a link cannot plant a bowl that would create a venue or borshch in someone\'s name', () => {
+  const now = Date.now();
+  const forged = (bowl) => btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, drafts: {}, bowl }))))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  go(`/?${HANDOFF_PARAM}=${forged({ id: 'bowl_x1_aaaaaa', createdAt: now, place: { id: null, name: 'Fake', google: { place_id: 'g' } }, borsch: { id: null, name: 'Fake', created: true } })}`);
+  expect(applyHandoff()).toEqual({ drafts: 0, bowl: false });
+  expect(getDraft('bowl_x1_aaaaaa')).toBeNull();
+
+  // a catalogue bowl is taken, but only its naming fields
+  go(`/?${HANDOFF_PARAM}=${forged({ id: 'bowl_x2_bbbbbb', createdAt: now, place: { id: 'p1', name: 'Маяк', google: { place_id: 'g' } }, borsch: { id: 'b1', name: 'Домашній', created: true }, extra: 'x' })}`);
+  expect(applyHandoff()).toEqual({ drafts: 0, bowl: true });
+  const bowl = getDraft('bowl_x2_bbbbbb');
+  expect(bowl.place).toEqual({ id: 'p1', name: 'Маяк', city: '' });
+  expect(bowl.borsch).toEqual({ id: 'b1', name: 'Домашній' });
+  expect(bowl.extra).toBeUndefined();
+});
+
 it('a page with nothing to carry gets the plain address', () => {
   go('/borsch/x/evaluations?utm_source=threads');
   expect(handoffUrl()).toBe('http://localhost/borsch/x/evaluations?utm_source=threads');

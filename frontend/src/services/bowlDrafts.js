@@ -116,15 +116,35 @@ export const createDraft = async ({ place, borsch, photoMode = 'later', photos =
  * handoff): the browser inside Threads cannot sign in, so its bowl travels
  * to Safari in the link. The photos stay behind in the other browser's
  * IndexedDB, so the bowl arrives without them and the rating asks for one.
- * A bowl already here is left alone.
+ * A bowl already here is left alone. A bowl of a new venue or borshch stays
+ * behind too (see below); its answers still travel with the link.
  */
 export const importDraft = (bowl, now = Date.now()) => {
   if (!bowl || typeof bowl.id !== 'string' || !/^bowl_[a-z0-9_]+$/.test(bowl.id)) return null;
   if (!Number.isFinite(bowl.createdAt) || !alive(bowl, now)) return null;
+  // It came in a link, and anybody can write a link. Only a bowl of a venue
+  // and a borshch the map already has is taken, and only the fields that
+  // name them: a bowl that would create a venue or a borshch on the server
+  // in this person's name is not something a link may hand them.
+  const id = (v) => (typeof v === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(v) ? v : null);
+  const text = (v) => (typeof v === 'string' ? v.slice(0, 200) : '');
+  const placeId = id(bowl.place?.id);
+  const borschId = id(bowl.borsch?.id);
+  if (!placeId || !borschId) return null;
   const bowls = read();
   const existing = bowls.find((b) => b.id === bowl.id);
   if (existing) return existing;
-  const draft = { ...bowl, photoCount: 0, snoozedUntil: 0, reviewedAt: null };
+  const draft = {
+    id: bowl.id,
+    createdAt: bowl.createdAt,
+    place: { id: placeId, name: text(bowl.place.name), city: text(bowl.place.city) },
+    borsch: { id: borschId, name: text(bowl.borsch.name) },
+    photoMode: ['now', 'camera_roll', 'later'].includes(bowl.photoMode) ? bowl.photoMode : 'later',
+    photoCount: 0,
+    ...(typeof bowl.photoTakenAt === 'string' ? { photoTakenAt: bowl.photoTakenAt.slice(0, 16) } : {}),
+    snoozedUntil: 0,
+    reviewedAt: null,
+  };
   write([...bowls, draft]);
   return draft;
 };

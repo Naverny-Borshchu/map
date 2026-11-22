@@ -64,6 +64,11 @@ export const GoogleAuth = ({ onSuccess, disabled = false }) => {
     // (initialize() twice is what the console warned about)
     const onSuccessRef = useRef(onSuccess);
     onSuccessRef.current = onSuccess;
+    // Google's button lives in its own frame and cannot be disabled. The cover
+    // below stops a tap and `inert` stops Tab, but whatever still gets through
+    // (terms not accepted on /login, a claim already in flight) stops here.
+    const blockedRef = useRef(disabled);
+    blockedRef.current = disabled;
 
     const inApp = useMemo(() => detectInAppBrowser(), []);
     const [ready, setReady] = useState(() => Boolean(gsi()));
@@ -98,6 +103,10 @@ export const GoogleAuth = ({ onSuccess, disabled = false }) => {
     }, [ready, inApp]);
 
     const handleCredential = useCallback(async (response) => {
+        if (blockedRef.current) {
+            track("auth_google_blocked", { in_app: Boolean(inApp) });
+            return;
+        }
         setError("");
         setBusy(true);
         try {
@@ -181,7 +190,13 @@ export const GoogleAuth = ({ onSuccess, disabled = false }) => {
                 title={disabled ? t("auth.consentHint") : ""}
             >
                 {/* Google's button lands here once its script is in */}
-                <div ref={slot} className={style.slot} hidden={!ready} data-testid="google-button-slot" />
+                <div
+                    ref={slot}
+                    className={style.slot}
+                    hidden={!ready}
+                    inert={disabled || busy}
+                    data-testid="google-button-slot"
+                />
                 {!ready && (
                     <button type="button" className={style.googleBtn} disabled aria-busy={!slow}>
                         <FcGoogle size={24} className={style.googleIcon} />
