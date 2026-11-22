@@ -1175,6 +1175,24 @@
   &:disabled { opacity: 0.55; cursor: default; }
 }
 
+/* A rating that came in a link (services/handoff): every answer on the
+   comment screen, before the send, with a way back to change them */
+.carried {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  .sum { align-self: stretch; margin-top: 0; }
+}
+
+.carriedNote {
+  margin: 0;
+  @include footnote;
+  color: var(--q-ink-2);
+}
+
 /* «Твій Борщ у двох словах» */
 .sum {
   margin-top: 16px;

@@ -31,13 +31,22 @@ const SessionProbe = () => {
 beforeEach(() => {
   localStorage.clear();
   googleAuth.mockReset();
-  // Google Identity Services: initialize() hands us the callback, prompt() answers it like One Tap does.
+  // Google Identity Services: initialize() hands us the callback; the button
+  // renderButton() draws answers it like Google's sign-in window does. No
+  // prompt(): One Tap is not used any more (it silently did nothing for most
+  // people, 11.2026).
   let callback = null;
   window.google = {
     accounts: {
       id: {
         initialize: ({ callback: cb }) => { callback = cb; },
-        prompt: () => callback && callback({ credential: 'google-id-token' }),
+        renderButton: (el) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = 'Google';
+          b.addEventListener('click', () => callback && callback({ credential: 'google-id-token' }));
+          el.appendChild(b);
+        },
       },
     },
   };

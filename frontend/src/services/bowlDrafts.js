@@ -111,6 +111,48 @@ export const createDraft = async ({ place, borsch, photoMode = 'later', photos =
   return draft;
 };
 
+/**
+ * A bowl carried over from another browser on the same phone (services/
+ * handoff): the browser inside Threads cannot sign in, so its bowl travels
+ * to Safari in the link. The photos stay behind in the other browser's
+ * IndexedDB, so the bowl arrives without them and the rating asks for one.
+ * A bowl already here is left alone. A bowl of a new venue or borshch stays
+ * behind (see below), and so do its answers (services/handoff).
+ */
+// a bowl is made on this device, so its clock and the link's agree to a minute
+const CLOCK_SKEW_MS = 60 * 1000;
+
+export const importDraft = (bowl, now = Date.now()) => {
+  if (!bowl || typeof bowl.id !== 'string' || !/^bowl_[a-z0-9_]{1,59}$/.test(bowl.id)) return null;
+  // A bowl from the future would never expire and never be due.
+  if (!Number.isFinite(bowl.createdAt) || bowl.createdAt > now + CLOCK_SKEW_MS || !alive(bowl, now)) return null;
+  // It came in a link, and anybody can write a link. Only a bowl of a venue
+  // and a borshch the map already has is taken, and only their ids: a bowl
+  // that would create a venue or a borshch on the server in this person's
+  // name is not something a link may hand them, and the names the person
+  // sees come from the map (services/handoff), not from whoever wrote it.
+  const id = (v) => (typeof v === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(v) ? v : null);
+  const placeId = id(bowl.place?.id);
+  const borschId = id(bowl.borsch?.id);
+  if (!placeId || !borschId) return null;
+  const bowls = read();
+  const existing = bowls.find((b) => b.id === bowl.id);
+  if (existing) return existing;
+  const draft = {
+    id: bowl.id,
+    createdAt: Math.min(bowl.createdAt, now),
+    place: { id: placeId, name: '', city: '' },
+    borsch: { id: borschId, name: '' },
+    photoMode: ['now', 'camera_roll', 'later'].includes(bowl.photoMode) ? bowl.photoMode : 'later',
+    // the photo stays in the other browser, and so does when it was taken
+    photoCount: 0,
+    snoozedUntil: 0,
+    reviewedAt: null,
+  };
+  write([...bowls, draft]);
+  return draft;
+};
+
 /** Does rating this bowl first put a new venue or borshch on the map? */
 export const draftIsNew = (bowl) => Boolean(bowl && (!bowl.borsch?.id || !bowl.place?.id));
 

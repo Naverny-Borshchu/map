@@ -54,6 +54,8 @@ export const RateFlow = ({
   doneExtra = null,
   cover = null,
   coverSrc = '',
+  // the answers came in a link from another browser (services/handoff)
+  carried = false,
 }) => {
   const t = useT();
   const { isAuthenticated, completeGoogleSignIn } = useUser();
@@ -142,6 +144,7 @@ export const RateFlow = ({
       cover={cover}
       coverSrc={coverSrc}
       confirmExit
+      carried={carried}
     />
   );
 };
