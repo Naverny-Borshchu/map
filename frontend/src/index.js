@@ -7,6 +7,7 @@ import { applyTimeTheme } from './theme';
 import { getLanguage } from './i18n';
 import { initAnalytics, track } from './analytics';
 import { applyHandoff } from './services/handoff';
+import { borschAPI } from './api';
 import './index.scss';
 
 initAnalytics();
@@ -24,8 +25,9 @@ if (window.location.hash.startsWith('#/')) {
 
 // A rating carried over from the browser inside Threads/Instagram, which
 // cannot sign in with Google (services/handoff): its answers go back into
-// this tab before any page reads its draft.
-const handoff = applyHandoff();
+// this tab before any page reads its draft. A carried bowl takes the names of
+// its venue and borshch from the map, not from the link.
+const handoff = applyHandoff({ lookupBorsch: (id) => borschAPI.getById(id) });
 if (handoff) track('auth_handoff_restored', handoff);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

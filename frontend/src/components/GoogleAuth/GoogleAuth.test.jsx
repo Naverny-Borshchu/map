@@ -180,7 +180,7 @@ describe('inside Threads', () => {
   it('opens Safari with the answers in the link', async () => {
     installGoogle();
     window.history.replaceState(null, '', '/borsch/abc/evaluations');
-    sessionStorage.setItem('nb:quest-draft:rate:abc', JSON.stringify({ version: 1, step: 9, values: { answers: { overall: 8 }, comment: '' } }));
+    sessionStorage.setItem('nb:quest-draft:rate:abc', JSON.stringify({ version: 2, step: 9, values: { answers: { overall: 8 }, comment: '' } }));
     const assigned = [];
     const realLocation = window.location;
     delete window.location;

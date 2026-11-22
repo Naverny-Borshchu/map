@@ -81,7 +81,9 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const t = useT();
     const dishLabel = useDishLabel();
     const venueLabel = useVenueLabel();
-    const [comment, setComment] = useState(() => restoredDraft?.values?.comment || "");
+    const [comment, setComment] = useState(() => (
+      typeof restoredDraft?.values?.comment === 'string' ? restoredDraft.values.comment : ''
+    ));
     // Оцінювання 3.0: the answers of answers.js. A draft of the old seven
     // scores carries the previous draft version and is not read at all.
     const [answers, setAnswers] = useState(() => restoreAnswers(restoredDraft?.values?.answers));
