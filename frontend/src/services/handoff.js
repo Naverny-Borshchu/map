@@ -12,10 +12,17 @@ import { getDraft, importDraft } from './bowlDrafts';
  * lands on the same step with the same answers and only has to sign in.
  *
  * Photos are files and do not travel; a bowl arrives without its photo.
+ *
+ * Anybody can write such a link, so what comes in is never trusted to act:
+ * only rating drafts are taken, a bowl only for a venue and borshch the map
+ * already has (bowlDrafts.importDraft), and a carried rating always stops
+ * before the send for the person to see and confirm.
  */
 export const HANDOFF_PARAM = 'nb_handoff';
 const VERSION = 1;
-const DRAFT_PREFIX = 'nb:quest-draft:';
+// Ratings only. The add flow's draft holds a whole new venue and borshch,
+// and a link that anybody can write must not be able to hand one over.
+const CARRIED = /^nb:quest-draft:(rate|bowl):[A-Za-z0-9_-]{1,64}$/;
 // A query string this long still opens everywhere; a comment longer than that
 // is not worth a link that some app refuses to open.
 const MAX_ENCODED = 8000;
@@ -51,7 +58,7 @@ export const collectHandoff = (pathname = window.location.pathname) => {
   if (store) {
     for (let i = 0; i < store.length; i += 1) {
       const key = store.key(i);
-      if (key && key.startsWith(DRAFT_PREFIX)) drafts[key] = store.getItem(key);
+      if (key && CARRIED.test(key)) drafts[key] = store.getItem(key);
     }
   }
   const bowlId = bowlIdFromPath(pathname);
@@ -115,12 +122,16 @@ export const applyHandoff = () => {
   const store = session();
   if (store && payload.drafts && typeof payload.drafts === 'object') {
     Object.entries(payload.drafts).forEach(([key, value]) => {
-      if (!key.startsWith(DRAFT_PREFIX) || typeof value !== 'string' || store.getItem(key) !== null) return;
+      if (!CARRIED.test(key) || typeof value !== 'string' || store.getItem(key) !== null) return;
       try {
         const draft = JSON.parse(value);
         if (!draft || typeof draft !== 'object') return;
         // a send that was under way in the other browser is not under way here
         delete draft.submissionState;
+        // and it came in a link: the rating opens no further than the comment,
+        // so nothing is sent until this person taps it through
+        // (EvaluationsPage). A forged link cannot post in their name.
+        draft.handoff = true;
         store.setItem(key, JSON.stringify(draft));
         drafts += 1;
       } catch (e) { /* one broken draft does not stop the others */ }

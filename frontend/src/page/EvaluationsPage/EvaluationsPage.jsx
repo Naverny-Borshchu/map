@@ -85,7 +85,15 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     // Оцінювання 3.0: the answers of answers.js. A draft of the old seven
     // scores carries the previous draft version and is not read at all.
     const [answers, setAnswers] = useState(() => restoreAnswers(restoredDraft?.values?.answers));
-    const [draftStep, setDraftStep] = useState(() => restoredDraft?.step || 0);
+    // A draft carried in from another browser (services/handoff) came in a
+    // link that anybody can write, so it opens no further than the comment:
+    // the person sees what is about to go out and sends it with their own tap.
+    // Opened right on «done», the flow would post it by itself.
+    const [draftStep, setDraftStep] = useState(() => {
+      const step = restoredDraft?.step || 0;
+      if (!restoredDraft?.handoff) return step;
+      return Math.min(step, (withPhotoStep ? 1 : 0) + ratingSteps().length);
+    });
     // Two new borshch ratings a day (11.2026): asked once, before the
     // questions, for the borshch this page opened with (a bowl's new borshch
     // has no id yet: «a new one»). A second rating of the same borshch is an

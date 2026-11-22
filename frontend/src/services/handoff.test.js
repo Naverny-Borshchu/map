@@ -32,7 +32,7 @@ it('carries the rating to another browser and puts it back on the same step', ()
   expect(applyHandoff()).toEqual({ drafts: 1, bowl: false });
 
   const { submissionState, ...carried } = draft;
-  expect(JSON.parse(sessionStorage.getItem(RATE_KEY))).toEqual(carried);
+  expect(JSON.parse(sessionStorage.getItem(RATE_KEY))).toEqual({ ...carried, handoff: true });
   expect(sessionStorage.getItem('nb:geo-hint-shown')).toBeNull();
   // the parameter is gone from the address: not shared, not a page view
   expect(window.location.search).toBe('');
@@ -101,10 +101,22 @@ it('ignores a broken or foreign parameter and still cleans the address', () => {
   expect(sessionStorage.length).toBe(0);
 
   // only quest drafts may be written, whatever the link says
-  const evil = btoa(JSON.stringify({ v: 1, drafts: { access: '"stolen"', 'nb:quest-draft:x': '{"step":1}' } }));
+  const evil = btoa(JSON.stringify({ v: 1, drafts: { access: '"stolen"', 'nb:quest-draft:rate:b1': '{"step":1}' } }));
   go(`/?${HANDOFF_PARAM}=${evil}`);
   expect(applyHandoff()).toEqual({ drafts: 1, bowl: false });
   expect(sessionStorage.getItem('access')).toBeNull();
+});
+
+it('never carries the add flow: its draft is a whole new venue and borshch', () => {
+  go('/add-borsch/select-place/x');
+  sessionStorage.setItem('nb:quest-draft:add-borsch', JSON.stringify({ version: 2, step: 3, values: { name: 'Мій' } }));
+  expect(collectHandoff()).toBeNull();
+
+  sessionStorage.clear();
+  const forged = btoa(JSON.stringify({ v: 1, drafts: { 'nb:quest-draft:add-borsch': '{"version":2,"step":99,"values":{"name":"Fake"}}' } }));
+  go(`/add-borsch/select-place/x?${HANDOFF_PARAM}=${forged}`);
+  expect(applyHandoff()).toEqual({ drafts: 0, bowl: false });
+  expect(sessionStorage.getItem('nb:quest-draft:add-borsch')).toBeNull();
 });
 
 it('without the parameter does nothing at all', () => {
