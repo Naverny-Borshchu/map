@@ -111,6 +111,24 @@ export const createDraft = async ({ place, borsch, photoMode = 'later', photos =
   return draft;
 };
 
+/**
+ * A bowl carried over from another browser on the same phone (services/
+ * handoff): the browser inside Threads cannot sign in, so its bowl travels
+ * to Safari in the link. The photos stay behind in the other browser's
+ * IndexedDB, so the bowl arrives without them and the rating asks for one.
+ * A bowl already here is left alone.
+ */
+export const importDraft = (bowl, now = Date.now()) => {
+  if (!bowl || typeof bowl.id !== 'string' || !/^bowl_[a-z0-9_]+$/.test(bowl.id)) return null;
+  if (!Number.isFinite(bowl.createdAt) || !alive(bowl, now)) return null;
+  const bowls = read();
+  const existing = bowls.find((b) => b.id === bowl.id);
+  if (existing) return existing;
+  const draft = { ...bowl, photoCount: 0, snoozedUntil: 0, reviewedAt: null };
+  write([...bowls, draft]);
+  return draft;
+};
+
 /** Does rating this bowl first put a new venue or borshch on the map? */
 export const draftIsNew = (bowl) => Boolean(bowl && (!bowl.borsch?.id || !bowl.place?.id));
 

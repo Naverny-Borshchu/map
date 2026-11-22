@@ -38,3 +38,113 @@
     color: #1A1A1A;
     white-space: nowrap;
 }
+
+.wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+}
+
+.buttonBox {
+    position: relative;
+    width: 100%;
+}
+
+/* Google's own button: an iframe it sizes itself (up to 400px), centred */
+.slot {
+    display: flex;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.slot[hidden] {
+    display: none;
+}
+
+.isDisabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.blocker {
+    position: absolute;
+    inset: 0;
+    cursor: not-allowed;
+}
+
+.status,
+.error {
+    margin: 0;
+    font-family: var(--font-family-main);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.status {
+    color: var(--color-text-grey);
+}
+
+.error {
+    color: var(--color-red-900);
+}
+
+/* The browser inside Threads/Instagram: Google will not sign in there */
+.inApp {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 16px;
+    background: #FFF4E5;
+    text-align: left;
+}
+
+.inAppTitle {
+    margin: 0;
+    font-family: var(--font-family-main);
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+.inAppText,
+.inAppManual {
+    margin: 0;
+    font-family: var(--font-family-main);
+    font-size: 14px;
+    line-height: 1.4;
+    color: #4A3B36;
+}
+
+.inAppManual {
+    font-size: 13px;
+    /* a fixed colour: the box stays light in the night theme too */
+    color: #7A6A64;
+}
+
+.openBtn {
+    min-height: 48px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-akcent-btn);
+    color: #FFFFFF;
+    font-family: var(--font-family-main);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.copyBtn {
+    min-height: 40px;
+    border: 1.5px solid var(--color-border-input);
+    border-radius: var(--radius-pill);
+    background: #FFFFFF;
+    color: #1A1A1A;
+    font-family: var(--font-family-main);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}

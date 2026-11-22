@@ -5,7 +5,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { applyVariant } from './variant';
 import { applyTimeTheme } from './theme';
 import { getLanguage } from './i18n';
-import { initAnalytics } from './analytics';
+import { initAnalytics, track } from './analytics';
+import { applyHandoff } from './services/handoff';
 import './index.scss';
 
 initAnalytics();
@@ -20,6 +21,12 @@ if (window.location.hash.startsWith('#/')) {
   const target = window.location.hash.slice(1);
   window.history.replaceState(null, '', target + window.location.search);
 }
+
+// A rating carried over from the browser inside Threads/Instagram, which
+// cannot sign in with Google (services/handoff): its answers go back into
+// this tab before any page reads its draft.
+const handoff = applyHandoff();
+if (handoff) track('auth_handoff_restored', handoff);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
