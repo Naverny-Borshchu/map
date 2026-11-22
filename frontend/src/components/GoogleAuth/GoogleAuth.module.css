@@ -148,3 +148,19 @@
     font-weight: 600;
     cursor: pointer;
 }
+
+/* the link to select by hand when the clipboard refused it */
+.linkField {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--color-border-input);
+    border-radius: 12px;
+    background: #FFFFFF;
+    color: #1A1A1A;
+    font-family: var(--font-family-main);
+    font-size: 13px;
+    user-select: all;
+    -webkit-user-select: all;
+}

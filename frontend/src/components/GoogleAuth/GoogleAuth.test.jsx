@@ -88,7 +88,8 @@ it('says so when signing in fails after Google, instead of a button that seems d
   jest.spyOn(console, 'error').mockImplementation(() => {});
   renderAuth({ onSuccess });
   await googleSignsIn();
-  expect(await screen.findByRole('alert')).toHaveTextContent('Не вдалося увійти через Google');
+  // ти, as everywhere else in the app
+  expect(await screen.findByRole('alert')).toHaveTextContent('Не вдалося увійти через Google. Спробуй ще раз.');
   expect(track).toHaveBeenCalledWith('auth_google_failed', { stage: 'app', in_app: false });
   console.error.mockRestore();
 });
@@ -209,5 +210,76 @@ describe('inside Threads', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Скопіювати посилання' }));
     await waitFor(() => expect(screen.getByRole('button', { name: /Скопійовано/ })).toBeInTheDocument());
     expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^https:\/\/map\.navernyborshchu\.com\//));
+  });
+
+  describe('says what travels and what does not', () => {
+    const RATE = '/borsch/abc/evaluations';
+    const withDraft = () => sessionStorage.setItem('nb:quest-draft:rate:abc', JSON.stringify({
+      version: 2, step: 9, values: { answers: { overall: 8 }, comment: 'Смачний' },
+    }));
+    afterEach(() => window.history.replaceState(null, '', '/'));
+
+    it('a rating with answers: they come along, and the address carries them for the ⋯ menu', () => {
+      installGoogle();
+      window.history.replaceState(null, '', `${RATE}?utm_source=threads`);
+      withDraft();
+      const { unmount } = renderAuth();
+      expect(screen.getByText(/а твої відповіді перенесуться разом зі сторінкою/)).toBeInTheDocument();
+      expect(screen.queryByText(/дані відповіді/)).not.toBeInTheDocument();
+      const here = new URL(window.location.href);
+      expect(here.pathname).toBe(RATE);
+      expect(here.searchParams.get('utm_source')).toBe('threads');
+      expect(here.searchParams.get('nb_handoff')).toMatch(/^[A-Za-z0-9_-]+$/);
+      // signed in, another screen: the address is clean again
+      unmount();
+      expect(window.location.search).toBe('?utm_source=threads');
+    });
+
+    it.each([
+      ['/login', null],
+      ['/t/ABC123', null],
+      ['/tip/new', null],
+      ['/add-borsch/select-place/p1', ['nb:quest-draft:add-borsch', { version: 2, step: 3, values: { name: 'Мій' } }]],
+      ['/borsch/abc/evaluations', null], // a rating with nothing answered yet
+    ])('%s: nothing travels, so it says to start there, and the address stays as it is', (path, draft) => {
+      installGoogle();
+      window.history.replaceState(null, '', path);
+      if (draft) sessionStorage.setItem(draft[0], JSON.stringify(draft[1]));
+      renderAuth();
+      expect(screen.getByText('Відкрий сторінку у звичайному браузері, увійди й почни там. З цього вікна туди нічого не переноситься.')).toBeInTheDocument();
+      expect(screen.queryByText(/перенесуться/)).not.toBeInTheDocument();
+      expect(window.location.pathname).toBe(path);
+      expect(window.location.search).toBe('');
+    });
+  });
+
+  it('no «Відкрити в браузері» where no link can open one (Instagram on iPad looks like a Mac)', () => {
+    setUA('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Instagram 410.0.0.25.88 (iPad13,16; iPadOS 18_1; uk_UA; uk; scale=2.00; 1640x2360; 862365470)');
+    installGoogle();
+    renderAuth();
+    expect(screen.getByText('У браузері Instagram Google не дає увійти')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Відкрити в/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Скопіювати посилання' })).toBeInTheDocument();
+    expect(screen.getByText('Натисни ⋯ у кутку екрана й обери «Відкрити в браузері».')).toBeInTheDocument();
+  });
+
+  it('when copying fails, the link is there to select by hand', async () => {
+    installGoogle();
+    window.history.replaceState(null, '', '/login');
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: jest.fn(async () => { throw new Error('denied'); }) }, configurable: true });
+    const execCommand = document.execCommand;
+    document.execCommand = jest.fn(() => false);
+    try {
+      renderAuth();
+      await userEvent.click(screen.getByRole('button', { name: 'Скопіювати посилання' }));
+      const field = await screen.findByRole('textbox', { name: 'Посилання на цю сторінку' });
+      expect(field).toHaveValue('https://map.navernyborshchu.com/login');
+      expect(field).toHaveAttribute('readonly');
+      expect(screen.getByText('Не вийшло скопіювати. Виділи посилання нижче й скопіюй його.')).toBeInTheDocument();
+      expect(track).toHaveBeenCalledWith('auth_copy_link', { app: 'Threads', ok: false });
+    } finally {
+      document.execCommand = execCommand;
+      window.history.replaceState(null, '', '/');
+    }
   });
 });

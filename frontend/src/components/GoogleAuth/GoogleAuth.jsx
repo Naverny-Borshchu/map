@@ -4,7 +4,8 @@ import style from "./GoogleAuth.module.css";
 import { useI18n } from "../../i18n";
 import { track } from "../../analytics";
 import { detectInAppBrowser, externalBrowserUrl } from "../../utils/inAppBrowser";
-import { handoffUrl } from "../../services/handoff";
+import { canHandoff, handoffUrl } from "../../services/handoff";
+import { withoutHandoff } from "../../utils/handoffParam";
 
 // After this long without Google's script the person is told why nothing is
 // there (blocker, network). The wait itself goes on: a slow script that turns
@@ -71,16 +72,46 @@ export const GoogleAuth = ({ onSuccess, disabled = false }) => {
     blockedRef.current = disabled;
 
     const inApp = useMemo(() => detectInAppBrowser(), []);
+    // Only a rating of a borshch on the map (or a bowl of one) travels with
+    // the link; everywhere else the panel says the person starts over there.
+    const carry = useMemo(() => Boolean(inApp) && canHandoff(), [inApp]);
+    // Somewhere (an iPad app with a desktop address, say) there is no way to
+    // hand the page over by a link: no button that would do nothing.
+    const canOpen = useMemo(
+        () => Boolean(inApp && externalBrowserUrl(handoffUrl(), inApp.os)),
+        [inApp]
+    );
     const [ready, setReady] = useState(() => Boolean(gsi()));
     const [slow, setSlow] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
     const [copied, setCopied] = useState(false);
+    // the link, shown to select by hand when the clipboard refused it
+    const [manualLink, setManualLink] = useState("");
 
     useEffect(() => {
         mounted.current = true;
         return () => { mounted.current = false; };
     }, []);
+
+    // The app's own ⋯ «Open in browser» opens whatever address the page has.
+    // While this panel is up, that address carries the answers too; once it
+    // is gone (signed in, another screen) the address is clean again.
+    useEffect(() => {
+        if (!inApp || !carry) return undefined;
+        const put = (href) => {
+            try {
+                const u = new URL(href);
+                window.history.replaceState(window.history.state, "", `${u.pathname}${u.search}${u.hash}`);
+            } catch (e) { /* the buttons below still carry them */ }
+        };
+        put(handoffUrl());
+        return () => {
+            const href = window.location.href;
+            const clean = withoutHandoff(href);
+            if (clean !== href) put(clean);
+        };
+    }, [inApp, carry]);
 
     // Google's script is loaded `async defer` in index.html: often not there
     // yet when this mounts. Touching `google` directly once threw and blanked
@@ -162,9 +193,12 @@ export const GoogleAuth = ({ onSuccess, disabled = false }) => {
     };
 
     const copyLink = async () => {
-        const ok = await copyText(handoffUrl());
+        const link = handoffUrl();
+        const ok = await copyText(link);
         track("auth_copy_link", { app: inApp?.app || "webview", ok });
-        if (mounted.current) setCopied(ok);
+        if (!mounted.current) return;
+        setCopied(ok);
+        setManualLink(ok ? "" : link);
     };
 
     return (
@@ -174,14 +208,30 @@ export const GoogleAuth = ({ onSuccess, disabled = false }) => {
                     <p className={style.inAppTitle}>
                         {inApp.app ? t("auth.inAppTitle", { app: inApp.app }) : t("auth.inAppTitleGeneric")}
                     </p>
-                    <p className={style.inAppText}>{t("auth.inAppText")}</p>
-                    <button type="button" className={style.openBtn} onClick={openInBrowser}>
-                        {t(inApp.os === "ios" ? "auth.openInSafari" : "auth.openInBrowser")}
-                    </button>
+                    <p className={style.inAppText}>{t(carry ? "auth.inAppText" : "auth.inAppTextFresh")}</p>
+                    {canOpen && (
+                        <button type="button" className={style.openBtn} onClick={openInBrowser}>
+                            {t(inApp.os === "ios" ? "auth.openInSafari" : "auth.openInBrowser")}
+                        </button>
+                    )}
                     <button type="button" className={style.copyBtn} onClick={copyLink}>
                         {copied ? t("auth.linkCopied") : t("auth.copyLink")}
                     </button>
-                    <p className={style.inAppManual}>{t("auth.inAppManual")}</p>
+                    {manualLink && (
+                        <>
+                            <p className={style.inAppText} role="alert">{t("auth.copyFailed")}</p>
+                            <input
+                                className={style.linkField}
+                                type="text"
+                                readOnly
+                                value={manualLink}
+                                aria-label={t("auth.linkLabel")}
+                                onFocus={(e) => e.target.select()}
+                                onClick={(e) => e.target.select()}
+                            />
+                        </>
+                    )}
+                    <p className={style.inAppManual}>{t(canOpen ? "auth.inAppManual" : "auth.inAppManualOnly")}</p>
                 </div>
             )}
 

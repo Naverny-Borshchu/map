@@ -3,6 +3,7 @@
 // не має взагалі й нічого не підвантажує. Перевірено живою сесією на map1:
 // зі slim у проєкт приходили самі лише $pageview.
 import posthog from 'posthog-js';
+import { withoutHandoff } from './utils/handoffParam';
 
 /**
  * Аналітика (PostHog).
@@ -29,6 +30,28 @@ const apiHost = () =>
 
 let ready = false;
 
+/**
+ * Поки на екрані панель вбудованого браузера, в адресі лежить nb_handoff
+ * (services/handoff): там відповіді й коментар людини. У події, профілі й
+ * записи сесій він не йде.
+ */
+const scrubBag = (bag) => {
+  if (!bag || typeof bag !== 'object') return bag;
+  const out = { ...bag };
+  Object.keys(out).forEach((k) => { out[k] = withoutHandoff(out[k]); });
+  return out;
+};
+
+export function scrubHandoff(event) {
+  if (!event || typeof event !== 'object') return event;
+  return {
+    ...event,
+    properties: scrubBag(event.properties),
+    ...(event.$set ? { $set: scrubBag(event.$set) } : {}),
+    ...(event.$set_once ? { $set_once: scrubBag(event.$set_once) } : {}),
+  };
+}
+
 /** Викликається один раз зі src/index.js. Без ключа — повний no-op. */
 export function initAnalytics() {
   if (ready || !KEY) return;
@@ -53,6 +76,8 @@ export function initAnalytics() {
     session_recording: {
       maskAllInputs: true,
     },
+    get_current_url: (href) => withoutHandoff(href),
+    before_send: scrubHandoff,
   });
 
   posthog.register({ site: SITE });
@@ -120,7 +145,7 @@ export function bugContext() {
   try { lang = localStorage.getItem('lang'); } catch (e) { /* приватний режим */ }
   return {
     path: loc.pathname || null,
-    search: loc.search || null,
+    search: withoutHandoff(loc.search || '') || null,
     lang,
     site: SITE,
     viewport: typeof window === 'undefined' ? null : `${window.innerWidth}x${window.innerHeight}`,

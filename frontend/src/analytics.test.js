@@ -5,6 +5,7 @@ import {
   replayPointer,
   reportBug,
   resetAnalytics,
+  scrubHandoff,
   track,
   trackPageview,
 } from './analytics';
@@ -50,3 +51,32 @@ describe('bug reports without a project key', () => {
     expect(replayPointer()).toEqual({ replayUrl: null, sessionId: null, distinctId: null });
   });
 });
+
+// Поки панель вбудованого браузера на екрані, в адресі лежать відповіді
+// людини (services/handoff). До PostHog і в скарги вони не потрапляють.
+describe('the carried answers stay out of analytics', () => {
+  const url = 'https://map.navernyborshchu.com/borsch/b1/evaluations?nb_handoff=eyJ2IjoyLCJkcmFmdCI6&utm_source=threads';
+  const clean = 'https://map.navernyborshchu.com/borsch/b1/evaluations?utm_source=threads';
+
+  it('scrubs every URL an event carries', () => {
+    const event = scrubHandoff({
+      event: '$autocapture',
+      properties: { $current_url: url, $referrer: url, $pathname: '/borsch/b1/evaluations', n: 3 },
+      $set: { $current_url: url },
+      $set_once: { $initial_current_url: url },
+    });
+    expect(event.properties).toEqual({ $current_url: clean, $referrer: clean, $pathname: '/borsch/b1/evaluations', n: 3 });
+    expect(event.$set.$current_url).toBe(clean);
+    expect(event.$set_once.$initial_current_url).toBe(clean);
+    expect(scrubHandoff(null)).toBeNull();
+  });
+
+  it('and a bug report', () => {
+    window.history.replaceState(null, '', '/borsch/b1/evaluations?nb_handoff=eyJ2Ijoy&utm_source=threads');
+    expect(bugContext().search).toBe('?utm_source=threads');
+    window.history.replaceState(null, '', '/borsch/b1/evaluations?nb_handoff=eyJ2Ijoy');
+    expect(bugContext().search).toBeNull();
+    window.history.replaceState(null, '', '/');
+  });
+});
+
