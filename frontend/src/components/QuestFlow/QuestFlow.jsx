@@ -122,9 +122,16 @@ export const QuestFlow = ({
   // URL of the borshch's own photo. Shown small next to its name.
   cover = null,
   coverSrc = '',
-  // The cross asks «Вийти з оцінки?» once something is answered; the answers
-  // stay in the caller's draft either way.
+  // The cross asks «Вийти з оцінки?» once something is answered or a photo is
+  // picked; the answers stay in the caller's draft either way, a photo does not.
   confirmExit = false,
+  // Send the picked photos to the borshch and leave (NAV-228). A photo lives
+  // only in memory until the closing screen: on 24.11.2026 a photo picked on
+  // the first screen of a rating vanished with the cross, and the person was
+  // sure it had been sent. With this the sheet offers «Надіслати фото й вийти».
+  // Async; a rejection keeps the sheet open with a line about the failure.
+  // Without it (a borshch that does not exist yet) the sheet only warns.
+  onExitWithPhotos = null,
   // The answers came in a link from another browser (services/handoff), and
   // anybody can write one. The comment screen then shows every answer, the
   // way the closing screen does, with «Змінити відповіді»: nothing is sent
@@ -168,8 +175,14 @@ export const QuestFlow = ({
   const multiplier = updatedRating ? 1 : (xp.multiplier || 1);
   const earnedXp = updatedRating ? 0 : coinsEarned(steps, values, perStep) * multiplier;
 
+  const pickedPhotos = (values.photos || []).length;
   const anyAnswer = taskSteps.some((s) => RATING_TYPES.has(s.type) && segmentShare(s, values) > 0)
-    || !!(values.comment || '').trim();
+    || !!(values.comment || '').trim()
+    || pickedPhotos > 0;
+  // photos already sent with the rating are not lost on the way out
+  const unsentPhotos = status.sent ? 0 : pickedPhotos;
+  const [exitSending, setExitSending] = useState(false);
+  const [exitSendFailed, setExitSendFailed] = useState(false);
 
   const leave = () => {
     markClosing();
@@ -177,9 +190,25 @@ export const QuestFlow = ({
   };
   const handleExit = () => {
     if (confirmExit && current?.type !== 'done' && anyAnswer) {
+      setExitSendFailed(false);
       setExitOpen(true);
       return;
     }
+    leave();
+  };
+  const sendPhotosAndLeave = async () => {
+    if (exitSending) return;
+    setExitSending(true);
+    setExitSendFailed(false);
+    try {
+      await onExitWithPhotos();
+    } catch (e) {
+      setExitSending(false);
+      setExitSendFailed(true);
+      return;
+    }
+    setExitSending(false);
+    setExitOpen(false);
     leave();
   };
 
@@ -754,11 +783,30 @@ export const QuestFlow = ({
           <div className={style.sheet} role="dialog" aria-modal="true" aria-labelledby="exit-title">
             <h2 className={style.sheetTitle} id="exit-title">{t('r3.exitTitle')}</h2>
             <p className={style.sheetText}>{t('r3.exitText')}</p>
-            <button type="button" className={style.cta} ref={stayRef} onClick={() => { setExitOpen(false); quitRef.current?.focus(); }}>
+            {unsentPhotos > 0 && (
+              <p className={style.sheetText} data-testid="exit-photo-note">
+                {t(onExitWithPhotos ? 'r3.exitPhotoSend' : 'r3.exitPhotoLost', { count: unsentPhotos })}
+              </p>
+            )}
+            {exitSendFailed && (
+              <p className={style.sheetText} role="alert">{t('r3.exitPhotoFailed')}</p>
+            )}
+            {unsentPhotos > 0 && onExitWithPhotos && (
+              <button type="button" className={style.cta} onClick={sendPhotosAndLeave} disabled={exitSending}>
+                {exitSending ? t('rev.photoUploading') : t('r3.exitSendPhotos', { count: unsentPhotos })}
+              </button>
+            )}
+            <button
+              type="button"
+              className={unsentPhotos > 0 && onExitWithPhotos ? style.ghostBtn : style.cta}
+              ref={stayRef}
+              onClick={() => { setExitOpen(false); quitRef.current?.focus(); }}
+              disabled={exitSending}
+            >
               {t('r3.exitStay')}
             </button>
-            <button type="button" className={style.ghostBtn} onClick={() => { setExitOpen(false); leave(); }}>
-              {t('r3.exitLeave')}
+            <button type="button" className={style.ghostBtn} onClick={() => { setExitOpen(false); leave(); }} disabled={exitSending}>
+              {unsentPhotos > 0 ? t('r3.exitLeaveNoPhoto', { count: unsentPhotos }) : t('r3.exitLeave')}
             </button>
           </div>
         </div>
