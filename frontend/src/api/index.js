@@ -603,6 +603,22 @@ export const borschAPI = {
     return mapBorsch(updated);
   },
 
+  /**
+   * A new name for a borshch (POST /borsches/{id}/rename/, NAV-228): the menu
+   * calls it differently now. From staff it is applied at once:
+   *   { status: 'renamed', borsch }       (borsch mapped)
+   * from anybody else the AI checks it first, within a minute or two:
+   *   { status: 'pending', name, check_id, message }
+   * 400 (code too_short | too_long | same) and 429 (too_many) throw with .code.
+   */
+  rename: async (id, name) => {
+    const answer = await request(`/borsches/${id}/rename/`, {
+      method: 'POST', body: { name }, authRequired: true,
+    });
+    track('borsch_rename', { borsch_id: id, status: answer?.status || null });
+    return answer?.borsch ? { ...answer, borsch: mapBorsch(answer.borsch) } : answer;
+  },
+
   uploadPhoto: async (borschId, file) => {
     // a phone photo is 3-15 MB and nginx takes 10 MB at most; see preparePhoto
     const photo = await preparePhotoForUpload(file);

@@ -811,3 +811,28 @@
   strong { font-size: 15px; font-weight: 800; }
   span { font-size: 12px; font-weight: 600; color: var(--q-ink-2); line-height: 1.25; }
 }
+
+/* NAV-228: «Інша назва в меню?» під вибраним Борщем, що вже є на мапі */
+.menuNameLink {
+  align-self: flex-start;
+  min-height: 44px;
+  margin: -4px 0 4px 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--q-ink);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  @include footnote;
+}
+
+.menuNameEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin: 0 0 8px;
+}
+

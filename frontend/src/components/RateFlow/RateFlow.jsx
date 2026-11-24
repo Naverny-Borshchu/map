@@ -33,6 +33,8 @@ export const RateFlow = ({
   onPhotos,
   onSubmit,
   onExit,
+  // NAV-228: send the picked photos and leave (QuestFlow onExitWithPhotos)
+  onExitWithPhotos = null,
   onSignIn,
   saving,
   isSent,
@@ -133,6 +135,7 @@ export const RateFlow = ({
       onRetry={onSubmit}
       onRetryPhotos={onRetryPhotos}
       onExit={onExit}
+      onExitWithPhotos={onExitWithPhotos}
       // #34 moved the Google handler up to EvaluationsPage, which needs it to
       // resume the pending review; this one is for callers that do not supply
       // it (the tests). Prefer the parent's.
