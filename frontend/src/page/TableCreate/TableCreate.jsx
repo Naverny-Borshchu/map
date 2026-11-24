@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VenuePicker } from '../../components/VenuePicker';
 import { GooglePlacePicker } from '../../components/GooglePlacePicker';
@@ -15,6 +15,7 @@ import { findOwnPlace, pendingPlace } from '../../services/googlePlaces';
 import { ensurePlace } from '../../services/bowlTargets';
 import { saveHostTable } from '../../services/tableHost';
 import { useNearbyVenues } from '../../hook/useNearbyVenues';
+import { LONG_TOAST_MS, showToast } from '../../components/Toast';
 import { useFlowTracking } from '../../hook/useFlowTracking';
 import { getPriceChipsForCountry } from '../../utils/currency';
 import {
@@ -46,6 +47,8 @@ const STEPS = ['venue', 'borsch', 'facts', 'settings'];
 const STEP_INDEX = { venue: 0, google: 0, borsch: 1, facts: 2, settings: 3 };
 const STEP_EVENT = { venue: 'venue', google: 'venue_google', borsch: 'borsch', facts: 'facts', settings: 'settings' };
 const HUE = { venue: '#A00322', google: '#A00322', borsch: '#B5122E', facts: '#860130', settings: '#C0102F' };
+// the backend's shortest name (core/borsch_checks.py NAME_MIN)
+const MENU_NAME_MIN = 3;
 const MEAT_LABEL = { no_meat: 'ans.meatNo', chicken: 'ans.meatChicken', pork: 'ans.meatPork', beef: 'ans.meatBeef', other: 'ans.meatOther' };
 
 const itemFromBorsch = (b) => ({ key: String(b.id_borsch), id: String(b.id_borsch), name: b.name, known: knownFacts(b) });
@@ -72,6 +75,9 @@ export const TableCreate = () => {
   const [title, setTitle] = useState('');
   const [newName, setNewName] = useState('');
   const [newError, setNewError] = useState(null);
+  // NAV-228: «Інша назва в меню?» of a borshch already on the map
+  const [menuEdit, setMenuEdit] = useState(null); // { key, value }
+  const [menuError, setMenuError] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -166,6 +172,26 @@ export const TableCreate = () => {
     });
   };
 
+  // The name on the menu differs from the map's: the table keeps the borshch
+  // (no twin on the map) and, once created, sends the new name, which AI checks.
+  const startMenuName = (it) => {
+    setMenuError(false);
+    setMenuEdit({ key: it.key, value: it.menuName || it.name });
+  };
+  const saveMenuName = () => {
+    if (!menuEdit) return;
+    const clean = menuEdit.value.trim().replace(/\s+/g, ' ');
+    const it = items.find((x) => x.key === menuEdit.key);
+    if (!it) { setMenuEdit(null); return; }
+    const same = clean.toLocaleLowerCase('uk') === String(it.name || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('uk');
+    if (!same && (clean.length < MENU_NAME_MIN || clean.length > NEW_NAME_MAX)) {
+      setMenuError(true);
+      return;
+    }
+    setItems((prev) => prev.map((x) => (x.key === menuEdit.key ? { ...x, menuName: same ? null : clean } : x)));
+    setMenuEdit(null);
+  };
+
   const setFact = (key, kind, value) => {
     setFacts((prev) => ({ ...prev, [key]: { ...(prev[key] || {}), [kind]: value } }));
   };
@@ -188,6 +214,12 @@ export const TableCreate = () => {
       // the borshch this table puts on the map: a photo is asked once it closes
       const newNames = items.filter((it) => !it.id).map((it) => it.name);
       if (newNames.length) saveHostTable(table.code, { newNames, prompted: false, createdAt: Date.now() });
+      // NAV-228: the menu's name for a borshch already on the map; AI checks it
+      const renames = items.filter((it) => it.id && it.menuName);
+      renames.forEach((it) => {
+        borschAPI.rename(it.id, it.menuName).catch((e) => console.error('Не вдалося надіслати назву з меню:', e));
+      });
+      if (renames.length) showToast(t('table.menuNamePending'), { ms: LONG_TOAST_MS });
       setCreated(true);
       window.dispatchEvent(new Event('borschDataUpdated'));
       navigate(`/t/${table.code}`, { replace: true, state: { created: true } });
@@ -295,23 +327,51 @@ export const TableCreate = () => {
           {here.map((b) => {
             const at = items.findIndex((it) => it.key === String(b.id_borsch));
             const on = at >= 0;
+            const it = on ? items[at] : null;
+            const editing = on && menuEdit?.key === it.key;
             return (
-              <button
-                key={b.id_borsch}
-                type="button"
-                className={`${bowl.venue} ${style.pickCard} ${on ? `${bowl.venueOn} ${style.pickCardOn}` : ''}`}
-                onClick={() => toggle(b)}
-                aria-pressed={on}
-                disabled={!on && full}
-              >
-                <span className={style.pickNumber} aria-hidden="true">{on ? t('table.numberShort', { n: at + 1 }) : '+'}</span>
-                <span className={bowl.venueWords}>
-                  <span className={bowl.venueName}>{dishLabel(b.name)}</span>
-                  <span className={bowl.venueAddr}>
-                    {b.rating_count ? t('bowl.ratings', { count: b.rating_count }) : t('card.noRatings')}
+              <Fragment key={b.id_borsch}>
+                <button
+                  type="button"
+                  className={`${bowl.venue} ${style.pickCard} ${on ? `${bowl.venueOn} ${style.pickCardOn}` : ''}`}
+                  onClick={() => toggle(b)}
+                  aria-pressed={on}
+                  disabled={!on && full}
+                >
+                  <span className={style.pickNumber} aria-hidden="true">{on ? t('table.numberShort', { n: at + 1 }) : '+'}</span>
+                  <span className={bowl.venueWords}>
+                    <span className={bowl.venueName}>{dishLabel(b.name)}</span>
+                    <span className={bowl.venueAddr}>
+                      {b.rating_count ? t('bowl.ratings', { count: b.rating_count }) : t('card.noRatings')}
+                    </span>
                   </span>
-                </span>
-              </button>
+                </button>
+                {on && !editing && (
+                  <button type="button" className={style.menuNameLink} onClick={() => startMenuName(it)}>
+                    {it.menuName ? t('table.menuNameSet', { name: it.menuName }) : t('rename.link')}
+                  </button>
+                )}
+                {editing && (
+                  <div className={style.menuNameEdit}>
+                    <label className={style.fieldLabel} htmlFor={`menu-name-${b.id_borsch}`}>{t('table.menuNameLabel')}</label>
+                    <div className={style.newRow}>
+                      <input
+                        id={`menu-name-${b.id_borsch}`}
+                        className={q.input}
+                        type="text"
+                        value={menuEdit.value}
+                        onChange={(e) => { setMenuEdit({ ...menuEdit, value: e.target.value }); setMenuError(false); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveMenuName(); } }}
+                        maxLength={NEW_NAME_MAX + 10}
+                        autoComplete="off"
+                      />
+                      <button type="button" className={style.addBtn} onClick={saveMenuName}>{t('table.menuNameSave')}</button>
+                    </div>
+                    <p className={q.hint}>{t('table.menuNameHint')}</p>
+                    {menuError && <p className={style.error} role="alert">{t('table.menuNameErr', { max: NEW_NAME_MAX })}</p>}
+                  </div>
+                )}
+              </Fragment>
             );
           })}
           {extra.map((it) => {
@@ -332,6 +392,7 @@ export const TableCreate = () => {
         </div>
         {here.length === 0 && <p className={q.hint}>{t('bowl.noBorsch')}</p>}
         <label className={style.fieldLabel} htmlFor="table-new-borsch">{t('table.newBorschLabel')}</label>
+        {here.length > 0 && <p className={q.hint}>{t('table.newBorschSameHint')}</p>}
         <div className={style.newRow}>
           <input
             id="table-new-borsch"
@@ -384,7 +445,7 @@ export const TableCreate = () => {
               <li key={it.key} className={style.factsItem}>
                 <div className={style.factsHead}>
                   <span className={style.badge}>{t('table.numberShort', { n: i + 1 })}</span>
-                  <span className={style.rowName}>{it.id ? dishLabel(it.name) : it.name}</span>
+                  <span className={style.rowName}>{it.menuName || (it.id ? dishLabel(it.name) : it.name)}</span>
                 </div>
                 <p className={style.factsKnown}>{known ? t('table.factsKnown', { facts: known }) : t('table.factsUnknown')}</p>
                 <div className={style.factsInputs}>
@@ -489,7 +550,7 @@ export const TableCreate = () => {
         <ol className={style.chipsRow} aria-label={t('table.onTable', { count: items.length })}>
           {items.map((it, i) => (
             <li key={it.key} className={style.borschChip}>
-              {t('table.numberShort', { n: i + 1 })} {it.id ? dishLabel(it.name) : it.name}
+              {t('table.numberShort', { n: i + 1 })} {it.menuName || (it.id ? dishLabel(it.name) : it.name)}
             </li>
           ))}
         </ol>

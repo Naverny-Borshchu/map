@@ -8,6 +8,7 @@ import { uploadPhotos } from '../../utils/uploadPhotos';
 import { googleAuth } from '../../services/googleAuth';
 import { RateFlow } from '../../components/RateFlow';
 import { EmptyState } from '../../components/EmptyState';
+import { LONG_TOAST_MS, showToast } from '../../components/Toast';
 import { DailyLimitStop } from '../../components/DailyLimit';
 import { isDailyLimitError, useDailyLimit } from '../../hook/useDailyLimit';
 import { FactsQuestion } from '../../components/FactsQuestion';
@@ -113,7 +114,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
     const [reviewUpdated, setReviewUpdated] = useState(false);
     const { getBorschById, getBorschExploration, loadBorschData} = useBorsch();
     const { syncWithServer } = useComments();
-    const { completeGoogleSignIn } = useUser();
+    const { completeGoogleSignIn, isAuthenticated } = useUser();
     const { getPlaceById } = usePlaces();
     // Where the rating was opened from, for the step events: a borshch card,
     // the venue picker of the add chooser (two screens before this one), or a
@@ -288,6 +289,26 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       else deleteDraft(bowl.id);
     }
 
+    // NAV-228: the cross on a rating with a photo picked. The photo is sent to
+    // this borshch now (it goes through the AI check like any other) and the
+    // rating stays a draft. Only for a borshch that exists and a signed-in
+    // person: a bowl keeps its photo in its own draft, and a guest cannot upload.
+    const sendPhotosOnExit = async () => {
+      const result = await uploadPhotos({
+        borschId: id, photos, uploaded: photosUploaded, pending: photosPending, upload: borschAPI.uploadPhoto,
+      });
+      setPhotosUploaded(result.uploaded);
+      setPhotosPending(result.pending);
+      track('rate_exit_photos', {
+        borsch_id: id, count: photos.length, failed: result.failed, pending: result.pending.length,
+      });
+      if (result.failed > 0) throw new Error('photos_failed');
+      if (result.pending.length) showToast(t('photo.pending', { count: result.pending.length }), { ms: LONG_TOAST_MS });
+      else showToast(t('rev.photoAdded'));
+      window.dispatchEvent(new Event('borschDataUpdated'));
+    };
+    const canSendPhotosOnExit = Boolean(!bowl && id && isAuthenticated);
+
     // Only the photos; the review is already saved and must not be posted twice.
     const retryPhotos = async () => {
       setPhotoStatus((s) => ({ ...(s || {}), retrying: true }));
@@ -333,6 +354,7 @@ export const EvaluationsPage = ({ borschId: propId, bowl = null, initialPhotos =
       onPhotos={setPhotos}
       onSubmit={handleSubmitForm}
       onExit={() => navigate(id ? `/borsch/${id}` : '/')}
+      onExitWithPhotos={canSendPhotosOnExit ? sendPhotosOnExit : null}
       withPhotoStep={withPhotoStep}
       cover={withPhotoStep ? null : photos[0] || null}
       coverSrc={withPhotoStep ? (borschOne.photo_urls || [])[0] || '' : ''}

@@ -13,11 +13,12 @@ import { FotoBorschGallary } from "../../components/FotoBorschGallary";
 import { useBorsch } from '../../context/BorschContext';
 import { usePlaces } from '../../context/PlacesContext';
 import { useComments } from '../../context/CommentsContext';
-import { placesAPI } from '../../api';
+import { borschAPI, placesAPI } from '../../api';
 import style from './BorschPage.module.scss';
 import { formatGrade } from "../../utils/rating";
 import { RouteButton } from "../../components/RouteButton";
 import { VenueReport } from '../../components/VenueReport';
+import { BorschRename } from '../../components/BorschRename';
 import { hasRating } from "../../utils/rating";
 import { useT } from "../../i18n";
 import { useVenueLabel } from "../../i18n";
@@ -87,6 +88,27 @@ export const BorschPage=({ borschId: propId })=>{
     // On desktop the card sits beside the map: the map shows this borshch (hook/useShowOnMap)
     useShowOnMap(borschOne?.place_id);
 
+    // NAV-228: a borshch merged into its twin is gone from the catalogue, but an
+    // old link (a shared card, a story, a table) still carries its id. The API
+    // answers that id with 301 to the borshch it went into: open that one.
+    const missing = Boolean(id) && !borschLoading && !borschOne;
+    const [mergedCheck, setMergedCheck] = useState({ id: null, done: false });
+    useEffect(() => {
+      if (!missing) return undefined;
+      let cancelled = false;
+      setMergedCheck({ id, done: false });
+      borschAPI.getById(id)
+        .then((b) => {
+          if (cancelled) return;
+          const other = b?.id_borsch && String(b.id_borsch) !== String(id) ? String(b.id_borsch) : null;
+          if (other) navigate(`/borsch/${other}`, { replace: true });
+          else setMergedCheck({ id, done: true });
+        })
+        .catch(() => { if (!cancelled) setMergedCheck({ id, done: true }); });
+      return () => { cancelled = true; };
+    }, [missing, id, navigate]);
+    const checkingMerged = missing && !(mergedCheck.id === id && mergedCheck.done);
+
       if (!id) {
         return (
           <div className={style.BorschPage}>
@@ -102,7 +124,7 @@ export const BorschPage=({ borschId: propId })=>{
     const borschComents = getCommentsByBorschId(id);
 
 
-    if (borschLoading || placesLoading || (missingPlaceId && placeFetchState !== 'error' && !place)) {
+    if (borschLoading || placesLoading || checkingMerged || (missingPlaceId && placeFetchState !== 'error' && !place)) {
       return (
         <div className={style.BorschPage}>
           <EmptyState loading title={t('borsch.loading')} />
@@ -184,6 +206,8 @@ export const BorschPage=({ borschId: propId })=>{
             {place.city && <p className={style.kicker}>{cityLabel(place.city)}</p>}
             <h1 className={style.title}>{venueLabel(place.name)}</h1>
             <p className={style.dish}>{dishLabel(borschOne.name)}</p>
+            {/* NAV-228: у «Глеку» назва в меню була інша, і змінити її було ніде */}
+            <BorschRename borschId={id} name={borschOne.name} />
 
             {(weight || price) && (
               <div className={style.facts}>
